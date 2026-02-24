@@ -52,6 +52,7 @@ export async function POST(
         infoFileUrl: true,
         organId: true,
         setTypeId: true,
+        sampleType: true,
         organ: { select: { organInfoFileUrl: true } }
       },
     });
