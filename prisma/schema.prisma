@@ -182,6 +182,7 @@ model UpdateVersion {
   status             UpdateVersionStatus @default(DRAFT)
   rhythmsFileUrl     String?
   samplesFileUrl     String?
+  personalizedSamplesZipUrl String? // ZIP עם קבצי דגימות מותאמים אישית (123.cpi, 456.cpi וכו')
   masterZipUrl       String?
   emailSubject       String?
   emailBody          String?             @db.Text

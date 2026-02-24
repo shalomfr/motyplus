@@ -16,6 +16,7 @@ interface UpdateFormData {
   description: string
   rhythmsFileUrl: string
   samplesFileUrl: string
+  personalizedSamplesZipUrl: string
   emailSubject: string
   emailBody: string
   releaseDate: string
@@ -44,6 +45,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
     description: initialData?.description || "",
     rhythmsFileUrl: initialData?.rhythmsFileUrl || "",
     samplesFileUrl: initialData?.samplesFileUrl || "",
+    personalizedSamplesZipUrl: initialData?.personalizedSamplesZipUrl || "",
     emailSubject: initialData?.emailSubject || "",
     emailBody: initialData?.emailBody || "",
     releaseDate: initialData?.releaseDate || "",
@@ -51,11 +53,15 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const [isUploadingRhythms, setIsUploadingRhythms] = useState(false)
   const [isUploadingSamples, setIsUploadingSamples] = useState(false)
+  const [isUploadingPersonalizedSamples, setIsUploadingPersonalizedSamples] = useState(false)
   const [rhythmsFileName, setRhythmsFileName] = useState(
     initialData?.rhythmsFileUrl ? extractFilename(initialData.rhythmsFileUrl) : ""
   )
   const [samplesFileName, setSamplesFileName] = useState(
     initialData?.samplesFileUrl ? extractFilename(initialData.samplesFileUrl) : ""
+  )
+  const [personalizedSamplesFileName, setPersonalizedSamplesFileName] = useState(
+    initialData?.personalizedSamplesZipUrl ? extractFilename(initialData.personalizedSamplesZipUrl) : ""
   )
 
   const handleChange = (field: keyof UpdateFormData, value: string | number) => {
@@ -64,7 +70,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "rhythmsFileUrl" | "samplesFileUrl",
+    field: "rhythmsFileUrl" | "samplesFileUrl" | "personalizedSamplesZipUrl",
     setUploading: (v: boolean) => void,
     setFileName: (v: string) => void
   ) => {
@@ -265,6 +271,48 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                     className="hidden"
                     disabled={isUploadingSamples}
                     onChange={(e) => handleFileUpload(e, "samplesFileUrl", setIsUploadingSamples, setSamplesFileName)}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Personalized Samples ZIP */}
+          <div className="space-y-2">
+            <Label>קובץ דגימות מותאמות אישית (ZIP)</Label>
+            <div className="flex items-center gap-2">
+              {personalizedSamplesFileName ? (
+                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                  <span className="truncate">{personalizedSamplesFileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({ ...prev, personalizedSamplesZipUrl: "" }))
+                      setPersonalizedSamplesFileName("")
+                    }}
+                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
+                  isUploadingPersonalizedSamples && "opacity-50 cursor-not-allowed"
+                )}>
+                  {isUploadingPersonalizedSamples ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span>{isUploadingPersonalizedSamples ? "מעלה קובץ..." : "העלה קובץ דגימות מותאמות (.zip)"}</span>
+                  <input
+                    type="file"
+                    accept=".zip"
+                    className="hidden"
+                    disabled={isUploadingPersonalizedSamples}
+                    onChange={(e) => handleFileUpload(e, "personalizedSamplesZipUrl", setIsUploadingPersonalizedSamples, setPersonalizedSamplesFileName)}
                   />
                 </label>
               )}

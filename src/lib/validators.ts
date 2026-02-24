@@ -47,6 +47,7 @@ export const updateVersionSchema = z.object({
   description: z.string().optional().nullable(),
   rhythmsFileUrl: z.string().optional().nullable(),
   samplesFileUrl: z.string().optional().nullable(),
+  personalizedSamplesZipUrl: z.string().optional().nullable(),
   masterZipUrl: z.string().optional().nullable(),
   emailSubject: z.string().optional().nullable(),
   emailBody: z.string().optional().nullable(),

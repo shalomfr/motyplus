@@ -28,6 +28,7 @@ interface UpdateVersion {
   description: string | null
   rhythmsFileUrl: string | null
   samplesFileUrl: string | null
+  personalizedSamplesZipUrl: string | null
   emailSubject: string | null
   emailBody: string | null
   createdAt: string
@@ -188,6 +189,7 @@ export default function UpdateDetailsPage() {
                 description: update.description || "",
                 rhythmsFileUrl: update.rhythmsFileUrl || "",
                 samplesFileUrl: update.samplesFileUrl || "",
+                personalizedSamplesZipUrl: update.personalizedSamplesZipUrl || "",
                 emailSubject: update.emailSubject || "",
                 emailBody: update.emailBody || "",
                 releaseDate: update.releaseDate
@@ -242,6 +244,20 @@ export default function UpdateDetailsPage() {
                     <span className="text-sm text-muted-foreground">קובץ דגימות: </span>
                     <a
                       href={update.samplesFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                      dir="ltr"
+                    >
+                      הורד קובץ
+                    </a>
+                  </div>
+                )}
+                {update.personalizedSamplesZipUrl && (
+                  <div>
+                    <span className="text-sm text-muted-foreground">קובץ דגימות מותאמות אישית: </span>
+                    <a
+                      href={update.personalizedSamplesZipUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:underline"
