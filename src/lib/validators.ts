@@ -14,6 +14,7 @@ export const customerSchema = z.object({
   amountPaid: z.number().min(0, "סכום לא תקין"),
   purchaseDate: z.string().optional(),
   notes: z.string().optional().nullable(),
+  infoFileUrl: z.string().optional().nullable(),
 });
 
 export const customerUpdateSchema = customerSchema.partial().extend({
@@ -43,8 +44,8 @@ export const updateVersionSchema = z.object({
   price: z.number().min(0, "מחיר לא תקין"),
   releaseDate: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  driveRhythmsFolder: z.string().optional().nullable(),
-  driveSamplesFolder: z.string().optional().nullable(),
+  rhythmsFileUrl: z.string().optional().nullable(),
+  samplesFileUrl: z.string().optional().nullable(),
   emailSubject: z.string().optional().nullable(),
   emailBody: z.string().optional().nullable(),
 });

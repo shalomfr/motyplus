@@ -102,6 +102,7 @@ model Customer {
   sampleType           SampleType     @default(CPI)
   currentUpdateVersion String?
   hasV3                Boolean        @default(false)
+  infoFileUrl          String?
   notes                String?        @db.Text
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
@@ -172,8 +173,8 @@ model UpdateVersion {
   releaseDate        DateTime?
   description        String?             @db.Text
   status             UpdateVersionStatus @default(DRAFT)
-  driveRhythmsFolder String?
-  driveSamplesFolder String?
+  rhythmsFileUrl String?
+  samplesFileUrl String?
   emailSubject       String?
   emailBody          String?             @db.Text
   sortOrder          Int                 @default(0)

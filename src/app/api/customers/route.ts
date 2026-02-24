@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
         purchaseDate,
         updateExpiryDate,
         notes: data.notes,
+        infoFileUrl: data.infoFileUrl || null,
       },
       include: {
         organ: true,

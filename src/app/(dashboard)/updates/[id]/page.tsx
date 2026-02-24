@@ -25,8 +25,8 @@ interface UpdateVersion {
   status: string
   releaseDate: string | null
   description: string | null
-  driveRhythmsFolder: string | null
-  driveSamplesFolder: string | null
+  rhythmsFileUrl: string | null
+  samplesFileUrl: string | null
   emailSubject: string | null
   emailBody: string | null
   createdAt: string
@@ -181,8 +181,8 @@ export default function UpdateDetailsPage() {
                 version: update.version,
                 price: Number(update.price),
                 description: update.description || "",
-                driveRhythmsFolder: update.driveRhythmsFolder || "",
-                driveSamplesFolder: update.driveSamplesFolder || "",
+                rhythmsFileUrl: update.rhythmsFileUrl || "",
+                samplesFileUrl: update.samplesFileUrl || "",
                 emailSubject: update.emailSubject || "",
                 emailBody: update.emailBody || "",
                 releaseDate: update.releaseDate
@@ -218,31 +218,31 @@ export default function UpdateDetailsPage() {
                     <p className="text-sm mt-1">{update.description}</p>
                   </div>
                 )}
-                {update.driveRhythmsFolder && (
+                {update.rhythmsFileUrl && (
                   <div>
-                    <span className="text-sm text-muted-foreground">תיקיית ריתמוסים: </span>
+                    <span className="text-sm text-muted-foreground">קובץ ריתמוסים: </span>
                     <a
-                      href={update.driveRhythmsFolder}
+                      href={update.rhythmsFileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:underline"
                       dir="ltr"
                     >
-                      {update.driveRhythmsFolder}
+                      הורד קובץ
                     </a>
                   </div>
                 )}
-                {update.driveSamplesFolder && (
+                {update.samplesFileUrl && (
                   <div>
-                    <span className="text-sm text-muted-foreground">תיקיית דגימות: </span>
+                    <span className="text-sm text-muted-foreground">קובץ דגימות: </span>
                     <a
-                      href={update.driveSamplesFolder}
+                      href={update.samplesFileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:underline"
                       dir="ltr"
                     >
-                      {update.driveSamplesFolder}
+                      הורד קובץ
                     </a>
                   </div>
                 )}

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 
-// POST /api/updates/[id]/send - סימון לקוחות כמקבלי עדכון
+// POST /api/updates/[id]/send - סימון לקוחות כמקבלי עדכון ושליחת מייל
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,7 +45,7 @@ export async function POST(
     // בדיקה שכל הלקוחות קיימים
     const customers = await prisma.customer.findMany({
       where: { id: { in: customerIds } },
-      select: { id: true, fullName: true },
+      select: { id: true, fullName: true, email: true, infoFileUrl: true },
     });
 
     if (customers.length !== customerIds.length) {
@@ -90,6 +91,27 @@ export async function POST(
       where: { id: { in: newCustomerIds } },
       data: { currentUpdateVersion: updateVersion.version },
     });
+
+    // שליחת מיילים אם יש תבנית מוגדרת
+    if (updateVersion.emailSubject && updateVersion.emailBody) {
+      const emailCustomers = customers.filter((c) => newCustomerIds.includes(c.id));
+      await Promise.allSettled(
+        emailCustomers.map((customer) => {
+          const html = replaceTemplateVariables(updateVersion.emailBody!, {
+            customerName: customer.fullName,
+            version: updateVersion.version,
+            rhythmsLink: updateVersion.rhythmsFileUrl || "",
+            samplesLink: updateVersion.samplesFileUrl || "",
+            infoLink: customer.infoFileUrl || "",
+          });
+          return sendEmail({
+            to: customer.email,
+            subject: updateVersion.emailSubject!,
+            html,
+          });
+        })
+      );
+    }
 
     // רישום פעילות לכל לקוח
     const activityPromises = newCustomerIds.map((customerId) =>

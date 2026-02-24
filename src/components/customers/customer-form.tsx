@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
-import { Loader2, Save } from "lucide-react"
+import { Loader2, Save, Upload, FileText, X as XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type CustomerFormData = z.infer<typeof customerSchema>
@@ -83,6 +83,16 @@ export function CustomerForm({
   const [organs, setOrgans] = useState<Organ[]>([])
   const [setTypes, setSetTypes] = useState<SetType[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
+  const [isUploadingInfo, setIsUploadingInfo] = useState(false)
+  const [infoFileName, setInfoFileName] = useState<string>(() => {
+    if (initialData?.infoFileUrl) {
+      const parts = initialData.infoFileUrl.split("/")
+      const raw = parts[parts.length - 1]
+      const match = raw.match(/^\d+-(.+)$/)
+      return match ? match[1] : raw
+    }
+    return ""
+  })
 
   const schema = mode === "create" ? customerSchema : customerUpdateSchema
 
@@ -108,6 +118,7 @@ export function CustomerForm({
         initialData?.purchaseDate?.split("T")[0] ||
         new Date().toISOString().split("T")[0],
       notes: initialData?.notes || "",
+      infoFileUrl: initialData?.infoFileUrl || "",
       ...(mode === "edit" && {
         status: initialData?.status as "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
         hasV3: initialData?.hasV3 || false,
@@ -143,6 +154,27 @@ export function CustomerForm({
     }
     fetchData()
   }, [])
+
+  const handleInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingInfo(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "customers")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+      setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), data.url)
+      setInfoFileName(file.name)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
+    } finally {
+      setIsUploadingInfo(false)
+      e.target.value = ""
+    }
+  }
 
   if (isLoadingData) {
     return (
@@ -436,6 +468,48 @@ export function CustomerForm({
               placeholder="הערות נוספות..."
               rows={3}
             />
+          </div>
+
+          {/* Info File Upload */}
+          <div className="space-y-2">
+            <Label>קובץ אינפו של האורגן</Label>
+            <div className="flex items-center gap-2">
+              {infoFileName ? (
+                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                  <span className="truncate">{infoFileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
+                      setInfoFileName("")
+                    }}
+                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
+                  isUploadingInfo && "opacity-50 cursor-not-allowed"
+                )}>
+                  {isUploadingInfo ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span>{isUploadingInfo ? "מעלה קובץ..." : "העלה קובץ אינפו (.bin / .sty)"}</span>
+                  <input
+                    type="file"
+                    accept=".bin,.sty"
+                    className="hidden"
+                    onChange={handleInfoFileUpload}
+                    disabled={isUploadingInfo}
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           {/* Submit */}
