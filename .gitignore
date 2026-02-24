@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+deploy.zip
+source.zip
+*.log
