@@ -27,6 +27,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXT_TELEMETRY_DISABLED: 1
 
       - name: Copy static files to standalone
         run: |
@@ -43,3 +44,4 @@ jobs:
         with:
           app-name: motyplus-app
           package: .next/standalone
+          startup-command: node server.js
