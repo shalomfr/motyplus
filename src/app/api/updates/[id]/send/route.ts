@@ -124,7 +124,7 @@ export async function POST(
 
           // קישור לקובץ דגימות מותאם אישית לפי מזהה הלקוח
           const sampleFileLink = updateVersion.samplesFileUrl
-            ? `${updateVersion.samplesFileUrl}/${customer.id}.${customer.sampleType.toLowerCase()}`
+            ? `${updateVersion.samplesFileUrl}/${String(customer.id)}.${customer.sampleType.toLowerCase()}`
             : "";
 
           const html = replaceTemplateVariables(updateVersion.emailBody!, {
