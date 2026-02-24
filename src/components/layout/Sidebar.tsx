@@ -93,11 +93,13 @@ export function Sidebar({
         {/* Logo / Title area */}
         <div
           className={cn(
-            "flex items-center border-b border-gray-700 p-4 min-h-[64px]",
+            "flex items-center border-b border-gray-700 p-4 min-h-[72px]",
             isCollapsed ? "justify-center flex-col gap-2" : "justify-between"
           )}
         >
-          <div className={cn("flex items-center gap-2", isCollapsed ? "mt-2" : "")}>
+          <AnimatedLogo size={isCollapsed ? 36 : 44} />
+
+          <div className="flex items-center gap-1">
             {/* Mobile close button */}
             <button
               onClick={onMobileToggle}

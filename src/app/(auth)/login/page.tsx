@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { LogIn, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
 
 const loginSchema = z.object({
   email: z
@@ -65,9 +66,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <span className="text-3xl font-bold text-white">M+</span>
-          </div>
+          <AnimatedLogo size={80} />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-2">
