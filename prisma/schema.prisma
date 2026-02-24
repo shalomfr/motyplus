@@ -97,6 +97,7 @@ model Customer {
   organId              String
   additionalOrganId    String?
   setTypeId            String
+  customerId           String?        @unique // מזהה לקוח לפי שם קובץ האינפו (לדוגמה: 61455)
   amountPaid           Decimal        @db.Decimal(10, 2)
   status               CustomerStatus @default(ACTIVE)
   sampleType           SampleType     @default(CPI)

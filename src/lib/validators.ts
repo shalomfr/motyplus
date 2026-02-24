@@ -11,6 +11,7 @@ export const customerSchema = z.object({
   organId: z.string().min(1, "יש לבחור אורגן"),
   additionalOrganId: z.string().optional().nullable(),
   setTypeId: z.string().min(1, "יש לבחור סוג סט"),
+  customerId: z.string().optional().nullable(),
   amountPaid: z.number().min(0, "סכום לא תקין"),
   purchaseDate: z.string().optional(),
   notes: z.string().optional().nullable(),

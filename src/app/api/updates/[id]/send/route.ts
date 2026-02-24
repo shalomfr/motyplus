@@ -121,12 +121,18 @@ export async function POST(
           const matchedFile = fileMap.get(`${customer.setTypeId}_${customer.organId}`);
           // קישור הורדה: קודם קובץ מותאם, אחרת fallback לקישור כללי
           const downloadLink = matchedFile?.fileUrl || updateVersion.rhythmsFileUrl || "";
+
+          // קישור לקובץ דגימות מותאם אישית לפי מזהה הלקוח
+          const sampleFileLink = updateVersion.samplesFileUrl
+            ? `${updateVersion.samplesFileUrl}/${customer.id}.${customer.sampleType.toLowerCase()}`
+            : "";
+
           const html = replaceTemplateVariables(updateVersion.emailBody!, {
             customerName: customer.fullName,
             version: updateVersion.version,
             downloadLink,
             rhythmsLink: updateVersion.rhythmsFileUrl || "",
-            samplesLink: updateVersion.samplesFileUrl || "",
+            samplesLink: sampleFileLink,
             infoLink: customer.infoFileUrl || "",
             organInfoLink: customer.organ?.organInfoFileUrl || "",
           });

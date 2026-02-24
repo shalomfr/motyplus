@@ -5,3 +5,4 @@ node_modules/
 deploy.zip
 source.zip
 *.log
+.env

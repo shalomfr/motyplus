@@ -158,16 +158,38 @@ export function CustomerForm({
   const handleInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // במצב create - צריך ID של הלקוח
+    if (mode === "create") {
+      alert("אנא שמור את הלקוח תחילה, ואז תוכל להעלות קובץ אינפו")
+      e.target.value = ""
+      return
+    }
+
+    if (!initialData?.id) {
+      alert("שגיאה: לא נמצא מזהה לקוח")
+      e.target.value = ""
+      return
+    }
+
     setIsUploadingInfo(true)
     try {
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("folder", "customers")
-      const res = await fetch("/api/upload", { method: "POST", body: fd })
+
+      // שימוש ב-API החדש שמשנה את שם הקובץ אוטומטית
+      const res = await fetch(`/api/customers/${initialData.id}/upload-info`, {
+        method: "POST",
+        body: fd,
+      })
+
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+
       setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), data.url)
-      setInfoFileName(file.name)
+      setInfoFileName(data.fileName) // השם החדש שהשרת נתן
+
+      alert(`הקובץ הועלה בהצלחה בשם: ${data.fileName}`)
     } catch (err) {
       alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
     } finally {
