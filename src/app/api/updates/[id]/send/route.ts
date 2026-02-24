@@ -45,7 +45,15 @@ export async function POST(
     // בדיקה שכל הלקוחות קיימים — כולל organId ו-setTypeId להתאמת קבצים
     const customers = await prisma.customer.findMany({
       where: { id: { in: customerIds } },
-      select: { id: true, fullName: true, email: true, infoFileUrl: true, organId: true, setTypeId: true },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        infoFileUrl: true,
+        organId: true,
+        setTypeId: true,
+        organ: { select: { organInfoFileUrl: true } }
+      },
     });
 
     if (customers.length !== customerIds.length) {
@@ -120,6 +128,7 @@ export async function POST(
             rhythmsLink: updateVersion.rhythmsFileUrl || "",
             samplesLink: updateVersion.samplesFileUrl || "",
             infoLink: customer.infoFileUrl || "",
+            organInfoLink: customer.organ?.organInfoFileUrl || "",
           });
           return sendEmail({
             to: customer.email,

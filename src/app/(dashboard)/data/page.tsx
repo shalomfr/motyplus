@@ -23,8 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Loader2, Database } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+import { Plus, Edit, Trash2, Loader2, Database, Upload, FileText, X as XIcon } from "lucide-react"
+import { formatCurrency, cn } from "@/lib/utils"
 
 // ===== Types =====
 
@@ -32,6 +32,7 @@ interface Organ {
   id: string
   name: string
   folderAlias: string | null
+  organInfoFileUrl: string | null
   supportsUpdates: boolean
   sortOrder: number
   isActive: boolean
@@ -65,8 +66,11 @@ function OrgansTab() {
 
   const [formName, setFormName] = useState("")
   const [formFolderAlias, setFormFolderAlias] = useState("")
+  const [formOrganInfoFileUrl, setFormOrganInfoFileUrl] = useState("")
   const [formSupportsUpdates, setFormSupportsUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
+  const [isUploadingInfo, setIsUploadingInfo] = useState(false)
+  const [infoFileName, setInfoFileName] = useState("")
 
   const fetchOrgans = useCallback(async () => {
     try {
@@ -90,8 +94,10 @@ function OrgansTab() {
     setEditingOrgan(null)
     setFormName("")
     setFormFolderAlias("")
+    setFormOrganInfoFileUrl("")
     setFormSupportsUpdates(false)
     setFormSortOrder(0)
+    setInfoFileName("")
     setShowDialog(true)
   }
 
@@ -99,9 +105,45 @@ function OrgansTab() {
     setEditingOrgan(organ)
     setFormName(organ.name)
     setFormFolderAlias(organ.folderAlias || "")
+    setFormOrganInfoFileUrl(organ.organInfoFileUrl || "")
     setFormSupportsUpdates(organ.supportsUpdates)
     setFormSortOrder(organ.sortOrder)
+
+    // Extract filename from URL
+    if (organ.organInfoFileUrl) {
+      const parts = organ.organInfoFileUrl.split("/")
+      const raw = parts[parts.length - 1]
+      const match = raw.match(/^\d+-(.+)$/)
+      setInfoFileName(match ? match[1] : raw)
+    } else {
+      setInfoFileName("")
+    }
+
     setShowDialog(true)
+  }
+
+  const handleInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingInfo(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "organs/info")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+
+      setFormOrganInfoFileUrl(data.url)
+      setInfoFileName(file.name)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
+    } finally {
+      setIsUploadingInfo(false)
+      e.target.value = ""
+    }
   }
 
   const handleSave = async () => {
@@ -116,6 +158,7 @@ function OrgansTab() {
         body: JSON.stringify({
           name: formName,
           folderAlias: formFolderAlias || null,
+          organInfoFileUrl: formOrganInfoFileUrl || null,
           supportsUpdates: formSupportsUpdates,
           sortOrder: formSortOrder,
         }),
@@ -221,6 +264,46 @@ function OrgansTab() {
               <Label>כינוי תיקייה (folderAlias)</Label>
               <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
               <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: Genos2, Tyros5-1G</p>
+            </div>
+            <div className="space-y-2">
+              <Label>קובץ אינפו לזיהוי האורגן</Label>
+              <div className="flex items-center gap-2">
+                {infoFileName ? (
+                  <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                    <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                    <span className="truncate">{infoFileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormOrganInfoFileUrl("")
+                        setInfoFileName("")
+                      }}
+                      className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={cn(
+                    "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
+                    isUploadingInfo && "opacity-50 cursor-not-allowed"
+                  )}>
+                    {isUploadingInfo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    <span>{isUploadingInfo ? "מעלה קובץ..." : "העלה קובץ אינפו"}</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      disabled={isUploadingInfo}
+                      onChange={handleInfoFileUpload}
+                    />
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">קובץ שרק האורגן הזה יכול לפתוח - יישלח ללקוחות עם העדכונים</p>
             </div>
             <div className="space-y-2">
               <Label>סדר מיון</Label>

@@ -77,6 +77,7 @@ export const promotionSchema = z.object({
 export const organSchema = z.object({
   name: z.string().min(1, "יש להזין שם אורגן"),
   folderAlias: z.string().optional().nullable(),
+  organInfoFileUrl: z.string().optional().nullable(),
   supportsUpdates: z.boolean(),
   sortOrder: z.number().optional(),
 });

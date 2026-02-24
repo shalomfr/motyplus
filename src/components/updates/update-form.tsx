@@ -298,7 +298,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
               dir="rtl"
             />
             <p className="text-xs text-muted-foreground">
-              משתנים זמינים: {"{{customerName}}"}, {"{{version}}"}, {"{{rhythmsLink}}"}, {"{{samplesLink}}"}, {"{{infoLink}}"}
+              משתנים זמינים: {"{{customerName}}"}, {"{{version}}"}, {"{{downloadLink}}"}, {"{{rhythmsLink}}"}, {"{{samplesLink}}"}, {"{{infoLink}}"}, {"{{organInfoLink}}"}
             </p>
           </div>
         </CardContent>

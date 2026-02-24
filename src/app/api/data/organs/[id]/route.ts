@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { organSchema } from "@/lib/validators";
 
-// PUT /api/data/organs/[id] - עדכון אורגן
-export async function PUT(
+// PATCH /api/data/organs/[id] - עדכון אורגן
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
