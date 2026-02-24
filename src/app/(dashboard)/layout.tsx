@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/header";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+
+const MIN_SPLASH_MS = 1800;
 
 export default function DashboardLayout({
   children,
@@ -16,6 +18,8 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const mountTime = useRef(Date.now());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -24,13 +28,23 @@ export default function DashboardLayout({
     }
   }, [status, router]);
 
+  // Minimum splash screen duration
+  useEffect(() => {
+    if (status !== "loading") {
+      const elapsed = Date.now() - mountTime.current;
+      const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
+      const timer = setTimeout(() => setShowSplash(false), remaining);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // Show loading while checking auth
-  if (status === "loading") {
+  // Show splash loading screen
+  if (status === "loading" || showSplash) {
     return <LoadingScreen fullScreen />;
   }
 
