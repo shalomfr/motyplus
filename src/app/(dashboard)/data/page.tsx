@@ -31,6 +31,7 @@ import { formatCurrency } from "@/lib/utils"
 interface Organ {
   id: string
   name: string
+  folderAlias: string | null
   supportsUpdates: boolean
   sortOrder: number
   isActive: boolean
@@ -39,6 +40,7 @@ interface Organ {
 interface SetType {
   id: string
   name: string
+  folderAlias: string | null
   price: number
   includesUpdates: boolean
   sortOrder: number
@@ -62,6 +64,7 @@ function OrgansTab() {
   const [saving, setSaving] = useState(false)
 
   const [formName, setFormName] = useState("")
+  const [formFolderAlias, setFormFolderAlias] = useState("")
   const [formSupportsUpdates, setFormSupportsUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
 
@@ -86,6 +89,7 @@ function OrgansTab() {
   const openCreate = () => {
     setEditingOrgan(null)
     setFormName("")
+    setFormFolderAlias("")
     setFormSupportsUpdates(false)
     setFormSortOrder(0)
     setShowDialog(true)
@@ -94,6 +98,7 @@ function OrgansTab() {
   const openEdit = (organ: Organ) => {
     setEditingOrgan(organ)
     setFormName(organ.name)
+    setFormFolderAlias(organ.folderAlias || "")
     setFormSupportsUpdates(organ.supportsUpdates)
     setFormSortOrder(organ.sortOrder)
     setShowDialog(true)
@@ -110,6 +115,7 @@ function OrgansTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formName,
+          folderAlias: formFolderAlias || null,
           supportsUpdates: formSupportsUpdates,
           sortOrder: formSortOrder,
         }),
@@ -155,6 +161,7 @@ function OrgansTab() {
         <TableHeader>
           <TableRow>
             <TableHead>שם</TableHead>
+            <TableHead>כינוי תיקייה</TableHead>
             <TableHead>תומך בעדכונים</TableHead>
             <TableHead>סדר מיון</TableHead>
             <TableHead>סטטוס</TableHead>
@@ -165,6 +172,7 @@ function OrgansTab() {
           {organs.map((organ) => (
             <TableRow key={organ.id}>
               <TableCell className="font-medium">{organ.name}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{organ.folderAlias || "-"}</TableCell>
               <TableCell>
                 {organ.supportsUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
@@ -210,6 +218,11 @@ function OrgansTab() {
               <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="שם האורגן" />
             </div>
             <div className="space-y-2">
+              <Label>כינוי תיקייה (folderAlias)</Label>
+              <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
+              <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: Genos2, Tyros5-1G</p>
+            </div>
+            <div className="space-y-2">
               <Label>סדר מיון</Label>
               <Input
                 type="number"
@@ -249,6 +262,7 @@ function SetsTab() {
   const [saving, setSaving] = useState(false)
 
   const [formName, setFormName] = useState("")
+  const [formFolderAlias, setFormFolderAlias] = useState("")
   const [formPrice, setFormPrice] = useState(0)
   const [formIncludesUpdates, setFormIncludesUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
@@ -274,6 +288,7 @@ function SetsTab() {
   const openCreate = () => {
     setEditingSet(null)
     setFormName("")
+    setFormFolderAlias("")
     setFormPrice(0)
     setFormIncludesUpdates(false)
     setFormSortOrder(0)
@@ -283,6 +298,7 @@ function SetsTab() {
   const openEdit = (set: SetType) => {
     setEditingSet(set)
     setFormName(set.name)
+    setFormFolderAlias(set.folderAlias || "")
     setFormPrice(Number(set.price))
     setFormIncludesUpdates(set.includesUpdates)
     setFormSortOrder(set.sortOrder)
@@ -300,6 +316,7 @@ function SetsTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formName,
+          folderAlias: formFolderAlias || null,
           price: formPrice,
           includesUpdates: formIncludesUpdates,
           sortOrder: formSortOrder,
@@ -346,6 +363,7 @@ function SetsTab() {
         <TableHeader>
           <TableRow>
             <TableHead>שם</TableHead>
+            <TableHead>כינוי תיקייה</TableHead>
             <TableHead>מחיר</TableHead>
             <TableHead>כולל עדכונים</TableHead>
             <TableHead>סדר מיון</TableHead>
@@ -357,6 +375,7 @@ function SetsTab() {
           {sets.map((set) => (
             <TableRow key={set.id}>
               <TableCell className="font-medium">{set.name}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{set.folderAlias || "-"}</TableCell>
               <TableCell>{formatCurrency(Number(set.price))}</TableCell>
               <TableCell>
                 {set.includesUpdates ? (
@@ -401,6 +420,11 @@ function SetsTab() {
             <div className="space-y-2">
               <Label>שם</Label>
               <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="שם הסט" />
+            </div>
+            <div className="space-y-2">
+              <Label>כינוי תיקייה (folderAlias)</Label>
+              <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
+              <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: full, half, basis</p>
             </div>
             <div className="space-y-2">
               <Label>מחיר</Label>

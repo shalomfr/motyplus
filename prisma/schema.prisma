@@ -134,6 +134,7 @@ model Customer {
 model Organ {
   id              String  @id @default(cuid())
   name            String  @unique
+  folderAlias     String?
   supportsUpdates Boolean @default(false)
   sortOrder       Int     @default(0)
   isActive        Boolean @default(true)
@@ -142,18 +143,21 @@ model Organ {
   customers           Customer[]
   additionalCustomers Customer[] @relation("AdditionalOrgan")
   leads               Lead[]
+  updateFiles         UpdateFile[]
 }
 
 model SetType {
   id              String  @id @default(cuid())
   name            String  @unique
+  folderAlias     String?
   price           Decimal @db.Decimal(10, 2)
   includesUpdates Boolean @default(false)
   sortOrder       Int     @default(0)
   isActive        Boolean @default(true)
 
   // Relations
-  customers Customer[]
+  customers   Customer[]
+  updateFiles UpdateFile[]
 }
 
 // ===== עדכונים =====
@@ -173,8 +177,9 @@ model UpdateVersion {
   releaseDate        DateTime?
   description        String?             @db.Text
   status             UpdateVersionStatus @default(DRAFT)
-  rhythmsFileUrl String?
-  samplesFileUrl String?
+  rhythmsFileUrl     String?
+  samplesFileUrl     String?
+  masterZipUrl       String?
   emailSubject       String?
   emailBody          String?             @db.Text
   sortOrder          Int                 @default(0)
@@ -183,12 +188,14 @@ model UpdateVersion {
 
   // Relations
   customerUpdates CustomerUpdate[]
+  updateFiles     UpdateFile[]
 }
 
 model CustomerUpdate {
   id              String    @id @default(cuid())
   customerId      Int
   updateVersionId String
+  updateFileId    String?
   sentAt          DateTime?
   downloadedAt    DateTime?
   sentById        String?
@@ -199,10 +206,34 @@ model CustomerUpdate {
   // Relations
   customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   updateVersion UpdateVersion @relation(fields: [updateVersionId], references: [id])
+  updateFile    UpdateFile?   @relation(fields: [updateFileId], references: [id])
   sentBy        User?         @relation(fields: [sentById], references: [id])
 
   @@unique([customerId, updateVersionId])
   @@index([customerId])
+  @@index([updateVersionId])
+}
+
+// ===== קבצי עדכון (מטריצה: גרסה × סוג סט × אורגן) =====
+
+model UpdateFile {
+  id              String   @id @default(cuid())
+  updateVersionId String
+  setTypeId       String
+  organId         String
+  fileUrl         String
+  fileSize        Int?
+  originalPath    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  updateVersion   UpdateVersion    @relation(fields: [updateVersionId], references: [id], onDelete: Cascade)
+  setType         SetType          @relation(fields: [setTypeId], references: [id])
+  organ           Organ            @relation(fields: [organId], references: [id])
+  customerUpdates CustomerUpdate[]
+
+  @@unique([updateVersionId, setTypeId, organId])
   @@index([updateVersionId])
 }
 

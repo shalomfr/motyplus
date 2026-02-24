@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
     const organ = await prisma.organ.create({
       data: {
         name: data.name,
+        folderAlias: data.folderAlias || null,
         supportsUpdates: data.supportsUpdates,
         sortOrder: nextSortOrder,
       },

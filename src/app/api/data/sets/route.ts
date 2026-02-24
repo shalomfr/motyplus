@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
     const setType = await prisma.setType.create({
       data: {
         name: data.name,
+        folderAlias: data.folderAlias || null,
         price: data.price,
         includesUpdates: data.includesUpdates,
         sortOrder: nextSortOrder,

@@ -46,6 +46,7 @@ export const updateVersionSchema = z.object({
   description: z.string().optional().nullable(),
   rhythmsFileUrl: z.string().optional().nullable(),
   samplesFileUrl: z.string().optional().nullable(),
+  masterZipUrl: z.string().optional().nullable(),
   emailSubject: z.string().optional().nullable(),
   emailBody: z.string().optional().nullable(),
 });
@@ -75,12 +76,14 @@ export const promotionSchema = z.object({
 
 export const organSchema = z.object({
   name: z.string().min(1, "יש להזין שם אורגן"),
+  folderAlias: z.string().optional().nullable(),
   supportsUpdates: z.boolean(),
   sortOrder: z.number().optional(),
 });
 
 export const setTypeSchema = z.object({
   name: z.string().min(1, "יש להזין שם סוג סט"),
+  folderAlias: z.string().optional().nullable(),
   price: z.number().min(0, "מחיר לא תקין"),
   includesUpdates: z.boolean(),
   sortOrder: z.number().optional(),

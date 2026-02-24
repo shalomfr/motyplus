@@ -62,6 +62,15 @@ export async function GET(
       ],
     });
 
+    // שליפת קבצי עדכון זמינים (מטריצה)
+    const updateFiles = await prisma.updateFile.findMany({
+      where: { updateVersionId: id },
+      select: { setTypeId: true, organId: true },
+    });
+    const fileAvailableSet = new Set(
+      updateFiles.map((uf) => `${uf.setTypeId}_${uf.organId}`)
+    );
+
     // קיבוץ לפי סוג אורגן
     const groupedByOrgan: Record<string, {
       organId: string;
@@ -81,11 +90,18 @@ export async function GET(
       groupedByOrgan[key].customers.push(customer);
     }
 
+    // הוספת מידע על זמינות קובץ לכל לקוח
+    const customersWithFileInfo = eligibleCustomers.map((c) => ({
+      ...c,
+      hasUpdateFile: fileAvailableSet.has(`${c.setTypeId}_${c.organId}`),
+    }));
+
     return NextResponse.json({
       updateVersion,
       totalEligible: eligibleCustomers.length,
       alreadySentCount: alreadyReceivedIds.length,
       groups: Object.values(groupedByOrgan),
+      customers: customersWithFileInfo,
     });
   } catch (error) {
     console.error("Error fetching work list:", error);

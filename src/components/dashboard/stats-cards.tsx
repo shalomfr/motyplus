@@ -2,62 +2,122 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, DollarSign, UserPlus, RefreshCw, Loader2 } from "lucide-react"
+import { Users, UserCheck, ShieldOff, TrendingUp, Wallet, AlertCircle, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 interface DashboardStats {
   totalCustomers: number
   totalRevenue: number
-  totalLeads: number
-  pendingUpdates: number
+  activeLeadsCount: number
+  customersByStatus: {
+    ACTIVE: number
+    BLOCKED: number
+    FROZEN: number
+    EXCEPTION: number
+  }
 }
 
-const STAT_CONFIG = [
+interface StatCardConfig {
+  key: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  borderColor: string
+  iconBg: string
+  iconColor: string
+  getValue: (s: DashboardStats) => string
+  getSubtext?: (s: DashboardStats) => string
+}
+
+const TOP_ROW: StatCardConfig[] = [
   {
-    key: "totalCustomers" as const,
-    label: "לקוחות פעילים",
+    key: "totalCustomers",
+    label: "סה\"כ לקוחות",
     icon: Users,
-    color: "blue",
     borderColor: "border-r-blue-500",
     iconBg: "bg-blue-100",
     iconColor: "text-blue-600",
+    getValue: (s) => String(s.totalCustomers),
+    getSubtext: (s) => `${s.customersByStatus.ACTIVE} פעילים`,
   },
   {
-    key: "totalRevenue" as const,
-    label: "הכנסות",
-    icon: DollarSign,
-    color: "green",
+    key: "activeCustomers",
+    label: "לקוחות פעילים",
+    icon: UserCheck,
     borderColor: "border-r-green-500",
     iconBg: "bg-green-100",
     iconColor: "text-green-600",
-    format: "currency",
+    getValue: (s) => String(s.customersByStatus.ACTIVE),
   },
   {
-    key: "totalLeads" as const,
-    label: "לידים פתוחים",
-    icon: UserPlus,
-    color: "purple",
+    key: "blockedCustomers",
+    label: "לקוחות חסומים",
+    icon: ShieldOff,
+    borderColor: "border-r-red-500",
+    iconBg: "bg-red-100",
+    iconColor: "text-red-600",
+    getValue: (s) => String(s.customersByStatus.BLOCKED),
+  },
+]
+
+const BOTTOM_ROW: StatCardConfig[] = [
+  {
+    key: "totalRevenue",
+    label: "סה\"כ הכנסות",
+    icon: TrendingUp,
+    borderColor: "border-r-blue-400",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    getValue: (s) => formatCurrency(s.totalRevenue),
+  },
+  {
+    key: "totalPaid",
+    label: "סה\"כ שולם",
+    icon: Wallet,
+    borderColor: "border-r-yellow-500",
+    iconBg: "bg-yellow-100",
+    iconColor: "text-yellow-600",
+    getValue: (s) => formatCurrency(s.totalRevenue),
+  },
+  {
+    key: "balance",
+    label: "יתרה לגבייה",
+    icon: AlertCircle,
     borderColor: "border-r-purple-500",
     iconBg: "bg-purple-100",
     iconColor: "text-purple-600",
-  },
-  {
-    key: "pendingUpdates" as const,
-    label: "עדכונים ממתינים",
-    icon: RefreshCw,
-    color: "amber",
-    borderColor: "border-r-amber-500",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
+    getValue: () => formatCurrency(0),
+    getSubtext: () => "0 לקוחות עם חוב",
   },
 ]
+
+function StatCard({ config, stats }: { config: StatCardConfig; stats: DashboardStats }) {
+  const Icon = config.icon
+  return (
+    <Card className={`border-r-4 ${config.borderColor}`}>
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${config.iconBg}`}>
+            <Icon className={`h-5 w-5 ${config.iconColor}`} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">{config.label}</p>
+            <p className="text-2xl font-bold text-gray-800">{config.getValue(stats)}</p>
+            {config.getSubtext && (
+              <p className="text-xs text-muted-foreground">{config.getSubtext(stats)}</p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export function StatsCards() {
   const [stats, setStats] = useState<DashboardStats>({
     totalCustomers: 0,
     totalRevenue: 0,
-    totalLeads: 0,
-    pendingUpdates: 0,
+    activeLeadsCount: 0,
+    customersByStatus: { ACTIVE: 0, BLOCKED: 0, FROZEN: 0, EXCEPTION: 0 },
   })
   const [loading, setLoading] = useState(true)
 
@@ -80,43 +140,44 @@ export function StatsCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-r-4 border-r-gray-200">
-            <CardContent className="p-4 sm:p-6 flex items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="border-r-4 border-r-gray-200">
+              <CardContent className="p-4 sm:p-6 flex items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="border-r-4 border-r-gray-200">
+              <CardContent className="p-4 sm:p-6 flex items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {STAT_CONFIG.map((config) => {
-        const Icon = config.icon
-        const value = stats[config.key]
-        const displayValue = config.format === "currency"
-          ? formatCurrency(value)
-          : String(value)
+    <div className="space-y-4">
+      {/* שורה עליונה — לקוחות */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {TOP_ROW.map((config) => (
+          <StatCard key={config.key} config={config} stats={stats} />
+        ))}
+      </div>
 
-        return (
-          <Card key={config.key} className={`border-r-4 ${config.borderColor}`}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${config.iconBg}`}>
-                  <Icon className={`h-5 w-5 ${config.iconColor}`} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">{config.label}</p>
-                  <p className="text-2xl font-bold text-gray-800">{displayValue}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+      {/* שורה תחתונה — כספי */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {BOTTOM_ROW.map((config) => (
+          <StatCard key={config.key} config={config} stats={stats} />
+        ))}
+      </div>
     </div>
   )
 }

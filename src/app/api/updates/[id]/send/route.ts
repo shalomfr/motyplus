@@ -42,10 +42,10 @@ export async function POST(
       );
     }
 
-    // בדיקה שכל הלקוחות קיימים
+    // בדיקה שכל הלקוחות קיימים — כולל organId ו-setTypeId להתאמת קבצים
     const customers = await prisma.customer.findMany({
       where: { id: { in: customerIds } },
-      select: { id: true, fullName: true, email: true, infoFileUrl: true },
+      select: { id: true, fullName: true, email: true, infoFileUrl: true, organId: true, setTypeId: true },
     });
 
     if (customers.length !== customerIds.length) {
@@ -75,15 +75,29 @@ export async function POST(
       );
     }
 
-    // יצירת רשומות CustomerUpdate
+    // שליפת קבצי עדכון (מטריצה) להתאמת לקוח-לקובץ
+    const updateFiles = await prisma.updateFile.findMany({
+      where: { updateVersionId: id },
+    });
+    const fileMap = new Map<string, typeof updateFiles[0]>();
+    for (const uf of updateFiles) {
+      fileMap.set(`${uf.setTypeId}_${uf.organId}`, uf);
+    }
+
+    // יצירת רשומות CustomerUpdate עם התאמת קובץ
     const now = new Date();
+    const newCustomers = customers.filter((c) => newCustomerIds.includes(c.id));
     const customerUpdates = await prisma.customerUpdate.createMany({
-      data: newCustomerIds.map((customerId) => ({
-        customerId,
-        updateVersionId: id,
-        sentAt: now,
-        sentById: session.user.id,
-      })),
+      data: newCustomers.map((customer) => {
+        const matchedFile = fileMap.get(`${customer.setTypeId}_${customer.organId}`);
+        return {
+          customerId: customer.id,
+          updateVersionId: id,
+          updateFileId: matchedFile?.id || null,
+          sentAt: now,
+          sentById: session.user.id,
+        };
+      }),
     });
 
     // עדכון גרסה נוכחית בלקוחות
@@ -94,12 +108,15 @@ export async function POST(
 
     // שליחת מיילים אם יש תבנית מוגדרת
     if (updateVersion.emailSubject && updateVersion.emailBody) {
-      const emailCustomers = customers.filter((c) => newCustomerIds.includes(c.id));
       await Promise.allSettled(
-        emailCustomers.map((customer) => {
+        newCustomers.map((customer) => {
+          const matchedFile = fileMap.get(`${customer.setTypeId}_${customer.organId}`);
+          // קישור הורדה: קודם קובץ מותאם, אחרת fallback לקישור כללי
+          const downloadLink = matchedFile?.fileUrl || updateVersion.rhythmsFileUrl || "";
           const html = replaceTemplateVariables(updateVersion.emailBody!, {
             customerName: customer.fullName,
             version: updateVersion.version,
+            downloadLink,
             rhythmsLink: updateVersion.rhythmsFileUrl || "",
             samplesLink: updateVersion.samplesFileUrl || "",
             infoLink: customer.infoFileUrl || "",

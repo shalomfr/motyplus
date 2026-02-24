@@ -22,11 +22,11 @@ async function main() {
 
   // ===== רשימת אורגנים =====
   const organs = [
-    { name: "Tyros5-1G", supportsUpdates: true, sortOrder: 1 },
-    { name: "Tyros5-2G", supportsUpdates: true, sortOrder: 2 },
-    { name: "Genos", supportsUpdates: true, sortOrder: 3 },
-    { name: "Genos 2", supportsUpdates: true, sortOrder: 4 },
-    { name: "PSR-SX920", supportsUpdates: true, sortOrder: 5 },
+    { name: "Tyros5-1G", folderAlias: "Tyros5-1G", supportsUpdates: true, sortOrder: 1 },
+    { name: "Tyros5-2G", folderAlias: "Tyros5-2G", supportsUpdates: true, sortOrder: 2 },
+    { name: "Genos", folderAlias: "Genos", supportsUpdates: true, sortOrder: 3 },
+    { name: "Genos 2", folderAlias: "Genos2", supportsUpdates: true, sortOrder: 4 },
+    { name: "PSR-SX920", folderAlias: "PSR-SX920", supportsUpdates: true, sortOrder: 5 },
     { name: "PSR-SX720", supportsUpdates: false, sortOrder: 6 },
     { name: "PSR-SX900", supportsUpdates: false, sortOrder: 7 },
     { name: "PSR-SX700", supportsUpdates: false, sortOrder: 8 },
@@ -46,14 +46,14 @@ async function main() {
 
   // ===== סוגי סטים =====
   const setTypes = [
-    { name: "בסיס", price: 3000, includesUpdates: false, sortOrder: 1 },
-    { name: "חצי סט", price: 4500, includesUpdates: false, sortOrder: 2 },
-    { name: "3/4 סט", price: 7000, includesUpdates: false, sortOrder: 3 },
-    { name: "סט שלם", price: 9500, includesUpdates: true, sortOrder: 4 },
-    { name: "קטרון + מוטיף", price: 3500, includesUpdates: false, sortOrder: 5 },
-    { name: "דנסים", price: 5000, includesUpdates: false, sortOrder: 6 },
-    { name: "לייב", price: 4000, includesUpdates: false, sortOrder: 7 },
-    { name: "אחר", price: 0, includesUpdates: false, sortOrder: 8 },
+    { name: "בסיס", folderAlias: "basis", price: 3000, includesUpdates: false, sortOrder: 1 },
+    { name: "חצי סט", folderAlias: "half", price: 4500, includesUpdates: false, sortOrder: 2 },
+    { name: "3/4 סט", folderAlias: "3quarter", price: 7000, includesUpdates: false, sortOrder: 3 },
+    { name: "סט שלם", folderAlias: "full", price: 9500, includesUpdates: true, sortOrder: 4 },
+    { name: "קטרון + מוטיף", folderAlias: "katron-motif", price: 3500, includesUpdates: false, sortOrder: 5 },
+    { name: "דנסים", folderAlias: "dances", price: 5000, includesUpdates: false, sortOrder: 6 },
+    { name: "לייב", folderAlias: "live", price: 4000, includesUpdates: false, sortOrder: 7 },
+    { name: "אחר", folderAlias: "other", price: 0, includesUpdates: false, sortOrder: 8 },
   ];
 
   for (const setType of setTypes) {

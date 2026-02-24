@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/header";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 export default function DashboardLayout({
   children,
@@ -30,14 +31,7 @@ export default function DashboardLayout({
 
   // Show loading while checking auth
   if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="mt-4 text-gray-600 text-sm">טוען...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen fullScreen />;
   }
 
   // Don't render until authenticated

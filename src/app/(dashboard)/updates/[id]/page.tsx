@@ -15,7 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { UpdateForm } from "@/components/updates/update-form"
-import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks } from "lucide-react"
+import { UpdateFilesMatrix } from "@/components/updates/update-files-matrix"
+import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks, FileArchive } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -168,6 +169,10 @@ export default function UpdateDetailsPage() {
       <Tabs defaultValue="details" dir="rtl">
         <TabsList>
           <TabsTrigger value="details">פרטים</TabsTrigger>
+          <TabsTrigger value="files">
+            <FileArchive className="h-4 w-4 ml-1" />
+            קבצים
+          </TabsTrigger>
           <TabsTrigger value="work">רשימת עבודה</TabsTrigger>
           <TabsTrigger value="sent">נשלחו ({sentCount})</TabsTrigger>
         </TabsList>
@@ -255,6 +260,10 @@ export default function UpdateDetailsPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="files">
+          <UpdateFilesMatrix updateId={id} />
         </TabsContent>
 
         <TabsContent value="work">

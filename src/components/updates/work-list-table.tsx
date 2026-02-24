@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Copy, Check, Send, Loader2 } from "lucide-react"
+import { Copy, Check, Send, Loader2, FileCheck, FileX } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface WorkListCustomer {
@@ -33,6 +33,7 @@ interface WorkListCustomer {
   infoUploaded: boolean
   samplesReady: boolean
   sent: boolean
+  hasUpdateFile?: boolean
 }
 
 interface WorkListTableProps {
@@ -142,6 +143,7 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
                   <TableHead className="w-16">מזהה</TableHead>
                   <TableHead>שם</TableHead>
                   <TableHead>אורגן</TableHead>
+                  <TableHead className="w-20">קובץ זמין</TableHead>
                   <TableHead className="w-24">מידע הועלה</TableHead>
                   <TableHead className="w-24">דגימות מוכנות</TableHead>
                   <TableHead>סטטוס</TableHead>
@@ -174,6 +176,13 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
                     </TableCell>
                     <TableCell className="font-medium">{customer.fullName}</TableCell>
                     <TableCell>{customer.organ.name}</TableCell>
+                    <TableCell>
+                      {customer.hasUpdateFile ? (
+                        <FileCheck className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <FileX className="h-4 w-4 text-red-400" />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Checkbox
                         checked={customer.infoUploaded}

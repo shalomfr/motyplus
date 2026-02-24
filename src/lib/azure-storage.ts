@@ -31,3 +31,25 @@ export async function deleteFile(url: string): Promise<void> {
     // ignore delete errors
   }
 }
+
+export async function uploadFileWithPath(
+  buffer: Buffer,
+  blobPath: string
+): Promise<string> {
+  const client = getClient();
+  const container = client.getContainerClient(CONTAINER);
+  const blockBlob = container.getBlockBlobClient(blobPath);
+  await blockBlob.uploadData(buffer);
+  return blockBlob.url;
+}
+
+export async function deleteFilesWithPrefix(prefix: string): Promise<number> {
+  const client = getClient();
+  const container = client.getContainerClient(CONTAINER);
+  let deleted = 0;
+  for await (const blob of container.listBlobsFlat({ prefix })) {
+    await container.deleteBlob(blob.name);
+    deleted++;
+  }
+  return deleted;
+}
