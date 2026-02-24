@@ -52,7 +52,6 @@ export async function POST(
         infoFileUrl: true,
         organId: true,
         setTypeId: true,
-        sampleType: true,
         organ: { select: { organInfoFileUrl: true } }
       },
     });
@@ -123,10 +122,11 @@ export async function POST(
           // קישור הורדה: קודם קובץ מותאם, אחרת fallback לקישור כללי
           const downloadLink = matchedFile?.fileUrl || updateVersion.rhythmsFileUrl || "";
 
-          // קישור לקובץ דגימות מותאם אישית לפי מזהה הלקוח
-          const sampleFileLink = updateVersion.samplesFileUrl
-            ? `${updateVersion.samplesFileUrl}/${String(customer.id)}.${customer.sampleType.toLowerCase()}`
-            : "";
+          // קישור לקובץ דגימות - כללי או מותאם אישית
+          // אם יש personalizedSamplesZipUrl, השתמש במזהה הלקוח (נניח CPI כברירת מחדל)
+          const sampleFileLink = updateVersion.personalizedSamplesZipUrl
+            ? `${updateVersion.personalizedSamplesZipUrl}/${String(customer.id)}.cpi`
+            : updateVersion.samplesFileUrl || "";
 
           const html = replaceTemplateVariables(updateVersion.emailBody!, {
             customerName: customer.fullName,
