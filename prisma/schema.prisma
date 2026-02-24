@@ -132,12 +132,14 @@ model Customer {
 // ===== נתוני בסיס =====
 
 model Organ {
-  id              String  @id @default(cuid())
-  name            String  @unique
-  folderAlias     String?
-  supportsUpdates Boolean @default(false)
-  sortOrder       Int     @default(0)
-  isActive        Boolean @default(true)
+  id               String  @id @default(cuid())
+  name             String  @unique
+  folderAlias      String?
+  organInfoFileUrl String? // קובץ אינפו ייחודי שרק האורגן הזה יכול לפתוח
+  organInfoNumber  String? // מספר זיהוי שייזרק לתוך קבצי העדכון
+  supportsUpdates  Boolean @default(false)
+  sortOrder        Int     @default(0)
+  isActive         Boolean @default(true)
 
   // Relations
   customers           Customer[]
