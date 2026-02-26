@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         description: data.description,
         rhythmsFileUrl: data.rhythmsFileUrl,
         samplesFileUrl: data.samplesFileUrl,
+        ppfFileUrl: data.ppfFileUrl,
         emailSubject: data.emailSubject,
         emailBody: data.emailBody,
         sortOrder: nextSortOrder,

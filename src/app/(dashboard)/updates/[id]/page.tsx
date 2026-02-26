@@ -29,6 +29,7 @@ interface UpdateVersion {
   rhythmsFileUrl: string | null
   samplesFileUrl: string | null
   personalizedSamplesZipUrl: string | null
+  ppfFileUrl: string | null
   emailSubject: string | null
   emailBody: string | null
   createdAt: string
@@ -189,7 +190,7 @@ export default function UpdateDetailsPage() {
                 description: update.description || "",
                 rhythmsFileUrl: update.rhythmsFileUrl || "",
                 samplesFileUrl: update.samplesFileUrl || "",
-                personalizedSamplesZipUrl: update.personalizedSamplesZipUrl || "",
+                ppfFileUrl: update.ppfFileUrl || "",
                 emailSubject: update.emailSubject || "",
                 emailBody: update.emailBody || "",
                 releaseDate: update.releaseDate
@@ -253,7 +254,24 @@ export default function UpdateDetailsPage() {
                     </a>
                   </div>
                 )}
-                {update.personalizedSamplesZipUrl && (
+                {update.ppfFileUrl && (
+                  <div>
+                    <span className="text-sm text-muted-foreground">קובץ PPF (מקור ליצירת CPI): </span>
+                    <a
+                      href={update.ppfFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-purple-600 hover:underline"
+                      dir="ltr"
+                    >
+                      הורד קובץ PPF
+                    </a>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      בשליחה ייוצר CPI נעול אוטומטית לכל לקוח
+                    </p>
+                  </div>
+                )}
+                {update.personalizedSamplesZipUrl && !update.ppfFileUrl && (
                   <div>
                     <span className="text-sm text-muted-foreground">קובץ דגימות מותאמות אישית: </span>
                     <a

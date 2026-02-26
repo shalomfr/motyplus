@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
+import { generateCPIsForCustomers } from "@/lib/cpi-converter";
 
 // POST /api/updates/[id]/send - סימון לקוחות כמקבלי עדכון ושליחת מייל
 export async function POST(
@@ -49,6 +50,7 @@ export async function POST(
         id: true,
         fullName: true,
         email: true,
+        customerId: true,
         infoFileUrl: true,
         organId: true,
         setTypeId: true,
@@ -114,6 +116,35 @@ export async function POST(
       data: { currentUpdateVersion: updateVersion.version },
     });
 
+    // יצירת CPI מותאם אישית מקובץ PPF (אם קיים)
+    const cpiUrlMap = new Map<number, string>();
+    if (updateVersion.ppfFileUrl) {
+      const customersForCPI = newCustomers
+        .filter((c) => c.infoFileUrl)
+        .map((c) => ({
+          id: c.id,
+          customerId: c.customerId,
+          infoFileUrl: c.infoFileUrl,
+        }));
+
+      if (customersForCPI.length > 0) {
+        const cpiResult = await generateCPIsForCustomers(
+          updateVersion.ppfFileUrl,
+          updateVersion.version,
+          customersForCPI,
+          id,
+        );
+
+        for (const result of cpiResult.successful) {
+          cpiUrlMap.set(result.customerId, result.cpiUrl);
+        }
+
+        for (const failure of cpiResult.failed) {
+          console.error(`CPI generation failed for customer ${failure.customerId}: ${failure.error}`);
+        }
+      }
+    }
+
     // שליחת מיילים אם יש תבנית מוגדרת
     if (updateVersion.emailSubject && updateVersion.emailBody) {
       await Promise.allSettled(
@@ -122,11 +153,11 @@ export async function POST(
           // קישור הורדה: קודם קובץ מותאם, אחרת fallback לקישור כללי
           const downloadLink = matchedFile?.fileUrl || updateVersion.rhythmsFileUrl || "";
 
-          // קישור לקובץ דגימות - כללי או מותאם אישית
-          // אם יש personalizedSamplesZipUrl, השתמש במזהה הלקוח (נניח CPI כברירת מחדל)
-          const sampleFileLink = updateVersion.personalizedSamplesZipUrl
-            ? `${updateVersion.personalizedSamplesZipUrl}/${String(customer.id)}.cpi`
-            : updateVersion.samplesFileUrl || "";
+          // קישור לקובץ דגימות: 1) CPI שנוצר מ-PPF, 2) ZIP מותאם ישן, 3) דגימות כלליות
+          const sampleFileLink = cpiUrlMap.get(customer.id)
+            || (updateVersion.personalizedSamplesZipUrl
+              ? `${updateVersion.personalizedSamplesZipUrl}/${String(customer.id)}.cpi`
+              : updateVersion.samplesFileUrl || "");
 
           const html = replaceTemplateVariables(updateVersion.emailBody!, {
             customerName: customer.fullName,
@@ -167,6 +198,7 @@ export async function POST(
       sentCount: newCustomerIds.length,
       alreadyReceivedCount: alreadyReceivedIds.size,
       totalCreated: customerUpdates.count,
+      cpiGenerated: cpiUrlMap.size,
     });
   } catch (error) {
     console.error("Error sending update:", error);

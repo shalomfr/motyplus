@@ -183,6 +183,7 @@ model UpdateVersion {
   rhythmsFileUrl     String?
   samplesFileUrl     String?
   personalizedSamplesZipUrl String? // ZIP עם קבצי דגימות מותאמים אישית (123.cpi, 456.cpi וכו')
+  ppfFileUrl                String? // קובץ PPF מקור ליצירת CPI אוטומטית לכל לקוח
   masterZipUrl       String?
   emailSubject       String?
   emailBody          String?             @db.Text

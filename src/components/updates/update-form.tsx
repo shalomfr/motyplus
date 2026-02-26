@@ -16,7 +16,7 @@ interface UpdateFormData {
   description: string
   rhythmsFileUrl: string
   samplesFileUrl: string
-  personalizedSamplesZipUrl: string
+  ppfFileUrl: string
   emailSubject: string
   emailBody: string
   releaseDate: string
@@ -45,7 +45,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
     description: initialData?.description || "",
     rhythmsFileUrl: initialData?.rhythmsFileUrl || "",
     samplesFileUrl: initialData?.samplesFileUrl || "",
-    personalizedSamplesZipUrl: initialData?.personalizedSamplesZipUrl || "",
+    ppfFileUrl: initialData?.ppfFileUrl || "",
     emailSubject: initialData?.emailSubject || "",
     emailBody: initialData?.emailBody || "",
     releaseDate: initialData?.releaseDate || "",
@@ -53,15 +53,15 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const [isUploadingRhythms, setIsUploadingRhythms] = useState(false)
   const [isUploadingSamples, setIsUploadingSamples] = useState(false)
-  const [isUploadingPersonalizedSamples, setIsUploadingPersonalizedSamples] = useState(false)
+  const [isUploadingPpf, setIsUploadingPpf] = useState(false)
   const [rhythmsFileName, setRhythmsFileName] = useState(
     initialData?.rhythmsFileUrl ? extractFilename(initialData.rhythmsFileUrl) : ""
   )
   const [samplesFileName, setSamplesFileName] = useState(
     initialData?.samplesFileUrl ? extractFilename(initialData.samplesFileUrl) : ""
   )
-  const [personalizedSamplesFileName, setPersonalizedSamplesFileName] = useState(
-    initialData?.personalizedSamplesZipUrl ? extractFilename(initialData.personalizedSamplesZipUrl) : ""
+  const [ppfFileName, setPpfFileName] = useState(
+    initialData?.ppfFileUrl ? extractFilename(initialData.ppfFileUrl) : ""
   )
 
   const handleChange = (field: keyof UpdateFormData, value: string | number) => {
@@ -70,7 +70,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "rhythmsFileUrl" | "samplesFileUrl" | "personalizedSamplesZipUrl",
+    field: "rhythmsFileUrl" | "samplesFileUrl" | "ppfFileUrl",
     setUploading: (v: boolean) => void,
     setFileName: (v: string) => void
   ) => {
@@ -277,19 +277,19 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
             </div>
           </div>
 
-          {/* Personalized Samples ZIP */}
+          {/* PPF File */}
           <div className="space-y-2">
-            <Label>קובץ דגימות מותאמות אישית (ZIP)</Label>
+            <Label>קובץ PPF (ייצור CPI אוטומטי לכל לקוח)</Label>
             <div className="flex items-center gap-2">
-              {personalizedSamplesFileName ? (
+              {ppfFileName ? (
                 <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
-                  <span className="truncate">{personalizedSamplesFileName}</span>
+                  <FileText className="h-4 w-4 text-purple-500 shrink-0" />
+                  <span className="truncate">{ppfFileName}</span>
                   <button
                     type="button"
                     onClick={() => {
-                      setForm((prev) => ({ ...prev, personalizedSamplesZipUrl: "" }))
-                      setPersonalizedSamplesFileName("")
+                      setForm((prev) => ({ ...prev, ppfFileUrl: "" }))
+                      setPpfFileName("")
                     }}
                     className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
                   >
@@ -298,25 +298,28 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                 </div>
               ) : (
                 <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
-                  isUploadingPersonalizedSamples && "opacity-50 cursor-not-allowed"
+                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-purple-300 rounded-lg text-sm text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors flex-1",
+                  isUploadingPpf && "opacity-50 cursor-not-allowed"
                 )}>
-                  {isUploadingPersonalizedSamples ? (
+                  {isUploadingPpf ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  <span>{isUploadingPersonalizedSamples ? "מעלה קובץ..." : "העלה קובץ דגימות מותאמות (.zip)"}</span>
+                  <span>{isUploadingPpf ? "מעלה קובץ..." : "העלה קובץ PPF (.ppf)"}</span>
                   <input
                     type="file"
-                    accept=".zip"
+                    accept=".ppf"
                     className="hidden"
-                    disabled={isUploadingPersonalizedSamples}
-                    onChange={(e) => handleFileUpload(e, "personalizedSamplesZipUrl", setIsUploadingPersonalizedSamples, setPersonalizedSamplesFileName)}
+                    disabled={isUploadingPpf}
+                    onChange={(e) => handleFileUpload(e, "ppfFileUrl", setIsUploadingPpf, setPpfFileName)}
                   />
                 </label>
               )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              בשליחת העדכון, ייווצר CPI נעול אוטומטית לכל לקוח לפי קובץ האינפו שלו
+            </p>
           </div>
         </CardContent>
       </Card>

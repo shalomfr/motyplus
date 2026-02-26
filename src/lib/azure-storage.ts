@@ -1,4 +1,9 @@
-import { BlobServiceClient } from "@azure/storage-blob";
+import {
+  BlobServiceClient,
+  BlobSASPermissions,
+  generateBlobSASQueryParameters,
+  StorageSharedKeyCredential,
+} from "@azure/storage-blob";
 
 const CONTAINER = "files";
 
@@ -41,6 +46,22 @@ export async function uploadFileWithPath(
   const blockBlob = container.getBlockBlobClient(blobPath);
   await blockBlob.uploadData(buffer);
   return blockBlob.url;
+}
+
+export async function downloadFile(url: string): Promise<Buffer> {
+  const client = getClient();
+  const container = client.getContainerClient(CONTAINER);
+  const blobName = url.split(`/${CONTAINER}/`)[1];
+  if (!blobName) throw new Error("Invalid blob URL");
+  const blockBlob = container.getBlockBlobClient(blobName);
+  const downloadResponse = await blockBlob.download(0);
+  const chunks: Buffer[] = [];
+  if (downloadResponse.readableStreamBody) {
+    for await (const chunk of downloadResponse.readableStreamBody) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+  }
+  return Buffer.concat(chunks);
 }
 
 export async function deleteFilesWithPrefix(prefix: string): Promise<number> {

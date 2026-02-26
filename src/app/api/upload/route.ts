@@ -4,7 +4,7 @@ import { uploadFile } from "@/lib/azure-storage";
 
 const ALLOWED_TYPES: Record<string, string[]> = {
   customers: ["bin", "sty"],
-  updates: ["zip"],
+  updates: ["zip", "ppf"],
 };
 
 const MAX_SIZE = 100 * 1024 * 1024; // 100MB
