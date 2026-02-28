@@ -31,7 +31,7 @@ export default function CustomersListPage() {
     try {
       const params = new URLSearchParams()
       params.set("page", page.toString())
-      params.set("pageSize", PAGE_SIZE.toString())
+      params.set("limit", PAGE_SIZE.toString())
 
       if (filters.search) params.set("search", filters.search)
       if (filters.organId && filters.organId !== "all")
@@ -50,7 +50,7 @@ export default function CustomersListPage() {
 
       const data = await res.json()
       setCustomers(data.customers || [])
-      setTotalCount(data.totalCount || 0)
+      setTotalCount(data.pagination?.total || 0)
     } catch (error) {
       toast({
         title: "שגיאה",
