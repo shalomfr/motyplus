@@ -80,7 +80,6 @@ export default function CustomersListPage() {
     setIsExporting(true)
     try {
       const params = new URLSearchParams()
-      params.set("export", "excel")
 
       if (filters.search) params.set("search", filters.search)
       if (filters.organId && filters.organId !== "all")
@@ -94,7 +93,7 @@ export default function CustomersListPage() {
       if (filters.missingDetails)
         params.set("missingDetails", "true")
 
-      const res = await fetch(`/api/customers?${params.toString()}`)
+      const res = await fetch(`/api/customers/export?${params.toString()}`)
       if (!res.ok) throw new Error("שגיאה בייצוא")
 
       const blob = await res.blob()
