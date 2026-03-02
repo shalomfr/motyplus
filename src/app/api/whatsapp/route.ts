@@ -38,12 +38,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "WhatsApp service לא מוגדר" }, { status: 400 });
     }
 
-    const { action } = await request.json();
+    const { action, phone } = await request.json();
 
     if (action === "connect" || action === "create") {
       const res = await fetch(`${WA_URL}/connect`, {
         method: "POST",
         headers: waHeaders(),
+      });
+      const data = await res.json();
+      return NextResponse.json(data);
+    }
+
+    if (action === "pair") {
+      const res = await fetch(`${WA_URL}/pair`, {
+        method: "POST",
+        headers: waHeaders(),
+        body: JSON.stringify({ phone }),
       });
       const data = await res.json();
       return NextResponse.json(data);

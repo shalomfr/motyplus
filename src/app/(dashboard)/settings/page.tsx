@@ -64,9 +64,10 @@ interface SystemInfo {
 
 interface WhatsAppStatus {
   configured: boolean
-  status: "connected" | "disconnected" | "not_created" | "not_configured" | "error"
+  status: "connected" | "disconnected" | "not_created" | "not_configured" | "pairing" | "connecting" | "error"
   phone?: string
   qrcode?: string | null
+  pairingCode?: string | null
 }
 
 export default function SettingsPage() {
@@ -84,6 +85,9 @@ export default function SettingsPage() {
   const [whatsapp, setWhatsapp] = useState<WhatsAppStatus>({ configured: false, status: "not_configured" })
   const [waLoading, setWaLoading] = useState(false)
   const [waPolling, setWaPolling] = useState(false)
+  const [waPhone, setWaPhone] = useState("")
+  const [waPairingCode, setWaPairingCode] = useState<string | null>(null)
+  const [waMode, setWaMode] = useState<"qr" | "phone">("qr")
 
   // New user form
   const [newUserName, setNewUserName] = useState("")
@@ -112,10 +116,32 @@ export default function SettingsPage() {
         body: JSON.stringify({ action }),
       })
       await fetchWhatsApp()
-      // Start polling for QR/connection update
       if (action === "connect" || action === "create") setWaPolling(true)
+      if (action === "disconnect") { setWaPairingCode(null); setWaPolling(false) }
     } catch (err) {
       console.error("WhatsApp action error:", err)
+    } finally {
+      setWaLoading(false)
+    }
+  }
+
+  const handlePairByPhone = async () => {
+    if (!waPhone.trim()) return
+    setWaLoading(true)
+    setWaPairingCode(null)
+    try {
+      const res = await fetch("/api/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "pair", phone: waPhone }),
+      })
+      const data = await res.json()
+      if (data.pairingCode) {
+        setWaPairingCode(data.pairingCode)
+        setWaPolling(true)
+      }
+    } catch (err) {
+      console.error("Pairing error:", err)
     } finally {
       setWaLoading(false)
     }
@@ -372,48 +398,97 @@ export default function SettingsPage() {
                   נתק
                 </Button>
               </div>
-            ) : whatsapp.status === "not_created" || whatsapp.status === "disconnected" && !whatsapp.qrcode ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <XCircle className="h-5 w-5" />
-                  <span className="text-sm">לא מחובר</span>
-                </div>
-                <Button size="sm" onClick={() => { handleWhatsAppAction("connect"); setWaPolling(true); }} disabled={waLoading}>
-                  {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-                  חבר WhatsApp
-                </Button>
-              </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  {waPolling ? (
-                    <><Loader2 className="h-4 w-4 animate-spin text-green-600" /><span className="text-sm text-green-700">ממתין לחיבור...</span></>
-                  ) : (
-                    <><XCircle className="h-5 w-5 text-amber-500" /><span className="text-sm text-amber-700">לא מחובר</span></>
-                  )}
+                {/* Mode tabs */}
+                <div className="flex border rounded-lg overflow-hidden w-fit">
+                  <button
+                    className={`px-4 py-1.5 text-sm font-medium transition-colors ${waMode === "qr" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                    onClick={() => setWaMode("qr")}
+                  >
+                    קוד QR
+                  </button>
+                  <button
+                    className={`px-4 py-1.5 text-sm font-medium transition-colors ${waMode === "phone" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                    onClick={() => setWaMode("phone")}
+                  >
+                    מספר טלפון
+                  </button>
                 </div>
-                {whatsapp.qrcode ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">סרוק קוד QR בוואטסאפ:</p>
-                    <p className="text-xs text-muted-foreground">פתח וואטסאפ → מחובר מכשירים → הוסף מכשיר</p>
-                    <img
-                      src={whatsapp.qrcode.startsWith("data:") ? whatsapp.qrcode : `data:image/png;base64,${whatsapp.qrcode}`}
-                      alt="QR Code"
-                      className="w-52 h-52 border rounded-lg"
-                    />
-                  </div>
+
+                {waMode === "qr" ? (
+                  <>
+                    {whatsapp.qrcode ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                          <span className="text-sm text-green-700">ממתין לסריקה...</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">פתח וואטסאפ ← מכשירים מחוברים ← חבר מכשיר</p>
+                        <img
+                          src={whatsapp.qrcode.startsWith("data:") ? whatsapp.qrcode : `data:image/png;base64,${whatsapp.qrcode}`}
+                          alt="QR Code"
+                          className="w-52 h-52 border rounded-lg"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">חבר את WhatsApp באמצעות סריקת קוד QR</p>
+                        <Button size="sm" onClick={() => { handleWhatsAppAction("connect"); setWaPolling(true); }} disabled={waLoading}>
+                          {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                          קבל קוד QR
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <Button size="sm" onClick={() => { handleWhatsAppAction("connect"); setWaPolling(true); }} disabled={waLoading}>
-                    {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-                    קבל קוד QR
-                  </Button>
+                  <>
+                    {waPairingCode ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                          <span className="text-sm text-green-700">ממתין לאישור בטלפון...</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">פתח וואטסאפ ← מכשירים מחוברים ← חבר מכשיר ← חבר עם מספר טלפון</p>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/10 border-2 border-primary rounded-xl px-6 py-3">
+                            <span className="text-2xl font-bold tracking-[0.3em] text-primary" dir="ltr">
+                              {waPairingCode.slice(0, 4)}-{waPairingCode.slice(4)}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">הזן קוד זה בוואטסאפ</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">הזן מספר טלפון לקבלת קוד צימוד</p>
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <Label className="text-xs mb-1">מספר טלפון</Label>
+                            <Input
+                              dir="ltr"
+                              placeholder="050-837-7756"
+                              value={waPhone}
+                              onChange={(e) => setWaPhone(e.target.value)}
+                              className="text-left"
+                            />
+                          </div>
+                          <Button size="sm" onClick={handlePairByPhone} disabled={waLoading || !waPhone.trim()}>
+                            {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                            קבל קוד
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
+
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" onClick={fetchWhatsApp} disabled={waLoading}>
                     <RefreshCw className="h-4 w-4 ml-1" />
                     רענן
                   </Button>
-                  {whatsapp.qrcode && (
+                  {(whatsapp.qrcode || waPairingCode) && (
                     <Button variant="ghost" size="sm" onClick={() => handleWhatsAppAction("disconnect")} disabled={waLoading} className="text-red-500">
                       נתק ונסה שוב
                     </Button>
