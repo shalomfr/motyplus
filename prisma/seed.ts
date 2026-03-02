@@ -30,9 +30,11 @@ async function main() {
     { name: "PSR-SX720", supportsUpdates: false, sortOrder: 6 },
     { name: "PSR-SX900", supportsUpdates: false, sortOrder: 7 },
     { name: "PSR-SX700", supportsUpdates: false, sortOrder: 8 },
-    { name: "PSR-S970 / S975", supportsUpdates: false, sortOrder: 9 },
-    { name: "PSR-A3000", supportsUpdates: false, sortOrder: 10 },
-    { name: "PSR-S770 / S775", supportsUpdates: false, sortOrder: 11 },
+    { name: "PSR-S970", supportsUpdates: false, sortOrder: 9 },
+    { name: "PSR-S975", supportsUpdates: false, sortOrder: 10 },
+    { name: "PSR-A3000", supportsUpdates: false, sortOrder: 11 },
+    { name: "PSR-S770", supportsUpdates: false, sortOrder: 12 },
+    { name: "PSR-S775", supportsUpdates: false, sortOrder: 13 },
   ];
 
   for (const organ of organs) {

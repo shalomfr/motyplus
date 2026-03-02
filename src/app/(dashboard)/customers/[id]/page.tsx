@@ -164,7 +164,9 @@ export default function EditCustomerPage() {
         updateExpiryDate: raw.updateExpiryDate,
         createdAt: raw.createdAt,
         updatedAt: raw.updatedAt,
-        balance: raw.balance ?? null,
+        balance: raw.setType?.includesUpdates
+          ? 0
+          : Math.max(0, Number(raw.setType?.price || 0) - Number(raw.amountPaid)),
         linkedCustomer: raw.linkedCustomer
           ? {
               id: raw.linkedCustomer.id,
@@ -326,6 +328,8 @@ export default function EditCustomerPage() {
             customerId={customer.id}
             customerEmail={customer.email}
             customerName={customer.fullName}
+            customerPhone={customer.phone}
+            customerWhatsapp={customer.whatsappPhone}
             status={customer.status}
             sampleType={customer.sampleType}
             amountPaid={customer.amountPaid}

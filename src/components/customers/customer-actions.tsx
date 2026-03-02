@@ -52,6 +52,9 @@ import {
   Download,
   Clock,
   ExternalLink,
+  MessageCircle,
+  PartyPopper,
+  Wrench,
 } from "lucide-react"
 
 interface CustomerUpdate {
@@ -79,6 +82,8 @@ interface CustomerActionsProps {
   customerId: number
   customerEmail: string
   customerName: string
+  customerPhone: string
+  customerWhatsapp: string | null
   status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   sampleType: "CPI" | "CPF"
   amountPaid: number
@@ -93,6 +98,8 @@ export function CustomerActions({
   customerId,
   customerEmail,
   customerName,
+  customerPhone,
+  customerWhatsapp,
   status,
   sampleType,
   amountPaid,
@@ -240,6 +247,32 @@ export function CustomerActions({
       `/api/customers/${customerId}/send-price-quote`,
       "POST"
     )
+  }
+
+  const handleSendWelcomeEmail = () => {
+    handleAction(
+      "welcomeEmail",
+      `/api/customers/${customerId}/send-welcome-email`,
+      "POST"
+    )
+  }
+
+  const handleSendUpdateRequest = () => {
+    handleAction(
+      "updateRequest",
+      `/api/customers/${customerId}/send-update-request`,
+      "POST"
+    )
+  }
+
+  const handleWhatsAppGreeting = () => {
+    const phone = (customerWhatsapp || customerPhone)
+      .replace(/\D/g, "")
+      .replace(/^0/, "972")
+    const text = encodeURIComponent(
+      `שלום ${customerName}, תודה רבה על הרכישה! 🎹 ברוכים הבאים למשפחת מוטי פלוס!`
+    )
+    window.open(`https://wa.me/${phone}?text=${text}`, "_blank")
   }
 
   return (
@@ -406,6 +439,43 @@ export function CustomerActions({
               <FileText className="h-4 w-4 ml-2" />
             )}
             שליחת טופס עדכון פרטים
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50"
+            onClick={handleSendWelcomeEmail}
+            disabled={loadingAction === "welcomeEmail"}
+          >
+            {loadingAction === "welcomeEmail" ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <PartyPopper className="h-4 w-4 ml-2" />
+            )}
+            מייל ברכה לאחר רכישה
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
+            onClick={handleSendUpdateRequest}
+            disabled={loadingAction === "updateRequest"}
+          >
+            {loadingAction === "updateRequest" ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <Wrench className="h-4 w-4 ml-2" />
+            )}
+            הכנת עדכון (שלח לאדמין)
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            onClick={handleWhatsAppGreeting}
+          >
+            <MessageCircle className="h-4 w-4 ml-2" />
+            וואטסאפ ברכה
           </Button>
         </CardContent>
       </Card>

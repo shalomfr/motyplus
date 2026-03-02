@@ -259,7 +259,7 @@ export function CustomerForm({
             {/* Phone */}
             <div className="space-y-2">
               <Label htmlFor="phone">
-                פלאפון <span className="text-destructive">*</span>
+                פלאפון ראשי <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="phone"
@@ -277,7 +277,7 @@ export function CustomerForm({
 
             {/* WhatsApp */}
             <div className="space-y-2">
-              <Label htmlFor="whatsappPhone">פלאפון וואטסאפ</Label>
+              <Label htmlFor="whatsappPhone">פלאפון משני</Label>
               <Input
                 id="whatsappPhone"
                 {...register("whatsappPhone")}
