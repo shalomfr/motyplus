@@ -193,27 +193,27 @@ export function CustomerActions({
 
   const handleToggleBlock = () => {
     const newStatus = status === "BLOCKED" ? "ACTIVE" : "BLOCKED"
-    handleAction("toggleBlock", `/api/customers/${customerId}`, "PATCH", {
+    handleAction("toggleBlock", `/api/customers/${customerId}`, "PUT", {
       status: newStatus,
     })
   }
 
   const handleToggleException = () => {
     const newStatus = status === "EXCEPTION" ? "ACTIVE" : "EXCEPTION"
-    handleAction("toggleException", `/api/customers/${customerId}`, "PATCH", {
+    handleAction("toggleException", `/api/customers/${customerId}`, "PUT", {
       status: newStatus,
     })
   }
 
   const handleFreeze = () => {
-    handleAction("freeze", `/api/customers/${customerId}`, "PATCH", {
+    handleAction("freeze", `/api/customers/${customerId}`, "PUT", {
       status: "FROZEN",
     })
   }
 
   const handleToggleSampleType = () => {
     const newType = sampleType === "CPI" ? "CPF" : "CPI"
-    handleAction("sampleType", `/api/customers/${customerId}`, "PATCH", {
+    handleAction("sampleType", `/api/customers/${customerId}`, "PUT", {
       sampleType: newType,
     })
   }

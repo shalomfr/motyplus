@@ -140,8 +140,54 @@ export default function EditCustomerPage() {
         }
         throw new Error("שגיאה בטעינת נתוני הלקוח")
       }
-      const data = await res.json()
-      setCustomer(data)
+      const raw = await res.json()
+      const mapped: CustomerData = {
+        id: raw.id,
+        fullName: raw.fullName,
+        phone: raw.phone,
+        whatsappPhone: raw.whatsappPhone,
+        address: raw.address,
+        email: raw.email,
+        organId: raw.organId,
+        organName: raw.organ?.name || "",
+        additionalOrganId: raw.additionalOrganId,
+        additionalOrganName: null,
+        setTypeId: raw.setTypeId,
+        setTypeName: raw.setType?.name || "",
+        amountPaid: Number(raw.amountPaid),
+        status: raw.status,
+        sampleType: raw.sampleType,
+        currentUpdateVersion: raw.currentUpdateVersion,
+        hasV3: raw.hasV3,
+        notes: raw.notes,
+        purchaseDate: raw.purchaseDate,
+        updateExpiryDate: raw.updateExpiryDate,
+        createdAt: raw.createdAt,
+        updatedAt: raw.updatedAt,
+        balance: raw.balance ?? null,
+        linkedCustomer: raw.linkedCustomer
+          ? {
+              id: raw.linkedCustomer.id,
+              fullName: raw.linkedCustomer.fullName,
+              organName: raw.linkedCustomer.organ?.name || "",
+            }
+          : null,
+        updates: (raw.customerUpdates || []).map(
+          (cu: {
+            id: string
+            updateVersion?: { version: string }
+            sentAt?: string | null
+            downloadedAt?: string | null
+          }) => ({
+            id: cu.id,
+            version: cu.updateVersion?.version || "",
+            sentAt: cu.sentAt || null,
+            downloadedAt: cu.downloadedAt || null,
+          })
+        ),
+        activityLog: [],
+      }
+      setCustomer(mapped)
       setError(null)
     } catch (err) {
       setError(
@@ -160,7 +206,7 @@ export default function EditCustomerPage() {
     setIsSubmitting(true)
     try {
       const res = await fetch(`/api/customers/${customerId}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
