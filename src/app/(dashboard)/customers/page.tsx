@@ -49,7 +49,17 @@ export default function CustomersListPage() {
       if (!res.ok) throw new Error("שגיאה בטעינת הנתונים")
 
       const data = await res.json()
-      setCustomers(data.customers || [])
+      setCustomers(
+        (data.customers || []).map((c: {
+          id: number; fullName: string; phone: string; email: string;
+          organ?: { name: string }; setType?: { name: string };
+          status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"; updatedAt: string;
+        }) => ({
+          ...c,
+          organName: c.organ?.name || "",
+          setTypeName: c.setType?.name || "",
+        }))
+      )
       setTotalCount(data.pagination?.total || 0)
     } catch (error) {
       toast({
