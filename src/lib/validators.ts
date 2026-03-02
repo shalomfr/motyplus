@@ -2,20 +2,22 @@ import { z } from "zod";
 
 // ===== לקוחות =====
 
+const emptyToNull = z.string().optional().nullable().transform(v => v === '' ? null : v ?? null);
+
 export const customerSchema = z.object({
   fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
   phone: z.string().min(9, "מספר טלפון לא תקין"),
-  whatsappPhone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
+  whatsappPhone: emptyToNull,
+  address: emptyToNull,
   email: z.string().email("כתובת מייל לא תקינה"),
   organId: z.string().min(1, "יש לבחור אורגן"),
-  additionalOrganId: z.string().optional().nullable(),
+  additionalOrganId: emptyToNull,
   setTypeId: z.string().min(1, "יש לבחור סוג סט"),
-  customerId: z.string().optional().nullable(),
+  customerId: emptyToNull,
   amountPaid: z.number().min(0, "סכום לא תקין"),
   purchaseDate: z.string().optional(),
-  notes: z.string().optional().nullable(),
-  infoFileUrl: z.string().optional().nullable(),
+  notes: emptyToNull,
+  infoFileUrl: emptyToNull,
 });
 
 export const customerUpdateSchema = customerSchema.partial().extend({
