@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
 import {
   Table,
@@ -10,10 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Pencil, Eye, ChevronRight, ChevronLeft } from "lucide-react"
+import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/utils"
 
@@ -35,6 +43,8 @@ interface CustomerTableProps {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  onToggleSuspend?: (id: number, currentStatus: string) => Promise<void>
+  onDelete?: (id: number, fullName: string) => Promise<void>
 }
 
 const statusConfig: Record<
@@ -86,8 +96,28 @@ export function CustomerTable({
   page,
   pageSize,
   onPageChange,
+  onToggleSuspend,
+  onDelete,
 }: CustomerTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize)
+  const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; fullName: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleSuspend = async (id: number, status: string) => {
+    if (!onToggleSuspend) return
+    setLoadingId(id)
+    await onToggleSuspend(id, status)
+    setLoadingId(null)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget || !onDelete) return
+    setIsDeleting(true)
+    await onDelete(deleteTarget.id, deleteTarget.fullName)
+    setIsDeleting(false)
+    setDeleteTarget(null)
+  }
 
   if (isLoading) {
     return (
@@ -174,6 +204,35 @@ export function CustomerTable({
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </Link>
+                      {onToggleSuspend && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={customer.status === "FROZEN" ? "חידוש" : "השהייה"}
+                          disabled={loadingId === customer.id}
+                          onClick={() => handleSuspend(customer.id, customer.status)}
+                          className={customer.status === "FROZEN" ? "text-blue-600 hover:text-blue-700" : "text-amber-600 hover:text-amber-700"}
+                        >
+                          {loadingId === customer.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : customer.status === "FROZEN" ? (
+                            <PlayCircle className="h-4 w-4" />
+                          ) : (
+                            <PauseCircle className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="מחיקה"
+                          onClick={() => setDeleteTarget({ id: customer.id, fullName: customer.fullName })}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -182,6 +241,32 @@ export function CustomerTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>אישור מחיקה</DialogTitle>
+            <DialogDescription>
+              האם למחוק את הלקוח <strong>{deleteTarget?.fullName}</strong>?
+              פעולה זו אינה ניתנת לביטול.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 justify-start">
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+              מחק
+            </Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              ביטול
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination */}
       <div className="flex items-center justify-between">

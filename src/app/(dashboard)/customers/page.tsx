@@ -132,6 +132,40 @@ export default function CustomersListPage() {
     }
   }
 
+  const handleToggleSuspend = async (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === "FROZEN" ? "ACTIVE" : "FROZEN"
+    try {
+      const res = await fetch(`/api/customers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) throw new Error()
+      toast({
+        title: newStatus === "FROZEN" ? "הלקוח הושהה" : "הלקוח חודש",
+        variant: "success" as "default",
+      })
+      fetchCustomers()
+    } catch {
+      toast({ title: "שגיאה בשינוי סטטוס", variant: "destructive" })
+    }
+  }
+
+  const handleDelete = async (id: number, fullName: string) => {
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      toast({
+        title: "הלקוח נמחק",
+        description: fullName,
+        variant: "success" as "default",
+      })
+      fetchCustomers()
+    } catch {
+      toast({ title: "שגיאה במחיקת הלקוח", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -177,6 +211,8 @@ export default function CustomersListPage() {
       <CustomerTable
         customers={customers}
         isLoading={isLoading}
+        onToggleSuspend={handleToggleSuspend}
+        onDelete={handleDelete}
         totalCount={totalCount}
         page={page}
         pageSize={PAGE_SIZE}
