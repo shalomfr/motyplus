@@ -1,21 +1,4 @@
-import nodemailer from "nodemailer";
-
-let _transporter: nodemailer.Transporter | null = null;
-
-function getTransporter() {
-  if (!_transporter) {
-    _transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "mail-eu.smtp2go.com",
-      port: parseInt(process.env.SMTP_PORT || "2525"),
-      secure: false, // TLS via STARTTLS
-      auth: {
-        user: process.env.SMTP_USER || "",
-        pass: process.env.SMTP_PASS || "",
-      },
-    });
-  }
-  return _transporter;
-}
+const SMTP2GO_API_URL = "https://api.smtp2go.com/v3/email/send";
 
 interface SendEmailParams {
   to: string;
@@ -25,20 +8,33 @@ interface SendEmailParams {
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
-  if (!process.env.SMTP_PASS) {
-    console.log("Email not sent (no SMTP_PASS configured):", { to, subject });
-    return { success: false, error: "No SMTP credentials configured" };
+  const apiKey = process.env.SMTP2GO_API_KEY;
+
+  if (!apiKey) {
+    console.log("Email not sent (no SMTP2GO_API_KEY configured):", { to, subject });
+    return { success: false, error: "No SMTP2GO API key configured" };
   }
 
   try {
-    const info = await getTransporter().sendMail({
-      from: from || `MotyPlus <${process.env.SMTP_USER || "noreply@mottirozenfeld.com"}>`,
-      to,
-      subject,
-      html,
+    const res = await fetch(SMTP2GO_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        to: [to],
+        sender: from || `MotyPlus <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
+        subject,
+        html_body: html,
+      }),
     });
 
-    return { success: true, data: info };
+    const data = await res.json();
+
+    if (!res.ok || data.data?.error) {
+      throw new Error(data.data?.error || `HTTP ${res.status}`);
+    }
+
+    return { success: true, data };
   } catch (error) {
     console.error("Email send error:", error);
     return { success: false, error };
