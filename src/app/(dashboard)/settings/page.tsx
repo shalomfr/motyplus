@@ -39,6 +39,9 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  MessageSquare,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 
@@ -59,6 +62,13 @@ interface SystemInfo {
   version: string
 }
 
+interface WhatsAppStatus {
+  configured: boolean
+  status: "connected" | "disconnected" | "not_created" | "not_configured" | "error"
+  phone?: string
+  qrcode?: string | null
+}
+
 export default function SettingsPage() {
   const [users, setUsers] = useState<SystemUser[]>([])
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
@@ -71,6 +81,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [showAddUser, setShowAddUser] = useState(false)
   const [savingUser, setSavingUser] = useState(false)
+  const [whatsapp, setWhatsapp] = useState<WhatsAppStatus>({ configured: false, status: "not_configured" })
+  const [waLoading, setWaLoading] = useState(false)
+  const [waPolling, setWaPolling] = useState(false)
 
   // New user form
   const [newUserName, setNewUserName] = useState("")
@@ -78,12 +91,57 @@ export default function SettingsPage() {
   const [newUserPassword, setNewUserPassword] = useState("")
   const [newUserRole, setNewUserRole] = useState("ADMIN")
 
+  const fetchWhatsApp = async () => {
+    setWaLoading(true)
+    try {
+      const res = await fetch("/api/whatsapp")
+      if (res.ok) setWhatsapp(await res.json())
+    } catch (err) {
+      console.error("WhatsApp status error:", err)
+    } finally {
+      setWaLoading(false)
+    }
+  }
+
+  const handleWhatsAppAction = async (action: string) => {
+    setWaLoading(true)
+    try {
+      await fetch("/api/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      })
+      await fetchWhatsApp()
+      // If disconnected start polling for QR
+      if (action === "create") setWaPolling(true)
+    } catch (err) {
+      console.error("WhatsApp action error:", err)
+    } finally {
+      setWaLoading(false)
+    }
+  }
+
+  // Poll for QR/connection when waiting
+  useEffect(() => {
+    if (!waPolling) return
+    const interval = setInterval(async () => {
+      const res = await fetch("/api/whatsapp")
+      if (res.ok) {
+        const data: WhatsAppStatus = await res.json()
+        setWhatsapp(data)
+        if (data.status === "connected") setWaPolling(false)
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [waPolling])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [usersRes, infoRes] = await Promise.all([
           fetch("/api/users"),
           fetch("/api/settings/info"),
+          fetchWhatsApp(),
         ])
 
         if (usersRes.ok) {
@@ -272,6 +330,97 @@ export default function SettingsPage() {
                 <span>PostgreSQL</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Connection */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-green-600" />
+                חיבור וואטסאפ
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={fetchWhatsApp} disabled={waLoading}>
+                <RefreshCw className={`h-4 w-4 ${waLoading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!whatsapp.configured ? (
+              <div className="flex items-center gap-2 text-amber-700">
+                <XCircle className="h-5 w-5 text-amber-500" />
+                <span className="text-sm">Evolution API לא מוגדר (חסר EVOLUTION_URL)</span>
+              </div>
+            ) : whatsapp.status === "connected" ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                  <div>
+                    <p className="font-medium text-green-700">וואטסאפ מחובר</p>
+                    {whatsapp.phone && <p className="text-sm text-muted-foreground">{whatsapp.phone}</p>}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-500 border-red-200 hover:bg-red-50"
+                  onClick={() => handleWhatsAppAction("disconnect")}
+                  disabled={waLoading}
+                >
+                  <WifiOff className="h-4 w-4 ml-1" />
+                  נתק
+                </Button>
+              </div>
+            ) : whatsapp.status === "not_created" ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <XCircle className="h-5 w-5" />
+                  <span className="text-sm">לא נוצר אינסטנס</span>
+                </div>
+                <Button size="sm" onClick={() => handleWhatsAppAction("create")} disabled={waLoading}>
+                  {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                  צור חיבור חדש
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  {waPolling ? (
+                    <><Loader2 className="h-4 w-4 animate-spin text-green-600" /><span className="text-sm text-green-700">ממתין לחיבור...</span></>
+                  ) : (
+                    <><XCircle className="h-5 w-5 text-amber-500" /><span className="text-sm text-amber-700">לא מחובר</span></>
+                  )}
+                </div>
+                {whatsapp.qrcode ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">סרוק קוד QR בוואטסאפ:</p>
+                    <p className="text-xs text-muted-foreground">פתח וואטסאפ → מחובר מכשירים → הוסף מכשיר</p>
+                    <img
+                      src={whatsapp.qrcode.startsWith("data:") ? whatsapp.qrcode : `data:image/png;base64,${whatsapp.qrcode}`}
+                      alt="QR Code"
+                      className="w-52 h-52 border rounded-lg"
+                    />
+                  </div>
+                ) : (
+                  <Button size="sm" onClick={() => handleWhatsAppAction("create")} disabled={waLoading}>
+                    {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                    קבל קוד QR
+                  </Button>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" onClick={fetchWhatsApp} disabled={waLoading}>
+                    <RefreshCw className="h-4 w-4 ml-1" />
+                    רענן
+                  </Button>
+                  {whatsapp.qrcode && (
+                    <Button variant="ghost" size="sm" onClick={() => handleWhatsAppAction("delete")} disabled={waLoading} className="text-red-500">
+                      מחק ונסה שוב
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
