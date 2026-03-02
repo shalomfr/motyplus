@@ -521,10 +521,10 @@ export function CustomerForm({
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  <span>{isUploadingInfo ? "מעלה קובץ..." : "העלה קובץ אינפו (.bin / .sty)"}</span>
+                  <span>{isUploadingInfo ? "מעלה קובץ..." : "העלה קובץ אינפו (.n27)"}</span>
                   <input
                     type="file"
-                    accept=".bin,.sty"
+                    accept=".n27"
                     className="hidden"
                     onChange={handleInfoFileUpload}
                     disabled={isUploadingInfo}
