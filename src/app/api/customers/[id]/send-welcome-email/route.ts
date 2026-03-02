@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 
 // POST /api/customers/[id]/send-welcome-email - שליחת מייל ברכה לאחר רכישה
@@ -31,20 +31,34 @@ export async function POST(
       return NextResponse.json({ error: "הלקוח לא נמצא" }, { status: 404 });
     }
 
-    const html = `
-<div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #1a1a2e;">שלום ${customer.fullName},</h2>
+    // טעינת תבנית "ברכת קנייה" מה-DB (ניתנת לעריכה)
+    const template = await prisma.emailTemplate.findFirst({
+      where: { name: "ברכת קנייה" },
+    });
+
+    const variables = {
+      customerName: customer.fullName,
+      setType: customer.setType.name,
+      organName: customer.organ.name,
+      customerId: String(customer.id),
+    };
+
+    const html = template
+      ? replaceTemplateVariables(template.body, variables)
+      : `<div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2>שלום ${customer.fullName},</h2>
   <p>תודה רבה על רכישת <strong>${customer.setType.name}</strong> לאורגן <strong>${customer.organ.name}</strong>!</p>
   <p>מספר הלקוח שלך: <strong>${customer.id}</strong></p>
-  <br>
-  <p>לכל שאלה או עזרה, ניתן לפנות אלינו בוואטסאפ.</p>
-  <br>
   <p>בברכה,<br><strong>מוטי פלוס</strong></p>
 </div>`;
 
+    const subject = template
+      ? replaceTemplateVariables(template.subject, variables)
+      : `ברוכים הבאים ל-MotyPlus!`;
+
     const result = await sendEmail({
       to: customer.email,
-      subject: `ברוכים הבאים ל-MotyPlus! 🎹`,
+      subject,
       html,
     });
 
