@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { sendWhatsApp } from "@/lib/whatsapp";
 import { logActivity } from "@/lib/activity-logger";
 
 // POST /api/customers/[id]/send-update-request - שליחת בקשת הכנת עדכון לאדמין
@@ -58,6 +59,13 @@ export async function POST(
 
     if (!result.success) {
       return NextResponse.json({ error: "שגיאה בשליחת ההודעה" }, { status: 500 });
+    }
+
+    // וואטסאפ לאדמין (המספר של מוטי)
+    const adminPhone = process.env.ADMIN_WHATSAPP || process.env.ADMIN_EMAIL;
+    if (adminPhone && !adminPhone.includes("@")) {
+      const waMsg = `*בקשת הכנת עדכון*\nלקוח: ${customer.fullName} (#${customer.id})\nאורגן: ${customer.organ.name}\nסט: ${customer.setType.name}\nפלאפון: ${customer.phone}\nגרסה: ${customer.currentUpdateVersion || "לא עודכן"}\nסוג דגימה: ${customer.sampleType}`;
+      sendWhatsApp({ phone: adminPhone, message: waMsg }).catch(console.error);
     }
 
     await logActivity({

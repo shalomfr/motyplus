@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
+import { sendWhatsApp } from "@/lib/whatsapp";
 import { generateCPIsForCustomers } from "@/lib/cpi-converter";
 
 // POST /api/updates/[id]/send - סימון לקוחות כמקבלי עדכון ושליחת מייל
@@ -50,6 +51,8 @@ export async function POST(
         id: true,
         fullName: true,
         email: true,
+        phone: true,
+        whatsappPhone: true,
         customerId: true,
         infoFileUrl: true,
         organId: true,
@@ -176,6 +179,21 @@ export async function POST(
         })
       );
     }
+
+    // שליחת וואטסאפ לכל לקוח
+    await Promise.allSettled(
+      newCustomers.map((customer) => {
+        const phone = customer.whatsappPhone || customer.phone;
+        if (!phone) return Promise.resolve();
+        const downloadLink = fileMap.get(`${customer.setTypeId}_${customer.organId}`)?.fileUrl
+          || updateVersion.rhythmsFileUrl || "";
+        const sampleLink = cpiUrlMap.get(customer.id) || updateVersion.samplesFileUrl || "";
+        let waMsg = `שלום ${customer.fullName}!\nעדכון *${updateVersion.version}* מוכן עבורך 🎹`;
+        if (downloadLink) waMsg += `\n\nהורדת מקצבים:\n${downloadLink}`;
+        if (sampleLink) waMsg += `\n\nהורדת דגימות:\n${sampleLink}`;
+        return sendWhatsApp({ phone, message: waMsg });
+      })
+    );
 
     // רישום פעילות לכל לקוח
     const activityPromises = newCustomerIds.map((customerId) =>

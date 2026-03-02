@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
+import { sendWhatsApp } from "@/lib/whatsapp";
 import { logActivity } from "@/lib/activity-logger";
 
 // POST /api/customers/[id]/send-welcome-email - שליחת מייל ברכה לאחר רכישה
@@ -66,13 +67,20 @@ export async function POST(
       return NextResponse.json({ error: "שגיאה בשליחת המייל" }, { status: 500 });
     }
 
+    // שליחת וואטסאפ במקביל (לא חוסם אם נכשל)
+    const whatsappMessage = `שלום ${customer.fullName}!\nתודה על רכישת *${customer.setType.name}* לאורגן *${customer.organ.name}*.\nמספר לקוח: ${customer.id}\nלכל שאלה - כאן בשבילך 🎹`;
+    const phone = customer.whatsappPhone || customer.phone;
+    if (phone) {
+      sendWhatsApp({ phone, message: whatsappMessage }).catch(console.error);
+    }
+
     await logActivity({
       userId: session.user.id,
       customerId: customer.id,
       action: "EMAIL_WELCOME",
       entityType: "CUSTOMER",
       entityId: String(customer.id),
-      details: { to: customer.email },
+      details: { to: customer.email, whatsapp: phone },
     });
 
     return NextResponse.json({ message: "מייל הברכה נשלח בהצלחה" });
