@@ -147,19 +147,32 @@ export default function SettingsPage() {
     }
   }
 
-  // Poll for QR/connection when waiting
+  // Poll for QR/connection when waiting — slower poll to avoid QR flicker
   useEffect(() => {
     if (!waPolling) return
+    const pollInterval = whatsapp.qrcode ? 10000 : 5000 // 10s when QR shown, 5s otherwise
     const interval = setInterval(async () => {
-      const res = await fetch("/api/whatsapp")
-      if (res.ok) {
-        const data: WhatsAppStatus = await res.json()
-        setWhatsapp(data)
-        if (data.status === "connected") setWaPolling(false)
+      try {
+        const res = await fetch("/api/whatsapp")
+        if (res.ok) {
+          const data: WhatsAppStatus = await res.json()
+          // Only update QR if it actually changed (avoid flicker)
+          if (data.qrcode && whatsapp.qrcode && data.qrcode === whatsapp.qrcode) {
+            // QR same — just update status
+            setWhatsapp(prev => ({ ...prev, status: data.status, phone: data.phone }))
+          } else {
+            setWhatsapp(data)
+          }
+          if (data.status === "connected") setWaPolling(false)
+          // If QR expired (status back to disconnected with no QR), stop polling
+          if (data.status === "disconnected" && !data.qrcode && whatsapp.qrcode) setWaPolling(false)
+        }
+      } catch (err) {
+        console.error("Poll error:", err)
       }
-    }, 4000)
+    }, pollInterval)
     return () => clearInterval(interval)
-  }, [waPolling])
+  }, [waPolling, whatsapp.qrcode, whatsapp.status])
 
   useEffect(() => {
     const fetchData = async () => {
