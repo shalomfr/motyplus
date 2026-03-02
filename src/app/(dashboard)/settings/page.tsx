@@ -112,8 +112,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ action }),
       })
       await fetchWhatsApp()
-      // If disconnected start polling for QR
-      if (action === "create") setWaPolling(true)
+      // Start polling for QR/connection update
+      if (action === "connect" || action === "create") setWaPolling(true)
     } catch (err) {
       console.error("WhatsApp action error:", err)
     } finally {
@@ -372,15 +372,15 @@ export default function SettingsPage() {
                   נתק
                 </Button>
               </div>
-            ) : whatsapp.status === "not_created" ? (
+            ) : whatsapp.status === "not_created" || whatsapp.status === "disconnected" && !whatsapp.qrcode ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <XCircle className="h-5 w-5" />
-                  <span className="text-sm">לא נוצר אינסטנס</span>
+                  <span className="text-sm">לא מחובר</span>
                 </div>
-                <Button size="sm" onClick={() => handleWhatsAppAction("create")} disabled={waLoading}>
+                <Button size="sm" onClick={() => { handleWhatsAppAction("connect"); setWaPolling(true); }} disabled={waLoading}>
                   {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-                  צור חיבור חדש
+                  חבר WhatsApp
                 </Button>
               </div>
             ) : (
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                     />
                   </div>
                 ) : (
-                  <Button size="sm" onClick={() => handleWhatsAppAction("create")} disabled={waLoading}>
+                  <Button size="sm" onClick={() => { handleWhatsAppAction("connect"); setWaPolling(true); }} disabled={waLoading}>
                     {waLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                     קבל קוד QR
                   </Button>
@@ -414,8 +414,8 @@ export default function SettingsPage() {
                     רענן
                   </Button>
                   {whatsapp.qrcode && (
-                    <Button variant="ghost" size="sm" onClick={() => handleWhatsAppAction("delete")} disabled={waLoading} className="text-red-500">
-                      מחק ונסה שוב
+                    <Button variant="ghost" size="sm" onClick={() => handleWhatsAppAction("disconnect")} disabled={waLoading} className="text-red-500">
+                      נתק ונסה שוב
                     </Button>
                   )}
                 </div>
