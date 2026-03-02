@@ -265,14 +265,33 @@ export function CustomerActions({
     )
   }
 
-  const handleWhatsAppGreeting = () => {
-    const phone = (customerWhatsapp || customerPhone)
-      .replace(/\D/g, "")
-      .replace(/^0/, "972")
-    const text = encodeURIComponent(
-      `שלום ${customerName}, תודה רבה על הרכישה! 🎹 ברוכים הבאים למשפחת מוטי פלוס!`
-    )
-    window.open(`https://wa.me/${phone}?text=${text}`, "_blank")
+  const handleWhatsAppGreeting = async () => {
+    const phone = customerWhatsapp || customerPhone
+    if (!phone) {
+      toast({ title: "שגיאה", description: "אין מספר טלפון ללקוח", variant: "destructive" })
+      return
+    }
+    setLoadingAction("waGreeting")
+    try {
+      const res = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          message: `שלום ${customerName}, תודה רבה על הרכישה! 🎹 ברוכים הבאים למשפחת מוטי פלוס!`,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast({ title: "נשלח!", description: "הודעת ברכה נשלחה בהצלחה בוואטסאפ" })
+      } else {
+        toast({ title: "שגיאה", description: data.error || "שליחה נכשלה", variant: "destructive" })
+      }
+    } catch (err) {
+      toast({ title: "שגיאה", description: "לא ניתן לשלוח הודעה. ודא שוואטסאפ מחובר בהגדרות", variant: "destructive" })
+    } finally {
+      setLoadingAction(null)
+    }
   }
 
   return (
@@ -473,8 +492,13 @@ export function CustomerActions({
             variant="outline"
             className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
             onClick={handleWhatsAppGreeting}
+            disabled={loadingAction === "waGreeting"}
           >
-            <MessageCircle className="h-4 w-4 ml-2" />
+            {loadingAction === "waGreeting" ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <MessageCircle className="h-4 w-4 ml-2" />
+            )}
             וואטסאפ ברכה
           </Button>
         </CardContent>
