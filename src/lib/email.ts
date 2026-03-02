@@ -1,11 +1,20 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-let _resend: Resend | null = null;
-function getResend() {
-  if (!_resend) {
-    _resend = new Resend(process.env.RESEND_API_KEY || "");
+let _transporter: nodemailer.Transporter | null = null;
+
+function getTransporter() {
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "mail-eu.smtp2go.com",
+      port: parseInt(process.env.SMTP_PORT || "2525"),
+      secure: false, // TLS via STARTTLS
+      auth: {
+        user: process.env.SMTP_USER || "",
+        pass: process.env.SMTP_PASS || "",
+      },
+    });
   }
-  return _resend;
+  return _transporter;
 }
 
 interface SendEmailParams {
@@ -16,20 +25,20 @@ interface SendEmailParams {
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log("Email not sent (no API key):", { to, subject });
-    return { success: false, error: "No API key configured" };
+  if (!process.env.SMTP_PASS) {
+    console.log("Email not sent (no SMTP_PASS configured):", { to, subject });
+    return { success: false, error: "No SMTP credentials configured" };
   }
 
   try {
-    const data = await getResend().emails.send({
-      from: from || "MotyPlus <noreply@motyplus.com>",
+    const info = await getTransporter().sendMail({
+      from: from || `MotyPlus <${process.env.SMTP_USER || "noreply@mottirozenfeld.com"}>`,
       to,
       subject,
       html,
     });
 
-    return { success: true, data };
+    return { success: true, data: info };
   } catch (error) {
     console.error("Email send error:", error);
     return { success: false, error };
