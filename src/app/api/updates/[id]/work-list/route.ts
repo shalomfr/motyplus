@@ -38,6 +38,7 @@ export async function GET(
     const alreadyReceivedIds = alreadyReceived.map((cu) => cu.customerId);
 
     // לקוחות זכאים:
+    // - סט מלא בלבד (includesUpdates = true)
     // - סטטוס לא חסום/מוקפא
     // - בתוך תקופת עדכונים או בסטטוס EXCEPTION
     // - לא קיבלו את העדכון הזה כבר
@@ -47,6 +48,7 @@ export async function GET(
       where: {
         id: { notIn: alreadyReceivedIds.length > 0 ? alreadyReceivedIds : [-1] },
         status: { notIn: ["BLOCKED", "FROZEN"] },
+        setType: { includesUpdates: true },
         OR: [
           { updateExpiryDate: { gte: now } },
           { status: "EXCEPTION" },
@@ -62,14 +64,22 @@ export async function GET(
       ],
     });
 
-    // שליפת קבצי עדכון זמינים (מטריצה)
-    const updateFiles = await prisma.updateFile.findMany({
-      where: { updateVersionId: id },
-      select: { setTypeId: true, organId: true },
-    });
-    const fileAvailableSet = new Set(
-      updateFiles.map((uf) => `${uf.setTypeId}_${uf.organId}`)
-    );
+    // בדיקת קבצי CPI זמינים בתיקיית samples/{version}
+    let cpiCustomerIds = new Set<number>();
+    try {
+      const { listFiles } = await import("@/lib/file-storage");
+      const folder = `samples/${updateVersion.version}`;
+      const sampleFiles = await listFiles(folder);
+      for (const f of sampleFiles) {
+        const name = f.path.split("/").pop() || "";
+        const baseName = name.replace(/\.cpi$/i, "");
+        const isAdditional = baseName.includes("_");
+        const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName);
+        if (!isNaN(custId)) cpiCustomerIds.add(custId);
+      }
+    } catch {
+      // folder may not exist yet
+    }
 
     // קיבוץ לפי סוג אורגן
     const groupedByOrgan: Record<string, {
@@ -90,10 +100,10 @@ export async function GET(
       groupedByOrgan[key].customers.push(customer);
     }
 
-    // הוספת מידע על זמינות קובץ לכל לקוח
+    // הוספת מידע על זמינות קובץ CPI לכל לקוח
     const customersWithFileInfo = eligibleCustomers.map((c) => ({
       ...c,
-      hasUpdateFile: fileAvailableSet.has(`${c.setTypeId}_${c.organId}`),
+      hasCpiFile: cpiCustomerIds.has(c.id),
     }));
 
     return NextResponse.json({

@@ -167,6 +167,111 @@ export async function PUT(
   }
 }
 
+// PATCH /api/customers/[id] - שדרוג לקוח לסט מלא
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "לא מורשה. יש להתחבר למערכת" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+    const customerId = parseInt(id);
+
+    if (isNaN(customerId)) {
+      return NextResponse.json(
+        { error: "מזהה לקוח לא תקין" },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.customer.findUnique({
+      where: { id: customerId },
+      include: { setType: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "הלקוח לא נמצא" },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const { action, setTypeId } = body as { action: string; setTypeId?: string };
+
+    if (action === "upgrade") {
+      if (!setTypeId) {
+        return NextResponse.json(
+          { error: "יש לבחור סוג סט" },
+          { status: 400 }
+        );
+      }
+
+      // וידוא שסוג הסט החדש כולל עדכונים
+      const newSetType = await prisma.setType.findUnique({
+        where: { id: setTypeId },
+      });
+
+      if (!newSetType || !newSetType.includesUpdates) {
+        return NextResponse.json(
+          { error: "סוג הסט שנבחר לא כולל עדכונים" },
+          { status: 400 }
+        );
+      }
+
+      // שדרוג — updateExpiryDate = שנה מהיום
+      const updateExpiryDate = new Date();
+      updateExpiryDate.setFullYear(updateExpiryDate.getFullYear() + 1);
+
+      const customer = await prisma.customer.update({
+        where: { id: customerId },
+        data: {
+          setTypeId,
+          updateExpiryDate,
+        },
+        include: {
+          organ: true,
+          setType: true,
+        },
+      });
+
+      await logActivity({
+        userId: session.user.id,
+        customerId: customer.id,
+        action: "UPDATE",
+        entityType: "CUSTOMER",
+        entityId: String(customer.id),
+        details: {
+          action: "upgrade_to_full_set",
+          previousSetType: existing.setType?.name,
+          newSetType: newSetType.name,
+          updateExpiryDate: updateExpiryDate.toISOString(),
+        },
+      });
+
+      return NextResponse.json(customer);
+    }
+
+    return NextResponse.json(
+      { error: "פעולה לא מוכרת" },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error("Error patching customer:", error);
+    return NextResponse.json(
+      { error: "שגיאה בעדכון הלקוח" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/customers/[id] - מחיקת לקוח
 export async function DELETE(
   request: NextRequest,

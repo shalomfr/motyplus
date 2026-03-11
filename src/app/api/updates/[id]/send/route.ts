@@ -1,50 +1,49 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { logActivity } from "@/lib/activity-logger";
-import { sendEmail, replaceTemplateVariables } from "@/lib/email";
-import { sendWhatsApp } from "@/lib/whatsapp";
-import { generateCPIsForCustomers } from "@/lib/cpi-converter";
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { logActivity } from "@/lib/activity-logger"
+import { sendEmail, replaceTemplateVariables } from "@/lib/email"
+import { sendWhatsApp } from "@/lib/whatsapp"
+import { listFiles, shareFile } from "@/lib/file-storage"
 
-// POST /api/updates/[id]/send - סימון לקוחות כמקבלי עדכון ושליחת מייל
+// POST /api/updates/[id]/send — שיתוף קבצי CPI ושליחת מייל + WhatsApp ללקוחות זכאים
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
+    const session = await auth()
     if (!session?.user) {
       return NextResponse.json(
         { error: "לא מורשה. יש להתחבר למערכת" },
         { status: 401 }
-      );
+      )
     }
 
-    const { id } = await params;
+    const { id } = await params
 
-    // בדיקה שהעדכון קיים
     const updateVersion = await prisma.updateVersion.findUnique({
       where: { id },
-    });
+    })
 
     if (!updateVersion) {
       return NextResponse.json(
         { error: "העדכון לא נמצא" },
         { status: 404 }
-      );
+      )
     }
 
-    const body = await request.json();
-    const { customerIds } = body as { customerIds: number[] };
+    const body = await request.json()
+    const { customerIds } = body as { customerIds: number[] }
 
     if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
       return NextResponse.json(
         { error: "יש לספק רשימת מזהי לקוחות" },
         { status: 400 }
-      );
+      )
     }
 
-    // בדיקה שכל הלקוחות קיימים — כולל organId ו-setTypeId להתאמת קבצים
+    // שליפת לקוחות עם setType לבדיקת זכאות
     const customers = await prisma.customer.findMany({
       where: { id: { in: customerIds } },
       select: {
@@ -54,18 +53,17 @@ export async function POST(
         phone: true,
         whatsappPhone: true,
         customerId: true,
-        infoFileUrl: true,
-        organId: true,
-        setTypeId: true,
-        organ: { select: { organInfoFileUrl: true } }
+        status: true,
+        updateExpiryDate: true,
+        setType: { select: { includesUpdates: true } },
       },
-    });
+    })
 
     if (customers.length !== customerIds.length) {
       return NextResponse.json(
         { error: "חלק מהלקוחות לא נמצאו" },
         { status: 400 }
-      );
+      )
     }
 
     // בדיקה אילו לקוחות כבר קיבלו את העדכון
@@ -75,154 +73,176 @@ export async function POST(
         customerId: { in: customerIds },
       },
       select: { customerId: true },
-    });
-    const alreadyReceivedIds = new Set(alreadyReceived.map((cu) => cu.customerId));
+    })
+    const alreadyReceivedIds = new Set(alreadyReceived.map((cu) => cu.customerId))
 
-    // סינון לקוחות שלא קיבלו עדיין
-    const newCustomerIds = customerIds.filter((cid) => !alreadyReceivedIds.has(cid));
+    // סינון לקוחות זכאים
+    const now = new Date()
+    const eligible = customers.filter((c) => {
+      if (alreadyReceivedIds.has(c.id)) return false
+      if (!c.setType?.includesUpdates) return false // חצי סט — לא זכאי
+      if (c.status === "EXCEPTION") return true
+      if (c.updateExpiryDate && c.updateExpiryDate >= now) return true
+      return false
+    })
 
-    if (newCustomerIds.length === 0) {
+    if (eligible.length === 0) {
       return NextResponse.json(
-        { error: "כל הלקוחות המבוקשים כבר קיבלו את העדכון הזה" },
+        { error: "אין לקוחות זכאים לשליחה" },
         { status: 400 }
-      );
+      )
     }
 
-    // שליפת קבצי עדכון (מטריצה) להתאמת לקוח-לקובץ
-    const updateFiles = await prisma.updateFile.findMany({
-      where: { updateVersionId: id },
-    });
-    const fileMap = new Map<string, typeof updateFiles[0]>();
-    for (const uf of updateFiles) {
-      fileMap.set(`${uf.setTypeId}_${uf.organId}`, uf);
-    }
+    // טעינת קבצי CPI מתיקיית samples/{version}
+    const folder = `samples/${updateVersion.version}`
+    const sampleFiles = await listFiles(folder)
 
-    // יצירת רשומות CustomerUpdate עם התאמת קובץ
-    const now = new Date();
-    const newCustomers = customers.filter((c) => newCustomerIds.includes(c.id));
-    const customerUpdates = await prisma.customerUpdate.createMany({
-      data: newCustomers.map((customer) => {
-        const matchedFile = fileMap.get(`${customer.setTypeId}_${customer.organId}`);
-        return {
-          customerId: customer.id,
-          updateVersionId: id,
-          updateFileId: matchedFile?.id || null,
-          sentAt: now,
-          sentById: session.user.id,
-        };
-      }),
-    });
+    // בניית מפה: customerId → { main?: path, additional?: path }
+    const cpiMap = new Map<number, { main?: string; additional?: string }>()
+    for (const f of sampleFiles) {
+      const name = f.path.split("/").pop() || ""
+      const baseName = name.replace(/\.cpi$/i, "")
+      const isAdditional = baseName.includes("_")
+      const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName)
+      if (isNaN(custId)) continue
 
-    // עדכון גרסה נוכחית בלקוחות
-    await prisma.customer.updateMany({
-      where: { id: { in: newCustomerIds } },
-      data: { currentUpdateVersion: updateVersion.version },
-    });
-
-    // יצירת CPI מותאם אישית מקובץ PPF (אם קיים)
-    const cpiUrlMap = new Map<number, string>();
-    if (updateVersion.ppfFileUrl) {
-      const customersForCPI = newCustomers
-        .filter((c) => c.infoFileUrl)
-        .map((c) => ({
-          id: c.id,
-          customerId: c.customerId,
-          infoFileUrl: c.infoFileUrl,
-        }));
-
-      if (customersForCPI.length > 0) {
-        const cpiResult = await generateCPIsForCustomers(
-          updateVersion.ppfFileUrl,
-          updateVersion.version,
-          customersForCPI,
-          id,
-        );
-
-        for (const result of cpiResult.successful) {
-          cpiUrlMap.set(result.customerId, result.cpiUrl);
-        }
-
-        for (const failure of cpiResult.failed) {
-          console.error(`CPI generation failed for customer ${failure.customerId}: ${failure.error}`);
-        }
+      if (!cpiMap.has(custId)) cpiMap.set(custId, {})
+      const entry = cpiMap.get(custId)!
+      if (isAdditional) {
+        entry.additional = f.path
+      } else {
+        entry.main = f.path
       }
     }
 
-    // שליחת מיילים אם יש תבנית מוגדרת
-    if (updateVersion.emailSubject && updateVersion.emailBody) {
-      await Promise.allSettled(
-        newCustomers.map((customer) => {
-          const matchedFile = fileMap.get(`${customer.setTypeId}_${customer.organId}`);
-          // קישור הורדה: קודם קובץ מותאם, אחרת fallback לקישור כללי
-          const downloadLink = matchedFile?.fileUrl || updateVersion.rhythmsFileUrl || "";
-
-          // קישור לקובץ דגימות: 1) CPI שנוצר מ-PPF, 2) ZIP מותאם ישן, 3) דגימות כלליות
-          const sampleFileLink = cpiUrlMap.get(customer.id)
-            || (updateVersion.personalizedSamplesZipUrl
-              ? `${updateVersion.personalizedSamplesZipUrl}/${String(customer.id)}.cpi`
-              : updateVersion.samplesFileUrl || "");
-
-          const html = replaceTemplateVariables(updateVersion.emailBody!, {
-            customerName: customer.fullName,
-            version: updateVersion.version,
-            downloadLink,
-            rhythmsLink: updateVersion.rhythmsFileUrl || "",
-            samplesLink: sampleFileLink,
-            infoLink: customer.infoFileUrl || "",
-            organInfoLink: customer.organ?.organInfoFileUrl || "",
-          });
-          return sendEmail({
-            to: customer.email,
-            subject: updateVersion.emailSubject!,
-            html,
-          });
-        })
-      );
+    // שליחת עדכון לכל לקוח זכאי
+    const results = {
+      sent: 0,
+      skippedNoFile: 0,
+      failed: 0,
     }
 
-    // שליחת וואטסאפ לכל לקוח
-    await Promise.allSettled(
-      newCustomers.map((customer) => {
-        const phone = customer.whatsappPhone || customer.phone;
-        if (!phone) return Promise.resolve();
-        const downloadLink = fileMap.get(`${customer.setTypeId}_${customer.organId}`)?.fileUrl
-          || updateVersion.rhythmsFileUrl || "";
-        const sampleLink = cpiUrlMap.get(customer.id) || updateVersion.samplesFileUrl || "";
-        let waMsg = `שלום ${customer.fullName}!\nעדכון *${updateVersion.version}* מוכן עבורך 🎹`;
-        if (downloadLink) waMsg += `\n\nהורדת מקצבים:\n${downloadLink}`;
-        if (sampleLink) waMsg += `\n\nהורדת דגימות:\n${sampleLink}`;
-        return sendWhatsApp({ phone, message: waMsg });
-      })
-    );
+    for (const customer of eligible) {
+      const cpiFiles = cpiMap.get(customer.id)
+      if (!cpiFiles?.main) {
+        results.skippedNoFile++
+        continue
+      }
 
-    // רישום פעילות לכל לקוח
-    const activityPromises = newCustomerIds.map((customerId) =>
-      logActivity({
-        userId: session.user.id,
-        customerId,
-        action: "SEND_UPDATE",
-        entityType: "CUSTOMER_UPDATE",
-        entityId: id,
-        details: {
-          version: updateVersion.version,
-          customerId,
-        },
+      try {
+        // שיתוף קבצי CPI עם הלקוח
+        let downloadLink = ""
+        let downloadLink2 = ""
+
+        try {
+          downloadLink = await shareFile(cpiFiles.main, customer.email, "reader")
+        } catch (err) {
+          console.error(`Failed to share main CPI for customer ${customer.id}:`, err)
+          results.failed++
+          continue
+        }
+
+        if (cpiFiles.additional) {
+          try {
+            downloadLink2 = await shareFile(cpiFiles.additional, customer.email, "reader")
+          } catch (err) {
+            console.error(`Failed to share additional CPI for customer ${customer.id}:`, err)
+          }
+        }
+
+        // יצירת רשומת CustomerUpdate
+        await prisma.customerUpdate.create({
+          data: {
+            customerId: customer.id,
+            updateVersionId: id,
+            sentAt: now,
+            sentById: session.user.id,
+          },
+        })
+
+        // עדכון גרסה נוכחית
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: { currentUpdateVersion: updateVersion.version },
+        })
+
+        // שליחת מייל
+        if (updateVersion.emailSubject && updateVersion.emailBody) {
+          try {
+            const html = replaceTemplateVariables(updateVersion.emailBody, {
+              customerName: customer.fullName,
+              version: updateVersion.version,
+              downloadLink,
+              downloadLink2,
+              rhythmsLink: updateVersion.rhythmsFileUrl || "",
+            })
+            await sendEmail({
+              to: customer.email,
+              subject: replaceTemplateVariables(updateVersion.emailSubject, {
+                customerName: customer.fullName,
+                version: updateVersion.version,
+              }),
+              html,
+            })
+          } catch (err) {
+            console.error(`Failed to send email to customer ${customer.id}:`, err)
+          }
+        }
+
+        // שליחת WhatsApp
+        const phone = customer.whatsappPhone || customer.phone
+        if (phone) {
+          try {
+            let waMsg = `שלום ${customer.fullName}!\nעדכון *${updateVersion.version}* מוכן עבורך`
+            if (downloadLink) waMsg += `\n\nלינק להורדה:\n${downloadLink}`
+            if (downloadLink2) waMsg += `\n\nלינק נוסף (אורגן נוסף):\n${downloadLink2}`
+            await sendWhatsApp({ phone, message: waMsg })
+          } catch (err) {
+            console.error(`Failed to send WhatsApp to customer ${customer.id}:`, err)
+          }
+        }
+
+        // רישום פעילות
+        await logActivity({
+          userId: session.user.id,
+          customerId: customer.id,
+          action: "SEND_UPDATE",
+          entityType: "CUSTOMER_UPDATE",
+          entityId: id,
+          details: {
+            version: updateVersion.version,
+            customerId: customer.id,
+            downloadLink,
+          },
+        })
+
+        results.sent++
+      } catch (err) {
+        console.error(`Failed to process customer ${customer.id}:`, err)
+        results.failed++
+      }
+    }
+
+    // עדכון סטטוס העדכון
+    if (results.sent > 0 && updateVersion.status === "DRAFT") {
+      await prisma.updateVersion.update({
+        where: { id },
+        data: { status: "SENDING" },
       })
-    );
-    await Promise.all(activityPromises);
+    }
 
     return NextResponse.json({
-      message: `העדכון נשלח בהצלחה ל-${newCustomerIds.length} לקוחות`,
-      sentCount: newCustomerIds.length,
-      alreadyReceivedCount: alreadyReceivedIds.size,
-      totalCreated: customerUpdates.count,
-      cpiGenerated: cpiUrlMap.size,
-    });
+      message: `העדכון נשלח בהצלחה ל-${results.sent} לקוחות`,
+      sent: results.sent,
+      skippedNoFile: results.skippedNoFile,
+      failed: results.failed,
+      alreadyReceived: alreadyReceivedIds.size,
+    })
   } catch (error) {
-    console.error("Error sending update:", error);
+    console.error("Error sending update:", error)
     return NextResponse.json(
       { error: "שגיאה בשליחת העדכון" },
       { status: 500 }
-    );
+    )
   }
 }

@@ -6,10 +6,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { CustomerForm } from "@/components/customers/customer-form"
 import { CustomerActions } from "@/components/customers/customer-actions"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ArrowUpCircle, Loader2 } from "lucide-react"
 
 interface CustomerUpdate {
   id: string
@@ -45,6 +46,7 @@ interface CustomerData {
   additionalOrganName: string | null
   setTypeId: string
   setTypeName: string
+  includesUpdates: boolean
   amountPaid: number
   status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   sampleType: "CPI" | "CPF"
@@ -156,6 +158,7 @@ export default function EditCustomerPage() {
         additionalOrganName: null,
         setTypeId: raw.setTypeId,
         setTypeName: raw.setType?.name || "",
+        includesUpdates: raw.setType?.includesUpdates ?? false,
         amountPaid: Number(raw.amountPaid),
         status: raw.status,
         sampleType: raw.sampleType,
@@ -244,6 +247,49 @@ export default function EditCustomerPage() {
     fetchCustomer()
   }
 
+  const [isUpgrading, setIsUpgrading] = useState(false)
+  const [fullSetTypes, setFullSetTypes] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    // טעינת סוגי סט מלאים (includesUpdates = true) לשדרוג
+    fetch("/api/data/sets")
+      .then((res) => res.json())
+      .then((sets: { id: string; name: string; includesUpdates: boolean }[]) => {
+        setFullSetTypes(sets.filter((s) => s.includesUpdates))
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleUpgrade = async (setTypeId: string) => {
+    if (!confirm("לשדרג לקוח לסט מלא? תקופת העדכון תתחיל מהיום ותהיה לשנה.")) return
+    setIsUpgrading(true)
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "upgrade", setTypeId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "שגיאה בשדרוג")
+      }
+      toast({
+        title: "הלקוח שודרג בהצלחה",
+        description: "תקופת העדכון — שנה מהיום",
+        variant: "success" as "default",
+      })
+      fetchCustomer()
+    } catch (err) {
+      toast({
+        title: "שגיאה",
+        description: err instanceof Error ? err.message : "שגיאה בשדרוג",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
   if (isLoading) {
     return <CustomerPageSkeleton />
   }
@@ -284,14 +330,58 @@ export default function EditCustomerPage() {
             <ArrowRight className="h-5 w-5" />
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             {customer.fullName}
           </h1>
           <p className="text-muted-foreground mt-1">
             מזהה: {customer.id} | {customer.organName} | {customer.setTypeName}
+            {!customer.includesUpdates && (
+              <Badge className="mr-2 bg-yellow-100 text-yellow-800 border-yellow-200">
+                חצי סט — ללא עדכונים
+              </Badge>
+            )}
           </p>
         </div>
+        {/* כפתור שדרוג לסט מלא — מוצג רק ללקוחות חצי סט */}
+        {!customer.includesUpdates && fullSetTypes.length > 0 && (
+          <div className="flex items-center gap-2">
+            {fullSetTypes.length === 1 ? (
+              <Button
+                onClick={() => handleUpgrade(fullSetTypes[0].id)}
+                disabled={isUpgrading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isUpgrading ? (
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                ) : (
+                  <ArrowUpCircle className="h-4 w-4 ml-2" />
+                )}
+                שדרג לסט מלא
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">שדרג ל:</span>
+                {fullSetTypes.map((st) => (
+                  <Button
+                    key={st.id}
+                    size="sm"
+                    onClick={() => handleUpgrade(st.id)}
+                    disabled={isUpgrading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isUpgrading ? (
+                      <Loader2 className="h-4 w-4 animate-spin ml-1" />
+                    ) : (
+                      <ArrowUpCircle className="h-4 w-4 ml-1" />
+                    )}
+                    {st.name}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Two-column layout */}

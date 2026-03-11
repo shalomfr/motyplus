@@ -15,8 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { UpdateForm } from "@/components/updates/update-form"
-import { UpdateFilesMatrix } from "@/components/updates/update-files-matrix"
-import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks, FileArchive } from "lucide-react"
+import { SamplesUploader } from "@/components/updates/samples-uploader"
+import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -27,9 +27,6 @@ interface UpdateVersion {
   releaseDate: string | null
   description: string | null
   rhythmsFileUrl: string | null
-  samplesFileUrl: string | null
-  personalizedSamplesZipUrl: string | null
-  ppfFileUrl: string | null
   emailSubject: string | null
   emailBody: string | null
   createdAt: string
@@ -171,10 +168,7 @@ export default function UpdateDetailsPage() {
       <Tabs defaultValue="details" dir="rtl">
         <TabsList>
           <TabsTrigger value="details">פרטים</TabsTrigger>
-          <TabsTrigger value="files">
-            <FileArchive className="h-4 w-4 ml-1" />
-            קבצים
-          </TabsTrigger>
+          <TabsTrigger value="samples">דגימות CPI</TabsTrigger>
           <TabsTrigger value="work">רשימת עבודה</TabsTrigger>
           <TabsTrigger value="sent">נשלחו ({sentCount})</TabsTrigger>
         </TabsList>
@@ -189,8 +183,6 @@ export default function UpdateDetailsPage() {
                 price: Number(update.price),
                 description: update.description || "",
                 rhythmsFileUrl: update.rhythmsFileUrl || "",
-                samplesFileUrl: update.samplesFileUrl || "",
-                ppfFileUrl: update.ppfFileUrl || "",
                 emailSubject: update.emailSubject || "",
                 emailBody: update.emailBody || "",
                 releaseDate: update.releaseDate
@@ -240,51 +232,6 @@ export default function UpdateDetailsPage() {
                     </a>
                   </div>
                 )}
-                {update.samplesFileUrl && (
-                  <div>
-                    <span className="text-sm text-muted-foreground">קובץ דגימות: </span>
-                    <a
-                      href={update.samplesFileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                      dir="ltr"
-                    >
-                      הורד קובץ
-                    </a>
-                  </div>
-                )}
-                {update.ppfFileUrl && (
-                  <div>
-                    <span className="text-sm text-muted-foreground">קובץ PPF (מקור ליצירת CPI): </span>
-                    <a
-                      href={update.ppfFileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-purple-600 hover:underline"
-                      dir="ltr"
-                    >
-                      הורד קובץ PPF
-                    </a>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      בשליחה ייוצר CPI נעול אוטומטית לכל לקוח
-                    </p>
-                  </div>
-                )}
-                {update.personalizedSamplesZipUrl && !update.ppfFileUrl && (
-                  <div>
-                    <span className="text-sm text-muted-foreground">קובץ דגימות מותאמות אישית: </span>
-                    <a
-                      href={update.personalizedSamplesZipUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                      dir="ltr"
-                    >
-                      הורד קובץ
-                    </a>
-                  </div>
-                )}
                 {update.emailSubject && (
                   <div>
                     <span className="text-sm text-muted-foreground">נושא מייל: </span>
@@ -296,8 +243,8 @@ export default function UpdateDetailsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="files">
-          <UpdateFilesMatrix updateId={id} />
+        <TabsContent value="samples">
+          <SamplesUploader updateId={id} />
         </TabsContent>
 
         <TabsContent value="work">

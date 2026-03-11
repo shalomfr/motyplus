@@ -15,8 +15,6 @@ interface UpdateFormData {
   price: number
   description: string
   rhythmsFileUrl: string
-  samplesFileUrl: string
-  ppfFileUrl: string
   emailSubject: string
   emailBody: string
   releaseDate: string
@@ -44,24 +42,14 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
     price: initialData?.price || 0,
     description: initialData?.description || "",
     rhythmsFileUrl: initialData?.rhythmsFileUrl || "",
-    samplesFileUrl: initialData?.samplesFileUrl || "",
-    ppfFileUrl: initialData?.ppfFileUrl || "",
     emailSubject: initialData?.emailSubject || "",
     emailBody: initialData?.emailBody || "",
     releaseDate: initialData?.releaseDate || "",
   })
 
   const [isUploadingRhythms, setIsUploadingRhythms] = useState(false)
-  const [isUploadingSamples, setIsUploadingSamples] = useState(false)
-  const [isUploadingPpf, setIsUploadingPpf] = useState(false)
   const [rhythmsFileName, setRhythmsFileName] = useState(
     initialData?.rhythmsFileUrl ? extractFilename(initialData.rhythmsFileUrl) : ""
-  )
-  const [samplesFileName, setSamplesFileName] = useState(
-    initialData?.samplesFileUrl ? extractFilename(initialData.samplesFileUrl) : ""
-  )
-  const [ppfFileName, setPpfFileName] = useState(
-    initialData?.ppfFileUrl ? extractFilename(initialData.ppfFileUrl) : ""
   )
 
   const handleChange = (field: keyof UpdateFormData, value: string | number) => {
@@ -70,7 +58,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "rhythmsFileUrl" | "samplesFileUrl" | "ppfFileUrl",
+    field: "rhythmsFileUrl",
     setUploading: (v: boolean) => void,
     setFileName: (v: string) => void
   ) => {
@@ -235,92 +223,6 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
             </div>
           </div>
 
-          {/* Samples ZIP */}
-          <div className="space-y-2">
-            <Label>קובץ דגימות (ZIP)</Label>
-            <div className="flex items-center gap-2">
-              {samplesFileName ? (
-                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
-                  <span className="truncate">{samplesFileName}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForm((prev) => ({ ...prev, samplesFileUrl: "" }))
-                      setSamplesFileName("")
-                    }}
-                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
-                  isUploadingSamples && "opacity-50 cursor-not-allowed"
-                )}>
-                  {isUploadingSamples ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  <span>{isUploadingSamples ? "מעלה קובץ..." : "העלה קובץ דגימות (.zip)"}</span>
-                  <input
-                    type="file"
-                    accept=".zip"
-                    className="hidden"
-                    disabled={isUploadingSamples}
-                    onChange={(e) => handleFileUpload(e, "samplesFileUrl", setIsUploadingSamples, setSamplesFileName)}
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
-          {/* PPF File */}
-          <div className="space-y-2">
-            <Label>קובץ PPF (ייצור CPI אוטומטי לכל לקוח)</Label>
-            <div className="flex items-center gap-2">
-              {ppfFileName ? (
-                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-purple-500 shrink-0" />
-                  <span className="truncate">{ppfFileName}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForm((prev) => ({ ...prev, ppfFileUrl: "" }))
-                      setPpfFileName("")
-                    }}
-                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-purple-300 rounded-lg text-sm text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors flex-1",
-                  isUploadingPpf && "opacity-50 cursor-not-allowed"
-                )}>
-                  {isUploadingPpf ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  <span>{isUploadingPpf ? "מעלה קובץ..." : "העלה קובץ PPF (.ppf)"}</span>
-                  <input
-                    type="file"
-                    accept=".ppf"
-                    className="hidden"
-                    disabled={isUploadingPpf}
-                    onChange={(e) => handleFileUpload(e, "ppfFileUrl", setIsUploadingPpf, setPpfFileName)}
-                  />
-                </label>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              בשליחת העדכון, ייווצר CPI נעול אוטומטית לכל לקוח לפי קובץ האינפו שלו
-            </p>
-          </div>
         </CardContent>
       </Card>
 
@@ -349,7 +251,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
               dir="rtl"
             />
             <p className="text-xs text-muted-foreground">
-              משתנים זמינים: {"{{customerName}}"}, {"{{version}}"}, {"{{downloadLink}}"}, {"{{rhythmsLink}}"}, {"{{samplesLink}}"}, {"{{infoLink}}"}, {"{{organInfoLink}}"}
+              משתנים זמינים: {"{{customerName}}"}, {"{{version}}"}, {"{{downloadLink}}"}, {"{{downloadLink2}}"}, {"{{rhythmsLink}}"}
             </p>
           </div>
         </CardContent>

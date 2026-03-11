@@ -115,17 +115,18 @@ async function main() {
     },
     {
       name: "שליחת עדכון",
-      subject: "עדכון {{updateVersion}} מוכן עבורך!",
+      subject: "עדכון {{version}} מוכן להורדה",
       body: `<div dir="rtl" style="font-family: Arial, sans-serif;">
 <h2>שלום {{customerName}},</h2>
-<p>עדכון {{updateVersion}} מוכן עבורך!</p>
-<p>העדכון כולל מקצבים ודגימות חדשות לאורגן {{organName}} שלך.</p>
-<p>לחץ על הקישור להורדה:</p>
-<p><a href="{{downloadLink}}">הורדת העדכון</a></p>
-<p>בברכה,<br>צוות MotyPlus</p>
+<p>עדכון גרסה {{version}} מוכן עבורך להורדה.</p>
+<p>לחץ כאן להורדת הדגימות:</p>
+<p><a href="{{downloadLink}}" style="display:inline-block;padding:10px 24px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">הורד דגימות</a></p>
+{{downloadLink2}}<p><a href="{{downloadLink2}}">קישור נוסף (אורגן נוסף)</a></p>{{downloadLink2}}
+{{rhythmsLink}}<p><a href="{{rhythmsLink}}">הורד מקצבים</a></p>{{rhythmsLink}}
+<p>בברכה,<br>מוטי רוזנפלד</p>
 </div>`,
       category: "עדכון",
-      variables: ["customerName", "updateVersion", "organName", "downloadLink"],
+      variables: ["customerName", "version", "downloadLink", "downloadLink2", "rhythmsLink"],
     },
     {
       name: "תזכורת עדכון",
