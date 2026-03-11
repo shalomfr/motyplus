@@ -55,7 +55,8 @@ export async function POST(
         customerId: true,
         status: true,
         updateExpiryDate: true,
-        setType: { select: { includesUpdates: true } },
+        organ: { select: { name: true } },
+        setType: { select: { includesUpdates: true, name: true } },
       },
     })
 
@@ -169,19 +170,20 @@ export async function POST(
         // שליחת מייל
         if (updateVersion.emailSubject && updateVersion.emailBody) {
           try {
-            const html = replaceTemplateVariables(updateVersion.emailBody, {
+            const templateVars = {
               customerName: customer.fullName,
               version: updateVersion.version,
+              updateVersion: updateVersion.version,
+              organName: customer.organ?.name || "",
+              setType: customer.setType?.name || "",
               downloadLink,
               downloadLink2,
               rhythmsLink: updateVersion.rhythmsFileUrl || "",
-            })
+            }
+            const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
             await sendEmail({
               to: customer.email,
-              subject: replaceTemplateVariables(updateVersion.emailSubject, {
-                customerName: customer.fullName,
-                version: updateVersion.version,
-              }),
+              subject: replaceTemplateVariables(updateVersion.emailSubject, templateVars),
               html,
             })
           } catch (err) {
