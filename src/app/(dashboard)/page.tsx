@@ -6,7 +6,10 @@ import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, AlertTriangle } from "lucide-react"
+import {
+  RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
+  Mail, Tags, LayoutDashboard, Settings
+} from "lucide-react"
 import { useSession } from "next-auth/react"
 
 export default function DashboardPage() {
@@ -19,6 +22,31 @@ export default function DashboardPage() {
         שלום, {session?.user?.name || "admin"}
       </h2>
       <h3 className="text-xl font-bold text-gray-700 -mt-4">לוח בקרה</h3>
+
+      {/* קוביות קיצורי דרך */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {[
+          { label: "הוספת לקוח חדש", icon: UserPlus, href: "/customers/new", bg: "bg-green-50 border-green-200", color: "text-green-600" },
+          { label: "עריכת לקוח", icon: UserCog, href: "/customers", bg: "bg-blue-50 border-blue-200", color: "text-blue-600" },
+          { label: "רשימת לקוחות", icon: Users, href: "/customers", bg: "bg-purple-50 border-purple-200", color: "text-purple-600" },
+          { label: "שליחת מיילים", icon: Mail, href: "/emails", bg: "bg-pink-50 border-pink-200", color: "text-pink-600" },
+          { label: "עדכונים", icon: RefreshCw, href: "/updates", bg: "bg-orange-50 border-orange-200", color: "text-orange-600" },
+          { label: "מבצעים", icon: Tags, href: "/promotions", bg: "bg-red-50 border-red-200", color: "text-red-600" },
+          { label: "לוח בקרה", icon: LayoutDashboard, href: "/", bg: "bg-indigo-50 border-indigo-200", color: "text-indigo-600" },
+          { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-100 border-gray-200", color: "text-gray-600" },
+        ].map((item) => (
+          <Card
+            key={item.label}
+            className={`${item.bg} cursor-pointer hover:shadow-md transition-shadow`}
+            onClick={() => router.push(item.href)}
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center">
+              <item.icon className={`h-8 w-8 ${item.color}`} />
+              <span className="font-medium text-gray-800 text-sm">{item.label}</span>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <StatsCards />
 

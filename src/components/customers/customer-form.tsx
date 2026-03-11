@@ -51,7 +51,7 @@ interface CustomerFormProps {
     createdAt?: string
     updatedAt?: string
   }
-  onSubmit: (data: CustomerFormData | CustomerUpdateFormData) => Promise<void>
+  onSubmit: (data: CustomerFormData | CustomerUpdateFormData, pendingInfoFile?: File) => Promise<void>
   isSubmitting: boolean
 }
 
@@ -84,6 +84,7 @@ export function CustomerForm({
   const [setTypes, setSetTypes] = useState<SetType[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [isUploadingInfo, setIsUploadingInfo] = useState(false)
+  const [pendingInfoFile, setPendingInfoFile] = useState<File | null>(null)
   const [infoFileName, setInfoFileName] = useState<string>(() => {
     if (initialData?.infoFileUrl) {
       const parts = initialData.infoFileUrl.split("/")
@@ -159,9 +160,10 @@ export function CustomerForm({
     const file = e.target.files?.[0]
     if (!file) return
 
-    // במצב create - צריך ID של הלקוח
+    // במצב create - שומרים את הקובץ בזיכרון ומעלים אחרי יצירת הלקוח
     if (mode === "create") {
-      alert("אנא שמור את הלקוח תחילה, ואז תוכל להעלות קובץ אינפו")
+      setPendingInfoFile(file)
+      setInfoFileName(file.name)
       e.target.value = ""
       return
     }
@@ -237,7 +239,7 @@ export function CustomerForm({
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit((data) => onSubmit(data, pendingInfoFile || undefined))} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
             <div className="space-y-2">
@@ -505,6 +507,7 @@ export function CustomerForm({
                     onClick={() => {
                       setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
                       setInfoFileName("")
+                      setPendingInfoFile(null)
                     }}
                     className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
                   >

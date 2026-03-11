@@ -13,7 +13,7 @@ export default function NewCustomerPage() {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: Record<string, unknown>) => {
+  const handleSubmit = async (data: Record<string, unknown>, pendingInfoFile?: File) => {
     setIsSubmitting(true)
     try {
       const res = await fetch("/api/customers", {
@@ -28,6 +28,32 @@ export default function NewCustomerPage() {
       }
 
       const newCustomer = await res.json()
+
+      // העלאת קובץ אינפו אם נבחר
+      if (pendingInfoFile) {
+        try {
+          const fd = new FormData()
+          fd.append("file", pendingInfoFile)
+          const uploadRes = await fetch(`/api/customers/${newCustomer.id}/upload-info`, {
+            method: "POST",
+            body: fd,
+          })
+          if (!uploadRes.ok) {
+            const uploadErr = await uploadRes.json().catch(() => ({}))
+            toast({
+              title: "הלקוח נוצר אבל העלאת קובץ אינפו נכשלה",
+              description: uploadErr.error || "ניתן להעלות שוב מעמוד עריכת הלקוח",
+              variant: "destructive",
+            })
+          }
+        } catch {
+          toast({
+            title: "הלקוח נוצר אבל העלאת קובץ אינפו נכשלה",
+            description: "ניתן להעלות שוב מעמוד עריכת הלקוח",
+            variant: "destructive",
+          })
+        }
+      }
 
       toast({
         title: "הלקוח נוצר בהצלחה",
