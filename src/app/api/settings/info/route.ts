@@ -7,9 +7,10 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
 
-  const [totalCustomers, totalLeads] = await Promise.all([
+  const [totalCustomers, totalLeads, lastBackupSetting] = await Promise.all([
     prisma.customer.count(),
     prisma.lead.count(),
+    prisma.systemSetting.findUnique({ where: { key: "lastBackupDate" } }),
   ]);
 
   return NextResponse.json({
@@ -18,5 +19,6 @@ export async function GET() {
     totalCustomers,
     totalLeads,
     version: "1.0.0",
+    lastBackupDate: lastBackupSetting?.value || null,
   });
 }

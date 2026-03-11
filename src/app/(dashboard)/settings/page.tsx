@@ -42,6 +42,10 @@ import {
   MessageSquare,
   RefreshCw,
   WifiOff,
+  Download,
+  Upload,
+  Database,
+  AlertTriangle,
 } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 
@@ -88,6 +92,14 @@ export default function SettingsPage() {
   const [waPhone, setWaPhone] = useState("")
   const [waPairingCode, setWaPairingCode] = useState<string | null>(null)
   const [waMode, setWaMode] = useState<"qr" | "phone">("qr")
+
+  // Backup states
+  const [backupLoading, setBackupLoading] = useState(false)
+  const [restoreLoading, setRestoreLoading] = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [restoreFile, setRestoreFile] = useState<File | null>(null)
+  const [restoreResult, setRestoreResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [lastBackupDate, setLastBackupDate] = useState<string | null>(null)
 
   // New user form
   const [newUserName, setNewUserName] = useState("")
@@ -245,6 +257,61 @@ export default function SettingsPage() {
     }
   }
 
+  // Fetch last backup date
+  useEffect(() => {
+    fetch("/api/settings/info")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.lastBackupDate) setLastBackupDate(data.lastBackupDate)
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleExportBackup = async () => {
+    setBackupLoading(true)
+    try {
+      const res = await fetch("/api/backup/export")
+      if (!res.ok) throw new Error("Export failed")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `motyplus-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setLastBackupDate(new Date().toISOString())
+    } catch (err) {
+      console.error("Backup error:", err)
+      alert("שגיאה ביצירת גיבוי")
+    } finally {
+      setBackupLoading(false)
+    }
+  }
+
+  const handleRestoreBackup = async () => {
+    if (!restoreFile) return
+    setRestoreLoading(true)
+    setRestoreResult(null)
+    try {
+      const formData = new FormData()
+      formData.append("file", restoreFile)
+      const res = await fetch("/api/backup/import", { method: "POST", body: formData })
+      const data = await res.json()
+      if (res.ok) {
+        setRestoreResult({ success: true, message: `שוחזרו ${data.totalRecords} רשומות מ-${data.tablesRestored} טבלאות` })
+      } else {
+        setRestoreResult({ success: false, message: data.error || "שגיאה בשחזור" })
+      }
+    } catch (err) {
+      console.error("Restore error:", err)
+      setRestoreResult({ success: false, message: "שגיאה בשחזור" })
+    } finally {
+      setRestoreLoading(false)
+      setShowRestoreConfirm(false)
+      setRestoreFile(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -369,6 +436,61 @@ export default function SettingsPage() {
                 <span>PostgreSQL</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Backup & Restore */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              גיבוי ושחזור
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {lastBackupDate && (
+              <div className="text-sm text-muted-foreground">
+                גיבוי אחרון: {formatDateTime(lastBackupDate)}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleExportBackup} disabled={backupLoading}>
+                {backupLoading ? <Loader2 className="h-4 w-4 animate-spin ml-1" /> : <Download className="h-4 w-4 ml-1" />}
+                ייצא גיבוי
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => document.getElementById("restore-file-input")?.click()}
+                disabled={restoreLoading}
+              >
+                <Upload className="h-4 w-4 ml-1" />
+                שחזר מגיבוי
+              </Button>
+              <input
+                id="restore-file-input"
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setRestoreFile(file)
+                    setShowRestoreConfirm(true)
+                  }
+                  e.target.value = ""
+                }}
+              />
+            </div>
+            {restoreResult && (
+              <div className={`flex items-center gap-2 text-sm ${restoreResult.success ? "text-green-700" : "text-red-700"}`}>
+                {restoreResult.success ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                {restoreResult.message}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              הגיבוי כולל את כל הנתונים במסד הנתונים. קבצים ב-Google Drive מגובים בנפרד.
+            </p>
           </CardContent>
         </Card>
 
@@ -581,6 +703,38 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Restore Confirm Dialog */}
+      <Dialog open={showRestoreConfirm} onOpenChange={setShowRestoreConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              שחזור מגיבוי
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-red-600">
+              שים לב! פעולה זו תמחק את כל הנתונים הנוכחיים במערכת ותחליף אותם בנתונים מהגיבוי.
+            </p>
+            {restoreFile && (
+              <div className="text-sm text-muted-foreground">
+                קובץ: {restoreFile.name} ({(restoreFile.size / 1024).toFixed(0)} KB)
+              </div>
+            )}
+            <p className="text-sm">האם אתה בטוח שברצונך להמשיך?</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowRestoreConfirm(false); setRestoreFile(null) }}>
+              ביטול
+            </Button>
+            <Button variant="destructive" onClick={handleRestoreBackup} disabled={restoreLoading}>
+              {restoreLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              כן, שחזר
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add User Dialog */}
       <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
