@@ -56,6 +56,7 @@ export async function POST(
         status: true,
         updateExpiryDate: true,
         organ: { select: { name: true } },
+        additionalOrgan: { select: { name: true } },
         setType: { select: { includesUpdates: true, name: true } },
       },
     })
@@ -170,11 +171,17 @@ export async function POST(
         // שליחת מייל
         if (updateVersion.emailSubject && updateVersion.emailBody) {
           try {
+            const additionalOrganName = customer.additionalOrgan?.name || ""
+            const additionalOrganLine = additionalOrganName && downloadLink2
+              ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>`
+              : ""
             const templateVars = {
               customerName: customer.fullName,
               version: updateVersion.version,
               updateVersion: updateVersion.version,
               organName: customer.organ?.name || "",
+              additionalOrganName,
+              additionalOrganLine,
               setType: customer.setType?.name || "",
               downloadLink,
               downloadLink2,
