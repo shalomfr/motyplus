@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Save, Loader2, Upload, FileText, X as XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SamplesUploader } from "@/components/updates/samples-uploader"
 
 interface UpdateFormData {
   version: string
@@ -225,6 +226,11 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
         </CardContent>
       </Card>
+
+      {/* CPI Samples — only in edit mode (update must exist first) */}
+      {mode === "edit" && updateId && (
+        <SamplesUploader updateId={updateId} />
+      )}
 
       <Card>
         <CardHeader>
