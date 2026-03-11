@@ -14,7 +14,7 @@ export async function GET() {
 
   return NextResponse.json({
     emailConfigured: !!process.env.SMTP2GO_API_KEY,
-    driveConnected: false,
+    driveConnected: !!(process.env.GOOGLE_DRIVE_CLIENT_ID && process.env.GOOGLE_DRIVE_REFRESH_TOKEN && process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID),
     totalCustomers,
     totalLeads,
     version: "1.0.0",

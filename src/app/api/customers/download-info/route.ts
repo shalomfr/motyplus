@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { downloadFile } from "@/lib/file-storage";
 import JSZip from "jszip";
 
 // GET /api/customers/download-info - הורדת כל קבצי האינפו של הלקוחות כ-ZIP
@@ -37,22 +38,23 @@ export async function GET() {
       if (c.additionalInfoFileUrl) paths.push(c.additionalInfoFileUrl);
     }
 
-    // הורד את כל הקבצים מה-DB
-    const files = await prisma.fileStorage.findMany({
-      where: { path: { in: paths } },
-      select: { path: true, data: true },
-    });
+    // צור ZIP מקבצי Google Drive
+    const zip = new JSZip();
+    let fileCount = 0;
 
-    if (files.length === 0) {
-      return NextResponse.json({ error: "לא נמצאו קבצים באחסון" }, { status: 404 });
+    for (const path of paths) {
+      try {
+        const buffer = await downloadFile(path);
+        const fileName = path.split("/").pop() || path;
+        zip.file(fileName, buffer);
+        fileCount++;
+      } catch (err) {
+        console.warn(`Failed to download ${path}:`, err);
+      }
     }
 
-    // צור ZIP
-    const zip = new JSZip();
-    for (const file of files) {
-      // שם הקובץ = החלק האחרון של הנתיב (e.g. "1234.n27")
-      const fileName = file.path.split("/").pop() || file.path;
-      zip.file(fileName, Buffer.from(file.data));
+    if (fileCount === 0) {
+      return NextResponse.json({ error: "לא נמצאו קבצים באחסון" }, { status: 404 });
     }
 
     const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
