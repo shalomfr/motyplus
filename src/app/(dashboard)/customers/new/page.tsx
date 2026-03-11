@@ -13,7 +13,7 @@ export default function NewCustomerPage() {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: Record<string, unknown>, pendingInfoFile?: File) => {
+  const handleSubmit = async (data: Record<string, unknown>, pendingInfoFile?: File, pendingAdditionalInfoFile?: File) => {
     setIsSubmitting(true)
     try {
       const res = await fetch("/api/customers", {
@@ -29,26 +29,30 @@ export default function NewCustomerPage() {
 
       const newCustomer = await res.json()
 
-      // העלאת קובץ אינפו אם נבחר
-      if (pendingInfoFile) {
+      // העלאת קבצי אינפו אם נבחרו
+      const uploadTasks: { file: File; type: string; label: string }[] = []
+      if (pendingInfoFile) uploadTasks.push({ file: pendingInfoFile, type: "main", label: "ראשי" })
+      if (pendingAdditionalInfoFile) uploadTasks.push({ file: pendingAdditionalInfoFile, type: "additional", label: "נוסף" })
+
+      for (const task of uploadTasks) {
         try {
           const fd = new FormData()
-          fd.append("file", pendingInfoFile)
-          const uploadRes = await fetch(`/api/customers/${newCustomer.id}/upload-info`, {
-            method: "POST",
-            body: fd,
-          })
+          fd.append("file", task.file)
+          const url = task.type === "additional"
+            ? `/api/customers/${newCustomer.id}/upload-info?type=additional`
+            : `/api/customers/${newCustomer.id}/upload-info`
+          const uploadRes = await fetch(url, { method: "POST", body: fd })
           if (!uploadRes.ok) {
             const uploadErr = await uploadRes.json().catch(() => ({}))
             toast({
-              title: "הלקוח נוצר אבל העלאת קובץ אינפו נכשלה",
+              title: `הלקוח נוצר אבל העלאת קובץ אינפו ${task.label} נכשלה`,
               description: uploadErr.error || "ניתן להעלות שוב מעמוד עריכת הלקוח",
               variant: "destructive",
             })
           }
         } catch {
           toast({
-            title: "הלקוח נוצר אבל העלאת קובץ אינפו נכשלה",
+            title: `הלקוח נוצר אבל העלאת קובץ אינפו ${task.label} נכשלה`,
             description: "ניתן להעלות שוב מעמוד עריכת הלקוח",
             variant: "destructive",
           })

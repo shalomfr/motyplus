@@ -18,6 +18,7 @@ export const customerSchema = z.object({
   purchaseDate: z.string().optional(),
   notes: emptyToNull,
   infoFileUrl: emptyToNull,
+  additionalInfoFileUrl: emptyToNull,
 });
 
 export const customerUpdateSchema = customerSchema.partial().extend({

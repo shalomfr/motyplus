@@ -51,6 +51,8 @@ interface CustomerData {
   currentUpdateVersion: string | null
   hasV3: boolean
   notes: string | null
+  infoFileUrl: string | null
+  additionalInfoFileUrl: string | null
   purchaseDate: string
   updateExpiryDate: string
   createdAt: string
@@ -160,6 +162,8 @@ export default function EditCustomerPage() {
         currentUpdateVersion: raw.currentUpdateVersion,
         hasV3: raw.hasV3,
         notes: raw.notes,
+        infoFileUrl: raw.infoFileUrl,
+        additionalInfoFileUrl: raw.additionalInfoFileUrl,
         purchaseDate: raw.purchaseDate,
         updateExpiryDate: raw.updateExpiryDate,
         createdAt: raw.createdAt,
@@ -308,6 +312,8 @@ export default function EditCustomerPage() {
               amountPaid: customer.amountPaid,
               purchaseDate: customer.purchaseDate,
               notes: customer.notes,
+              infoFileUrl: customer.infoFileUrl,
+              additionalInfoFileUrl: customer.additionalInfoFileUrl,
               status: customer.status,
               hasV3: customer.hasV3,
               sampleType: customer.sampleType,

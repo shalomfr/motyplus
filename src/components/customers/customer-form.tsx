@@ -51,7 +51,7 @@ interface CustomerFormProps {
     createdAt?: string
     updatedAt?: string
   }
-  onSubmit: (data: CustomerFormData | CustomerUpdateFormData, pendingInfoFile?: File) => Promise<void>
+  onSubmit: (data: CustomerFormData | CustomerUpdateFormData, pendingInfoFile?: File, pendingAdditionalInfoFile?: File) => Promise<void>
   isSubmitting: boolean
 }
 
@@ -84,10 +84,21 @@ export function CustomerForm({
   const [setTypes, setSetTypes] = useState<SetType[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
   const [isUploadingInfo, setIsUploadingInfo] = useState(false)
+  const [isUploadingAdditionalInfo, setIsUploadingAdditionalInfo] = useState(false)
   const [pendingInfoFile, setPendingInfoFile] = useState<File | null>(null)
+  const [pendingAdditionalInfoFile, setPendingAdditionalInfoFile] = useState<File | null>(null)
   const [infoFileName, setInfoFileName] = useState<string>(() => {
     if (initialData?.infoFileUrl) {
       const parts = initialData.infoFileUrl.split("/")
+      const raw = parts[parts.length - 1]
+      const match = raw.match(/^\d+-(.+)$/)
+      return match ? match[1] : raw
+    }
+    return ""
+  })
+  const [additionalInfoFileName, setAdditionalInfoFileName] = useState<string>(() => {
+    if (initialData?.additionalInfoFileUrl) {
+      const parts = initialData.additionalInfoFileUrl.split("/")
       const raw = parts[parts.length - 1]
       const match = raw.match(/^\d+-(.+)$/)
       return match ? match[1] : raw
@@ -120,6 +131,7 @@ export function CustomerForm({
         new Date().toISOString().split("T")[0],
       notes: initialData?.notes || "",
       infoFileUrl: initialData?.infoFileUrl || "",
+      additionalInfoFileUrl: initialData?.additionalInfoFileUrl || "",
       ...(mode === "edit" && {
         status: initialData?.status as "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
         hasV3: initialData?.hasV3 || false,
@@ -200,6 +212,48 @@ export function CustomerForm({
     }
   }
 
+  const handleAdditionalInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (mode === "create") {
+      setPendingAdditionalInfoFile(file)
+      setAdditionalInfoFileName(file.name)
+      e.target.value = ""
+      return
+    }
+
+    if (!initialData?.id) {
+      alert("שגיאה: לא נמצא מזהה לקוח")
+      e.target.value = ""
+      return
+    }
+
+    setIsUploadingAdditionalInfo(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+
+      const res = await fetch(`/api/customers/${initialData.id}/upload-info?type=additional`, {
+        method: "POST",
+        body: fd,
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+
+      setValue("additionalInfoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), data.url)
+      setAdditionalInfoFileName(data.fileName)
+
+      alert(`הקובץ הועלה בהצלחה בשם: ${data.fileName}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
+    } finally {
+      setIsUploadingAdditionalInfo(false)
+      e.target.value = ""
+    }
+  }
+
   if (isLoadingData) {
     return (
       <Card>
@@ -239,7 +293,7 @@ export function CustomerForm({
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit((data) => onSubmit(data, pendingInfoFile || undefined))} className="space-y-6">
+        <form onSubmit={handleSubmit((data) => onSubmit(data, pendingInfoFile || undefined, pendingAdditionalInfoFile || undefined))} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
             <div className="space-y-2">
@@ -536,6 +590,51 @@ export function CustomerForm({
               )}
             </div>
           </div>
+
+          {/* Additional Info File Upload - only when additional organ selected */}
+          {watch("additionalOrganId") && (
+          <div className="space-y-2">
+            <Label>קובץ אינפו של האורגן הנוסף</Label>
+            <div className="flex items-center gap-2">
+              {additionalInfoFileName ? (
+                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                  <FileText className="h-4 w-4 text-green-500 shrink-0" />
+                  <span className="truncate">{additionalInfoFileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue("additionalInfoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
+                      setAdditionalInfoFileName("")
+                      setPendingAdditionalInfoFile(null)
+                    }}
+                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex-1",
+                  isUploadingAdditionalInfo && "opacity-50 cursor-not-allowed"
+                )}>
+                  {isUploadingAdditionalInfo ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span>{isUploadingAdditionalInfo ? "מעלה קובץ..." : "העלה קובץ אינפו לאורגן נוסף (.n27)"}</span>
+                  <input
+                    type="file"
+                    accept=".n27"
+                    className="hidden"
+                    onChange={handleAdditionalInfoFileUpload}
+                    disabled={isUploadingAdditionalInfo}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+          )}
 
           {/* Submit */}
           <div className="flex justify-start">

@@ -104,6 +104,7 @@ model Customer {
   currentUpdateVersion String?
   hasV3                Boolean        @default(false)
   infoFileUrl          String?
+  additionalInfoFileUrl String?
   notes                String?        @db.Text
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt

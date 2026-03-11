@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { uploadFile } from "@/lib/azure-storage";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_EXTENSIONS = ["n27", "bin", "sty"];
+const ALLOWED_EXTENSIONS = ["n27"];
 
 // POST /api/customers/[id]/upload-info - העלאת קובץ אינפו עם שינוי שם אוטומטי
+// ?type=additional להעלאת קובץ אינפו של אורגן נוסף
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,6 +20,7 @@ export async function POST(
 
     const { id } = await params;
     const customerId = parseInt(id);
+    const isAdditional = request.nextUrl.searchParams.get("type") === "additional";
 
     // בדיקה שהלקוח קיים
     const customer = await prisma.customer.findUnique({
@@ -27,6 +29,10 @@ export async function POST(
 
     if (!customer) {
       return NextResponse.json({ error: "לקוח לא נמצא" }, { status: 404 });
+    }
+
+    if (isAdditional && !customer.additionalOrganId) {
+      return NextResponse.json({ error: "ללקוח אין אורגן נוסף" }, { status: 400 });
     }
 
     const formData = await request.formData();
@@ -52,8 +58,10 @@ export async function POST(
       );
     }
 
-    // שינוי שם הקובץ למזהה הלקוח + סיומת מקורית
-    const newFileName = `${customerId}.${ext}`;
+    // שינוי שם: ראשי = {id}.n27, נוסף = {id}_01.n27
+    const newFileName = isAdditional
+      ? `${customerId}_01.${ext}`
+      : `${customerId}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -64,7 +72,9 @@ export async function POST(
     // עדכון הלקוח
     await prisma.customer.update({
       where: { id: customerId },
-      data: { infoFileUrl: url },
+      data: isAdditional
+        ? { additionalInfoFileUrl: url }
+        : { infoFileUrl: url },
     });
 
     return NextResponse.json({
