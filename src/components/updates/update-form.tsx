@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,6 +47,24 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
     emailBody: initialData?.emailBody || "",
     releaseDate: initialData?.releaseDate || "",
   })
+
+  // Load email template on create mode
+  useEffect(() => {
+    if (mode !== "create" || form.emailSubject || form.emailBody) return
+    fetch("/api/emails/templates")
+      .then((r) => r.ok ? r.json() : [])
+      .then((templates: { name: string; subject: string; body: string }[]) => {
+        const tpl = templates.find((t) => t.name === "שליחת עדכון")
+        if (tpl) {
+          setForm((prev) => ({
+            ...prev,
+            emailSubject: prev.emailSubject || tpl.subject,
+            emailBody: prev.emailBody || tpl.body,
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [mode])
 
   const [isUploadingRhythms, setIsUploadingRhythms] = useState(false)
   const [rhythmsFileName, setRhythmsFileName] = useState(
