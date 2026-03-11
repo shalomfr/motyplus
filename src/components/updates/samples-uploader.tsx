@@ -14,7 +14,7 @@ import {
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { Progress } from "@/components/ui/progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
-import { Upload, Trash2, Loader2, Music, Users, FileText } from "lucide-react"
+import { Upload, Trash2, Loader2, Music, Users, FileText, Send, CheckCircle2, AlertCircle } from "lucide-react"
 
 interface SampleFile {
   path: string
@@ -44,6 +44,14 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [deletingFile, setDeletingFile] = useState<string | null>(null)
+  const [isSending, setIsSending] = useState(false)
+  const [sendResult, setSendResult] = useState<{
+    sent: number
+    skippedNoFile: number
+    failed: number
+    alreadyReceived: number
+  } | null>(null)
+  const [sendError, setSendError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchFiles = useCallback(async () => {
@@ -146,6 +154,47 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
       console.error("Error deleting file:", err)
     } finally {
       setDeletingFile(null)
+    }
+  }
+
+  const handleSendUpdate = async () => {
+    if (!confirm(`לשלוח את העדכון ל-${totalCustomers} לקוחות?`)) return
+    setIsSending(true)
+    setSendResult(null)
+    setSendError("")
+
+    try {
+      // First get eligible customer IDs from work-list
+      const workRes = await fetch(`/api/updates/${updateId}/work-list`)
+      if (!workRes.ok) throw new Error("שגיאה בטעינת רשימת לקוחות")
+      const workData = await workRes.json()
+      const customerIds = workData.customers.map((c: { id: number }) => c.id)
+
+      if (customerIds.length === 0) {
+        setSendError("אין לקוחות זכאים לשליחה")
+        setIsSending(false)
+        return
+      }
+
+      const res = await fetch(`/api/updates/${updateId}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerIds }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "שגיאה בשליחה")
+
+      setSendResult({
+        sent: data.sent,
+        skippedNoFile: data.skippedNoFile,
+        failed: data.failed,
+        alreadyReceived: data.alreadyReceived,
+      })
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "שגיאה בשליחת העדכון")
+    } finally {
+      setIsSending(false)
     }
   }
 
@@ -306,6 +355,55 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
                 ))}
               </TableBody>
             </Table>
+          </div>
+        )}
+
+        {/* Send Update Button — only when files exist and not uploading */}
+        {files.length > 0 && !isUploading && (
+          <div className="border-t pt-4 space-y-3">
+            <Button
+              onClick={handleSendUpdate}
+              disabled={isSending}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              size="lg"
+            >
+              {isSending ? (
+                <Loader2 className="h-5 w-5 animate-spin ml-2" />
+              ) : (
+                <Send className="h-5 w-5 ml-2" />
+              )}
+              {isSending ? "שולח עדכון ללקוחות..." : `שלח עדכון ל-${totalCustomers} לקוחות`}
+            </Button>
+
+            {/* Send Result */}
+            {sendResult && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 text-green-700 font-medium">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span>השליחה הושלמה</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-green-700">נשלחו בהצלחה: <strong>{sendResult.sent}</strong></div>
+                  {sendResult.skippedNoFile > 0 && (
+                    <div className="text-yellow-700">דולגו (אין קובץ): <strong>{sendResult.skippedNoFile}</strong></div>
+                  )}
+                  {sendResult.failed > 0 && (
+                    <div className="text-red-700">נכשלו: <strong>{sendResult.failed}</strong></div>
+                  )}
+                  {sendResult.alreadyReceived > 0 && (
+                    <div className="text-gray-600">כבר קיבלו: <strong>{sendResult.alreadyReceived}</strong></div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Send Error */}
+            {sendError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700 text-sm">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{sendError}</span>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
