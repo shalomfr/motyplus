@@ -7,14 +7,18 @@ import { Button } from "@/components/ui/button"
 import { CustomerForm } from "@/components/customers/customer-form"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowRight } from "lucide-react"
+import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
+import { uploadWithProgress } from "@/lib/upload-with-progress"
 
 export default function NewCustomerPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploads, setUploads] = useState<{ label: string; fileName: string; progress: number; status: UploadStatus; error: string }[]>([])
 
   const handleSubmit = async (data: Record<string, unknown>, pendingInfoFile?: File, pendingAdditionalInfoFile?: File) => {
     setIsSubmitting(true)
+    setUploads([])
     try {
       const res = await fetch("/api/customers", {
         method: "POST",
@@ -34,23 +38,42 @@ export default function NewCustomerPage() {
       if (pendingInfoFile) uploadTasks.push({ file: pendingInfoFile, type: "main", label: "ראשי" })
       if (pendingAdditionalInfoFile) uploadTasks.push({ file: pendingAdditionalInfoFile, type: "additional", label: "נוסף" })
 
-      for (const task of uploadTasks) {
+      if (uploadTasks.length > 0) {
+        setUploads(uploadTasks.map(t => ({
+          label: t.label,
+          fileName: t.file.name,
+          progress: 0,
+          status: "uploading" as UploadStatus,
+          error: "",
+        })))
+      }
+
+      for (let i = 0; i < uploadTasks.length; i++) {
+        const task = uploadTasks[i]
         try {
           const fd = new FormData()
           fd.append("file", task.file)
           const url = task.type === "additional"
             ? `/api/customers/${newCustomer.id}/upload-info?type=additional`
             : `/api/customers/${newCustomer.id}/upload-info`
-          const uploadRes = await fetch(url, { method: "POST", body: fd })
+
+          const uploadRes = await uploadWithProgress(url, fd, (percent) => {
+            setUploads(prev => prev.map((u, idx) => idx === i ? { ...u, progress: percent } : u))
+          })
+
           if (!uploadRes.ok) {
-            const uploadErr = await uploadRes.json().catch(() => ({}))
+            const err = (uploadRes.data as { error?: string }).error || "שגיאה בהעלאה"
+            setUploads(prev => prev.map((u, idx) => idx === i ? { ...u, status: "error", error: err } : u))
             toast({
               title: `הלקוח נוצר אבל העלאת קובץ אינפו ${task.label} נכשלה`,
-              description: uploadErr.error || "ניתן להעלות שוב מעמוד עריכת הלקוח",
+              description: err,
               variant: "destructive",
             })
+          } else {
+            setUploads(prev => prev.map((u, idx) => idx === i ? { ...u, status: "success", progress: 100 } : u))
           }
         } catch {
+          setUploads(prev => prev.map((u, idx) => idx === i ? { ...u, status: "error", error: "שגיאת רשת" } : u))
           toast({
             title: `הלקוח נוצר אבל העלאת קובץ אינפו ${task.label} נכשלה`,
             description: "ניתן להעלות שוב מעמוד עריכת הלקוח",
@@ -65,7 +88,8 @@ export default function NewCustomerPage() {
         variant: "success" as "default",
       })
 
-      router.push(`/customers/${newCustomer.id}`)
+      // Wait a moment to show success state before redirect
+      setTimeout(() => router.push(`/customers/${newCustomer.id}`), uploadTasks.length > 0 ? 1500 : 0)
     } catch (error) {
       toast({
         title: "שגיאה",
@@ -96,6 +120,22 @@ export default function NewCustomerPage() {
           </p>
         </div>
       </div>
+
+      {/* Upload Progress */}
+      {uploads.length > 0 && (
+        <div className="max-w-3xl space-y-2">
+          {uploads.map((u, i) => (
+            <FileUploadProgress
+              key={i}
+              fileName={`${u.fileName} (${u.label})`}
+              progress={u.progress}
+              status={u.status}
+              errorMessage={u.error}
+              colorScheme={i === 0 ? "blue" : "green"}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Form */}
       <div className="max-w-3xl">

@@ -23,6 +23,8 @@ import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
 import { Loader2, Save, Upload, FileText, X as XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
+import { uploadWithProgress } from "@/lib/upload-with-progress"
 
 type CustomerFormData = z.infer<typeof customerSchema>
 type CustomerUpdateFormData = z.infer<typeof customerUpdateSchema>
@@ -83,8 +85,12 @@ export function CustomerForm({
   const [organs, setOrgans] = useState<Organ[]>([])
   const [setTypes, setSetTypes] = useState<SetType[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
-  const [isUploadingInfo, setIsUploadingInfo] = useState(false)
-  const [isUploadingAdditionalInfo, setIsUploadingAdditionalInfo] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle")
+  const [uploadError, setUploadError] = useState("")
+  const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0)
+  const [additionalUploadStatus, setAdditionalUploadStatus] = useState<UploadStatus>("idle")
+  const [additionalUploadError, setAdditionalUploadError] = useState("")
   const [pendingInfoFile, setPendingInfoFile] = useState<File | null>(null)
   const [pendingAdditionalInfoFile, setPendingAdditionalInfoFile] = useState<File | null>(null)
   const [infoFileName, setInfoFileName] = useState<string>(() => {
@@ -186,28 +192,37 @@ export function CustomerForm({
       return
     }
 
-    setIsUploadingInfo(true)
+    setUploadStatus("uploading")
+    setUploadProgress(0)
+    setUploadError("")
+    setInfoFileName(file.name)
+
     try {
       const fd = new FormData()
       fd.append("file", file)
 
-      // שימוש ב-API החדש שמשנה את שם הקובץ אוטומטית
-      const res = await fetch(`/api/customers/${initialData.id}/upload-info`, {
-        method: "POST",
-        body: fd,
-      })
+      const res = await uploadWithProgress(
+        `/api/customers/${initialData.id}/upload-info`,
+        fd,
+        (percent) => setUploadProgress(percent)
+      )
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+      // קובץ הגיע לשרת, עכשיו מעבד (מעלה ל-Google Drive)
+      if (uploadProgress >= 100) setUploadStatus("processing")
 
+      if (!res.ok) throw new Error((res.data as { error?: string }).error || "שגיאה בהעלאה")
+
+      const data = res.data as { url: string; fileName: string }
       setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), data.url)
-      setInfoFileName(data.fileName) // השם החדש שהשרת נתן
+      setInfoFileName(data.fileName)
+      setUploadStatus("success")
 
-      alert(`הקובץ הועלה בהצלחה בשם: ${data.fileName}`)
+      // אחרי 3 שניות נחזור למצב רגיל
+      setTimeout(() => setUploadStatus("idle"), 3000)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
+      setUploadStatus("error")
+      setUploadError(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
     } finally {
-      setIsUploadingInfo(false)
       e.target.value = ""
     }
   }
@@ -229,27 +244,35 @@ export function CustomerForm({
       return
     }
 
-    setIsUploadingAdditionalInfo(true)
+    setAdditionalUploadStatus("uploading")
+    setAdditionalUploadProgress(0)
+    setAdditionalUploadError("")
+    setAdditionalInfoFileName(file.name)
+
     try {
       const fd = new FormData()
       fd.append("file", file)
 
-      const res = await fetch(`/api/customers/${initialData.id}/upload-info?type=additional`, {
-        method: "POST",
-        body: fd,
-      })
+      const res = await uploadWithProgress(
+        `/api/customers/${initialData.id}/upload-info?type=additional`,
+        fd,
+        (percent) => setAdditionalUploadProgress(percent)
+      )
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה")
+      if (additionalUploadProgress >= 100) setAdditionalUploadStatus("processing")
 
+      if (!res.ok) throw new Error((res.data as { error?: string }).error || "שגיאה בהעלאה")
+
+      const data = res.data as { url: string; fileName: string }
       setValue("additionalInfoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), data.url)
       setAdditionalInfoFileName(data.fileName)
+      setAdditionalUploadStatus("success")
 
-      alert(`הקובץ הועלה בהצלחה בשם: ${data.fileName}`)
+      setTimeout(() => setAdditionalUploadStatus("idle"), 3000)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
+      setAdditionalUploadStatus("error")
+      setAdditionalUploadError(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ")
     } finally {
-      setIsUploadingAdditionalInfo(false)
       e.target.value = ""
     }
   }
@@ -551,88 +574,100 @@ export function CustomerForm({
           {/* Info File Upload */}
           <div className="space-y-2">
             <Label>קובץ אינפו של האורגן</Label>
-            <div className="flex items-center gap-2">
-              {infoFileName ? (
-                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
-                  <span className="truncate">{infoFileName}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
-                      setInfoFileName("")
-                      setPendingInfoFile(null)
-                    }}
-                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
-                  isUploadingInfo && "opacity-50 cursor-not-allowed"
-                )}>
-                  {isUploadingInfo ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
+
+            {/* Progress indicator - shown during/after upload in edit mode */}
+            {uploadStatus !== "idle" && (
+              <FileUploadProgress
+                fileName={infoFileName}
+                progress={uploadProgress}
+                status={uploadStatus}
+                errorMessage={uploadError}
+                colorScheme="blue"
+              />
+            )}
+
+            {/* File selector / file display */}
+            {uploadStatus === "idle" && (
+              <div className="flex items-center gap-2">
+                {infoFileName ? (
+                  <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                    <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                    <span className="truncate">{infoFileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue("infoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
+                        setInfoFileName("")
+                        setPendingInfoFile(null)
+                      }}
+                      className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1">
                     <Upload className="h-4 w-4" />
-                  )}
-                  <span>{isUploadingInfo ? "מעלה קובץ..." : "העלה קובץ אינפו (.n27)"}</span>
-                  <input
-                    type="file"
-                    accept=".n27"
-                    className="hidden"
-                    onChange={handleInfoFileUpload}
-                    disabled={isUploadingInfo}
-                  />
-                </label>
-              )}
-            </div>
+                    <span>העלה קובץ אינפו (.n27)</span>
+                    <input
+                      type="file"
+                      accept=".n27"
+                      className="hidden"
+                      onChange={handleInfoFileUpload}
+                    />
+                  </label>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Additional Info File Upload - only when additional organ selected */}
           {watch("additionalOrganId") && (
           <div className="space-y-2">
             <Label>קובץ אינפו של האורגן הנוסף</Label>
-            <div className="flex items-center gap-2">
-              {additionalInfoFileName ? (
-                <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-green-500 shrink-0" />
-                  <span className="truncate">{additionalInfoFileName}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setValue("additionalInfoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
-                      setAdditionalInfoFileName("")
-                      setPendingAdditionalInfoFile(null)
-                    }}
-                    className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex-1",
-                  isUploadingAdditionalInfo && "opacity-50 cursor-not-allowed"
-                )}>
-                  {isUploadingAdditionalInfo ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
+
+            {additionalUploadStatus !== "idle" && (
+              <FileUploadProgress
+                fileName={additionalInfoFileName}
+                progress={additionalUploadProgress}
+                status={additionalUploadStatus}
+                errorMessage={additionalUploadError}
+                colorScheme="green"
+              />
+            )}
+
+            {additionalUploadStatus === "idle" && (
+              <div className="flex items-center gap-2">
+                {additionalInfoFileName ? (
+                  <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                    <FileText className="h-4 w-4 text-green-500 shrink-0" />
+                    <span className="truncate">{additionalInfoFileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue("additionalInfoFileUrl" as keyof (CustomerFormData | CustomerUpdateFormData), "")
+                        setAdditionalInfoFileName("")
+                        setPendingAdditionalInfoFile(null)
+                      }}
+                      className="mr-auto text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex-1">
                     <Upload className="h-4 w-4" />
-                  )}
-                  <span>{isUploadingAdditionalInfo ? "מעלה קובץ..." : "העלה קובץ אינפו לאורגן נוסף (.n27)"}</span>
-                  <input
-                    type="file"
-                    accept=".n27"
-                    className="hidden"
-                    onChange={handleAdditionalInfoFileUpload}
-                    disabled={isUploadingAdditionalInfo}
-                  />
-                </label>
-              )}
-            </div>
+                    <span>העלה קובץ אינפו לאורגן נוסף (.n27)</span>
+                    <input
+                      type="file"
+                      accept=".n27"
+                      className="hidden"
+                      onChange={handleAdditionalInfoFileUpload}
+                    />
+                  </label>
+                )}
+              </div>
+            )}
           </div>
           )}
 
