@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { uploadFileWithPath, deleteFilesWithPrefix } from "@/lib/azure-storage";
+import { uploadFileWithPath, deleteFilesWithPrefix } from "@/lib/file-storage";
 import { processUpdateZip } from "@/lib/zip-processor";
 
 const MAX_SIZE = 500 * 1024 * 1024; // 500MB

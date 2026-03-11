@@ -6,7 +6,7 @@
 import { parsePPFRaw } from './formats/ppi-parser';
 import { buildEncryptedCPI } from './formats/cpi-encryptor';
 import { parseN27 } from './formats/n27-parser';
-import { downloadFile, uploadFileWithPath } from './azure-storage';
+import { downloadFile, uploadFileWithPath } from './file-storage';
 
 interface CustomerForCPI {
   id: number;

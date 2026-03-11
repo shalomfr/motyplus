@@ -8,13 +8,38 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
-  Mail, Tags, LayoutDashboard, Settings
+  Mail, Tags, LayoutDashboard, Settings, Download, Loader2
 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { useState } from "react"
 
 export default function DashboardPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const handleDownloadInfoFiles = async () => {
+    setIsDownloading(true)
+    try {
+      const res = await fetch("/api/customers/download-info")
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "שגיאה בהורדה")
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "info-files.zip"
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert("שגיאה בהורדת קבצי האינפו")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -46,6 +71,22 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+        {/* כפתור הורדת קבצי אינפו */}
+        <Card
+          className="bg-teal-50 border-teal-200 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={handleDownloadInfoFiles}
+        >
+          <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center">
+            {isDownloading ? (
+              <Loader2 className="h-8 w-8 text-teal-600 animate-spin" />
+            ) : (
+              <Download className="h-8 w-8 text-teal-600" />
+            )}
+            <span className="font-medium text-gray-800 text-sm">
+              {isDownloading ? "מוריד..." : "הורד קבצי אינפו"}
+            </span>
+          </CardContent>
+        </Card>
       </div>
 
       <StatsCards />

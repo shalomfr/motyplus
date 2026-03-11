@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { uploadFile } from "@/lib/azure-storage";
+import { uploadFile } from "@/lib/file-storage";
 
 const ALLOWED_TYPES: Record<string, string[]> = {
   customers: ["bin", "sty"],

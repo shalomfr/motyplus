@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { deleteFile } from "@/lib/azure-storage";
+import { deleteFile } from "@/lib/file-storage";
 
 // DELETE /api/updates/[id]/files/[fileId] - מחיקת קובץ עדכון
 export async function DELETE(

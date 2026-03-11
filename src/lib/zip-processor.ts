@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { prisma } from "@/lib/prisma";
-import { uploadFileWithPath } from "@/lib/azure-storage";
+import { uploadFileWithPath } from "@/lib/file-storage";
 
 interface MatchResult {
   setTypeId: string;

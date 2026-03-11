@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadFile } from "@/lib/azure-storage";
+import { uploadFile } from "@/lib/file-storage";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS = ["n27"];

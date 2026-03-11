@@ -408,6 +408,20 @@ model ActivityLog {
   @@index([createdAt])
 }
 
+// ===== אחסון קבצים =====
+
+model FileStorage {
+  id        String   @id @default(cuid())
+  path      String   @unique // e.g. "customers/info/1234.n27"
+  data      Bytes
+  size      Int
+  mimeType  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([path])
+}
+
 // ===== הגדרות מערכת =====
 
 model SystemSetting {
