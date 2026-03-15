@@ -240,6 +240,8 @@ const TEMPLATES = [
   },
 ];
 
+export { TEMPLATES as DEFAULT_EMAIL_TEMPLATES };
+
 // POST /api/emails/templates/seed — טעינת תבניות מעוצבות
 export async function POST() {
   try {
