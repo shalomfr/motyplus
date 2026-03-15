@@ -31,6 +31,7 @@ import {
   ArrowRight,
   ArrowDown,
   Loader2,
+  RefreshCw,
 } from "lucide-react"
 
 interface Task {
@@ -269,10 +270,24 @@ export default function TasksPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
-        <Button onClick={() => setEditTask({ id: 0, title: "", description: null, status: "IDEA", priority: "MEDIUM", category: "כללי", order: 0, createdAt: "", completedAt: null })}>
-          <Plus className="h-4 w-4 ml-1" />
-          משימה חדשה
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (confirm("לטעון מחדש את כל המשימות מהאפיון? זה ימחק את כל המשימות הקיימות")) {
+                handleSeed()
+              }
+            }}
+            disabled={seeding}
+          >
+            {seeding ? <Loader2 className="h-4 w-4 ml-1 animate-spin" /> : <RefreshCw className="h-4 w-4 ml-1" />}
+            טען מהאפיון
+          </Button>
+          <Button onClick={() => setEditTask({ id: 0, title: "", description: null, status: "IDEA", priority: "MEDIUM", category: "כללי", order: 0, createdAt: "", completedAt: null })}>
+            <Plus className="h-4 w-4 ml-1" />
+            משימה חדשה
+          </Button>
+        </div>
       </div>
 
       {/* סיכום */}
