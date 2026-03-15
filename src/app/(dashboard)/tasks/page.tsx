@@ -32,6 +32,7 @@ import {
   ArrowDown,
   Loader2,
   RefreshCw,
+  Download,
 } from "lucide-react"
 
 interface Task {
@@ -271,6 +272,36 @@ export default function TasksPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const statusLabels: Record<string, string> = { IDEA: "רעיון", PLANNING: "תכנון", IN_PROGRESS: "בביצוע", DONE: "הושלם" }
+              const priorityLabels: Record<string, string> = { HIGH: "גבוהה", MEDIUM: "בינונית", LOW: "נמוכה" }
+              const lines = ["# משימות MotyPlus", ""]
+              for (const col of COLUMNS) {
+                const colTasks = tasks.filter(t => t.status === col.key)
+                if (colTasks.length === 0) continue
+                lines.push(`## ${col.label} (${colTasks.length})`, "")
+                colTasks.forEach((t, i) => {
+                  const check = t.status === "DONE" ? "x" : " "
+                  lines.push(`${i + 1}. [${check}] **${t.title}** [${t.category}] [${priorityLabels[t.priority]}]`)
+                  if (t.description) lines.push(`   ${t.description}`)
+                  lines.push("")
+                })
+              }
+              lines.push("---", `סה"כ: ${tasks.length} | הושלם: ${counts.DONE} | ${Math.round((counts.DONE / (counts.IDEA + counts.PLANNING + counts.IN_PROGRESS + counts.DONE || 1)) * 100)}%`)
+              const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement("a")
+              a.href = url
+              a.download = `tasks-${new Date().toISOString().slice(0, 10)}.md`
+              a.click()
+              URL.revokeObjectURL(url)
+            }}
+          >
+            <Download className="h-4 w-4 ml-1" />
+            ייצוא
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
