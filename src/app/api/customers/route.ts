@@ -145,6 +145,18 @@ export async function POST(request: NextRequest) {
     const updateExpiryDate = new Date(purchaseDate);
     updateExpiryDate.setFullYear(updateExpiryDate.getFullYear() + 1);
 
+    // #8: גרסת עדכון אוטומטית — ללקוח חדש עם סט שכולל עדכונים
+    const setType = await prisma.setType.findUnique({ where: { id: data.setTypeId } });
+    let currentUpdateVersion: string | null = null;
+    if (setType?.includesUpdates) {
+      const latestVersion = await prisma.updateVersion.findFirst({
+        where: { status: { not: "DRAFT" } },
+        orderBy: { sortOrder: "desc" },
+        select: { version: true },
+      });
+      currentUpdateVersion = latestVersion?.version || null;
+    }
+
     const customer = await prisma.customer.create({
       data: {
         fullName: data.fullName,
@@ -160,6 +172,8 @@ export async function POST(request: NextRequest) {
         updateExpiryDate,
         notes: data.notes || null,
         infoFileUrl: data.infoFileUrl || null,
+        hasV3: true, // #19: V3 אוטומטי לכל לקוח חדש
+        currentUpdateVersion, // #8: גרסה אחרונה אם סט שלם
       },
       include: {
         organ: true,

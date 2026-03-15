@@ -72,7 +72,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   EXCEPTION: {
     label: "חריג",
-    className: "bg-amber-100 text-amber-800 border-amber-200",
+    className: "bg-orange-100 text-orange-800 border-orange-200",
   },
 }
 
@@ -140,7 +140,7 @@ export function CustomerForm({
       additionalInfoFileUrl: initialData?.additionalInfoFileUrl || "",
       ...(mode === "edit" && {
         status: initialData?.status as "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
-        hasV3: initialData?.hasV3 || false,
+        hasV3: initialData?.hasV3 ?? true,
         sampleType: initialData?.sampleType as "CPI" | "CPF" | undefined,
         currentUpdateVersion: initialData?.currentUpdateVersion || "",
       }),
@@ -149,6 +149,17 @@ export function CustomerForm({
 
   const watchedOrganId = watch("organId")
   const watchedSetTypeId = watch("setTypeId")
+  const [userEditedAmount, setUserEditedAmount] = useState(false)
+
+  // #21/#6: Auto-fill סכום לפי סוג סט (רק אם המשתמש לא שינה ידנית)
+  useEffect(() => {
+    if (mode === "create" && watchedSetTypeId && !userEditedAmount) {
+      const selectedSet = setTypes.find(s => s.id === watchedSetTypeId)
+      if (selectedSet) {
+        setValue("amountPaid", selectedSet.price)
+      }
+    }
+  }, [watchedSetTypeId, setTypes, mode, userEditedAmount, setValue])
 
   useEffect(() => {
     async function fetchData() {
@@ -302,16 +313,38 @@ export function CustomerForm({
           <CardTitle className="text-lg">
             {mode === "create" ? "פרטי לקוח חדש" : "פרטי לקוח"}
           </CardTitle>
-          {mode === "edit" && initialData?.status && (
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-sm",
-                statusConfig[initialData.status]?.className
+          {mode === "edit" && initialData && (
+            <div className="flex items-center gap-2">
+              {initialData.currentUpdateVersion && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm",
+                    initialData.status === "EXCEPTION"
+                      ? "bg-orange-100 text-orange-800 border-orange-200"
+                      : "bg-green-100 text-green-800 border-green-200"
+                  )}
+                >
+                  {initialData.currentUpdateVersion}
+                </Badge>
               )}
-            >
-              {statusConfig[initialData.status]?.label}
-            </Badge>
+              {!initialData.currentUpdateVersion && initialData.status !== "EXCEPTION" && (
+                <Badge variant="outline" className="text-sm bg-red-100 text-red-800 border-red-200">
+                  לא עודכן
+                </Badge>
+              )}
+              {initialData.status && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm",
+                    statusConfig[initialData.status]?.className
+                  )}
+                >
+                  {statusConfig[initialData.status]?.label}
+                </Badge>
+              )}
+            </div>
           )}
         </div>
       </CardHeader>
@@ -493,6 +526,10 @@ export function CustomerForm({
                 placeholder="0"
                 dir="ltr"
                 className="text-right"
+                onChange={(e) => {
+                  setUserEditedAmount(true)
+                  register("amountPaid", { valueAsNumber: true }).onChange(e)
+                }}
               />
               {errors.amountPaid && (
                 <p className="text-sm text-destructive">
@@ -573,7 +610,10 @@ export function CustomerForm({
 
           {/* Info File Upload */}
           <div className="space-y-2">
-            <Label>קובץ אינפו של האורגן</Label>
+            <div className="flex items-center gap-2">
+              <Label>קובץ אינפו של האורגן</Label>
+              {infoFileName && <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">יש אינפו</Badge>}
+            </div>
 
             {/* Progress indicator - shown during/after upload in edit mode */}
             {uploadStatus !== "idle" && (

@@ -155,7 +155,7 @@ export default function EditCustomerPage() {
         organId: raw.organId,
         organName: raw.organ?.name || "",
         additionalOrganId: raw.additionalOrganId,
-        additionalOrganName: null,
+        additionalOrganName: raw.additionalOrgan?.name || null,
         setTypeId: raw.setTypeId,
         setTypeName: raw.setType?.name || "",
         includesUpdates: raw.setType?.includesUpdates ?? false,
@@ -334,54 +334,42 @@ export default function EditCustomerPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             {customer.fullName}
           </h1>
-          <p className="text-muted-foreground mt-1">
-            מזהה: {customer.id} | {customer.organName} | {customer.setTypeName}
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="text-muted-foreground">
+              מזהה: {customer.id} | {customer.organName}
+              {customer.additionalOrganName && ` + ${customer.additionalOrganName}`}
+              {" | "}{customer.setTypeName}
+            </span>
             {!customer.includesUpdates && (
-              <Badge className="mr-2 bg-yellow-100 text-yellow-800 border-yellow-200">
-                חצי סט — ללא עדכונים
-              </Badge>
-            )}
-          </p>
-        </div>
-        {/* כפתור שדרוג לסט מלא — מוצג רק ללקוחות חצי סט */}
-        {!customer.includesUpdates && fullSetTypes.length > 0 && (
-          <div className="flex items-center gap-2">
-            {fullSetTypes.length === 1 ? (
-              <Button
-                onClick={() => handleUpgrade(fullSetTypes[0].id)}
-                disabled={isUpgrading}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isUpgrading ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                ) : (
-                  <ArrowUpCircle className="h-4 w-4 ml-2" />
+              <>
+                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                  חצי סט — ללא עדכונים
+                </Badge>
+                {/* #11: כפתור שדרוג ליד סוג הסט */}
+                {fullSetTypes.length > 0 && (
+                  fullSetTypes.length === 1 ? (
+                    <Button
+                      size="sm"
+                      onClick={() => handleUpgrade(fullSetTypes[0].id)}
+                      disabled={isUpgrading}
+                      className="bg-green-600 hover:bg-green-700 h-7"
+                    >
+                      {isUpgrading ? <Loader2 className="h-3 w-3 animate-spin ml-1" /> : <ArrowUpCircle className="h-3 w-3 ml-1" />}
+                      שדרג לסט מלא
+                    </Button>
+                  ) : (
+                    fullSetTypes.map((st) => (
+                      <Button key={st.id} size="sm" onClick={() => handleUpgrade(st.id)} disabled={isUpgrading} className="bg-green-600 hover:bg-green-700 h-7">
+                        {isUpgrading ? <Loader2 className="h-3 w-3 animate-spin ml-1" /> : <ArrowUpCircle className="h-3 w-3 ml-1" />}
+                        {st.name}
+                      </Button>
+                    ))
+                  )
                 )}
-                שדרג לסט מלא
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">שדרג ל:</span>
-                {fullSetTypes.map((st) => (
-                  <Button
-                    key={st.id}
-                    size="sm"
-                    onClick={() => handleUpgrade(st.id)}
-                    disabled={isUpgrading}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isUpgrading ? (
-                      <Loader2 className="h-4 w-4 animate-spin ml-1" />
-                    ) : (
-                      <ArrowUpCircle className="h-4 w-4 ml-1" />
-                    )}
-                    {st.name}
-                  </Button>
-                ))}
-              </div>
+              </>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Two-column layout */}

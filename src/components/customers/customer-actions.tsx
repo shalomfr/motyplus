@@ -394,7 +394,7 @@ export function CustomerActions({
             variant="outline"
             className={cn(
               "w-full justify-start",
-              status === "EXCEPTION" && "border-amber-300 text-amber-700"
+              status === "EXCEPTION" && "border-orange-300 text-orange-700"
             )}
             onClick={handleToggleException}
             disabled={loadingAction === "toggleException"}
