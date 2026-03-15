@@ -253,7 +253,7 @@ export default function TasksPage() {
             <ClipboardList className="h-16 w-16 text-gray-300 mx-auto" />
             <h3 className="text-lg font-semibold text-gray-700">אין משימות עדיין</h3>
             <p className="text-sm text-muted-foreground">
-              לחץ כדי לטעון את כל המשימות מהאפיון עם סטטוס מעודכן
+              לחץ כדי לטעון את כל המשימות מהאפיון
             </p>
             <Button onClick={handleSeed} disabled={seeding} size="lg">
               {seeding ? <><Loader2 className="h-4 w-4 ml-2 animate-spin" />טוען...</> : "טען משימות מהאפיון"}
@@ -263,6 +263,7 @@ export default function TasksPage() {
       </div>
     )
   }
+
 
   return (
     <div className="space-y-4">

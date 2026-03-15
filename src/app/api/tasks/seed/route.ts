@@ -2,80 +2,166 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+// משימות מתוך גיליון "ראשי" באפיון — עמודה ימנית = משימה, שמאלית = פירוט
 const SEED_TASKS = [
-  // ===== הושלם (DONE) =====
-  { title: "הוספת לקוח חדש — כל השדות + אורגן + סט", category: "לקוחות", status: "DONE", priority: "HIGH" },
-  { title: "עריכת לקוח מלאה — כל השדות ניתנים לעריכה", category: "לקוחות", status: "DONE", priority: "HIGH" },
-  { title: "רשימת לקוחות עם חיפוש, פילטרים וייצוא לאקסל", category: "לקוחות", status: "DONE", priority: "HIGH" },
-  { title: "העלאת קובץ אינפו + הורדה מכרטיס לקוח", category: "לקוחות", status: "DONE", priority: "HIGH" },
-  { title: "אורגן מקושר — תמיכה בשני אורגנים ללקוח", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "שדרוג לסט שלם — כפתור ירוק בכרטיס לקוח", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "חסימה / הקפאה / חריג — סטטוסים ללקוח", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "מזהה לקוח אוטומטי", category: "לקוחות", status: "DONE", priority: "LOW" },
-  { title: "תאריך רכישה אוטומטי + תפוגת עדכון שנה", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "סכום ששולם לפי סוג סט", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "גרסאות עדכון — יצירה, סטטוסים, מחירים", category: "עדכונים", status: "DONE", priority: "HIGH" },
-  { title: "סטטוס עדכון: טיוטה → הכנה → מוכן → שליחה → הושלם", category: "עדכונים", status: "DONE", priority: "HIGH" },
-  { title: "העלאת קבצי עדכון (מקצבים, דגימות, ZIP)", category: "עדכונים", status: "DONE", priority: "HIGH" },
-  { title: "שליחת עדכון ללקוח בודד", category: "עדכונים", status: "DONE", priority: "HIGH" },
-  { title: "צינור לידים — חדש → שיחה → הצעה → סגירה", category: "לידים", status: "DONE", priority: "HIGH" },
-  { title: "המרת ליד ללקוח", category: "לידים", status: "DONE", priority: "MEDIUM" },
-  { title: "הערות לליד — CRUD", category: "לידים", status: "DONE", priority: "LOW" },
-  { title: "קודי קופון — הנחות, תוקף, מגבלת שימוש", category: "מבצעים", status: "DONE", priority: "HIGH" },
-  { title: "תבניות מייל לפי קטגוריה (עדכון, ברכה, מבצע)", category: "מיילים", status: "DONE", priority: "HIGH" },
-  { title: "משתנים דינמיים בתבניות מייל", category: "מיילים", status: "DONE", priority: "MEDIUM" },
-  { title: "ניהול אורגנים — CRUD + תמיכה בעדכונים", category: "נתונים", status: "DONE", priority: "HIGH" },
-  { title: "ניהול סוגי סטים — מחירים + תמיכה בעדכונים", category: "נתונים", status: "DONE", priority: "HIGH" },
-  { title: "חיבור Google Drive — אחסון קבצים", category: "הגדרות", status: "DONE", priority: "HIGH" },
-  { title: "חיבור WhatsApp — QR / זיווג טלפון", category: "הגדרות", status: "DONE", priority: "MEDIUM" },
-  { title: "גיבוי ושחזור — ייצוא/ייבוא JSON", category: "הגדרות", status: "DONE", priority: "HIGH" },
-  { title: "ניהול משתמשים — הוספה, הפעלה, תפקידים", category: "הגדרות", status: "DONE", priority: "HIGH" },
-  { title: "יומן פעילות — לוג מלא עם פילטרים", category: "לוח בקרה", status: "DONE", priority: "HIGH" },
-  { title: "גרף הכנסות בדשבורד", category: "לוח בקרה", status: "DONE", priority: "MEDIUM" },
-  { title: "כרטיסי סטטיסטיקות בדשבורד", category: "דף הבית", status: "DONE", priority: "MEDIUM" },
-  { title: "קוביות קיצורי דרך — 8 כפתורים + הורדת אינפו", category: "דף הבית", status: "DONE", priority: "LOW" },
-  { title: "פעילות אחרונה בדשבורד", category: "לוח בקרה", status: "DONE", priority: "LOW" },
-  { title: "התראת לקוחות שצריכים עדכון", category: "דף הבית", status: "DONE", priority: "MEDIUM" },
-
-  // ===== בתכנון / בביצוע (PLANNING / IN_PROGRESS) =====
-  { title: "UI שליחה המונית של מיילים — בחירת נמענים + שליחה", category: "מיילים", status: "PLANNING", priority: "HIGH" },
-  { title: "רשימת עבודה ייעודית לעדכונים — לפי אורגן", category: "עדכונים", status: "PLANNING", priority: "HIGH" },
-  { title: "מעקב הורדות — מי הוריד ומי לא", category: "עדכונים", status: "PLANNING", priority: "MEDIUM" },
-  { title: "תצוגה מקדימה למייל לפני שליחה", category: "מיילים", status: "PLANNING", priority: "MEDIUM" },
-  { title: "שליחת עדכון לכולם בלחיצה אחת", category: "עדכונים", status: "IN_PROGRESS", priority: "HIGH" },
-
-  // ===== רעיונות (IDEA) =====
-  { title: "תפריט שליחות — 8 אפשרויות שליחה ללקוח", category: "לקוחות", status: "IDEA", priority: "HIGH", description: "מייל ברכה, מקצבים בלבד, דגימות בלבד, מקצבים+דגימות, הוראות, מייל חופשי, טופס עדכון פרטים, הצעת מחיר ליתרה" },
-  { title: "לקוח מזדמן — סימון לקוח שלא בעדכונים", category: "לקוחות", status: "IDEA", priority: "MEDIUM", description: "הכל אותו דבר אבל הוא לא ברשימת העדכונים, עם אפשרות להכניס אותו לעדכונים" },
-  { title: "זיהוי אורגן אוטומטי מקובץ אינפו", category: "לקוחות", status: "IDEA", priority: "MEDIUM", description: "כשמעלים אינפו, המערכת מזהה אוטומטית את סוג האורגן מתוך הקובץ" },
-  { title: "עמלות סוכן — מעקב אחוזים על עסקאות", category: "לידים", status: "IDEA", priority: "LOW", description: "כמה כסף הסוכן צריך לקבל לפי אחוזים על כל עסקה שנסגרה" },
-  { title: "מעקב הוצאות — הוצאות לעומת הכנסות", category: "לוח בקרה", status: "IDEA", priority: "LOW" },
-  { title: "תזכורת אוטומטית למי שלא הוריד עדכון", category: "מיילים", status: "IDEA", priority: "MEDIUM", description: "מייל תזכורת אוטומטי לאחר X ימים למי שלא הוריד" },
-  { title: "סקר ללקוחות + קופון למי שענה", category: "מיילים", status: "IDEA", priority: "LOW" },
-  { title: "חוזה דיגיטלי לחתימה", category: "מיילים", status: "IDEA", priority: "LOW" },
-  { title: "אינטגרציית טלפון — זיהוי מתקשר + פרטים", category: "לידים", status: "IDEA", priority: "LOW", description: "מי שמתקשר לפון עובר דרך המערכת ועולים לו הפרטים" },
-  { title: "קישור סליקה מותאם — קישור תשלום ללקוח", category: "מבצעים", status: "IDEA", priority: "MEDIUM" },
-  { title: "ניוזלטר — שליחת עדכונים תקופתיים", category: "מיילים", status: "IDEA", priority: "LOW" },
-  { title: "שליחת עדכון קטן — מקצבים בודדים בנפרד", category: "עדכונים", status: "IDEA", priority: "MEDIUM", description: "כשיוצא עדכון קטן של מקצבים בודדים, לשלוח בנפרד למי שכבר מעודכן" },
-  { title: "שליחת מיילים לפי סינון — למי שלא מעודכן עם מחירון", category: "מיילים", status: "IDEA", priority: "HIGH", description: "שליחת מייל ללא-מעודכנים עם כמה עולה להשלים + כמה עדכונים חסרים" },
-  { title: "שליחת קישור העלאת אינפו ללקוח", category: "לקוחות", status: "IDEA", priority: "MEDIUM" },
-  { title: "כפתור שליחת אינפו למישהו אחר", category: "לקוחות", status: "IDEA", priority: "LOW" },
-  { title: "שליחת ווטסאפ — ברכות ועדכונים", category: "לקוחות", status: "IDEA", priority: "MEDIUM" },
-  { title: "הצגת המייל לפני שליחה — אישור איך ייראה", category: "מיילים", status: "IDEA", priority: "MEDIUM" },
-  { title: "התאמת טקסט ספציפי לאדם מסוים ושליחה", category: "מיילים", status: "IDEA", priority: "LOW" },
-  { title: "שליחה מוקדמת לקבוצת מיקוד", category: "מיילים", status: "IDEA", priority: "LOW" },
-  { title: "עיצוב קבוע למיילים עם לוגו ואנימציה", category: "מיילים", status: "IDEA", priority: "MEDIUM" },
-  { title: "הכנת תיקיות אוטומטית בפתיחת עדכון חדש", category: "עדכונים", status: "IDEA", priority: "HIGH", description: "בפתיחת עדכון חדש, נפתחות אוטומטית כל התיקיות (לכל אורגן, לכל סט) מוכנות למילוי" },
-  { title: "רובוט — אוטומציה של Expansion Manager", category: "עדכונים", status: "DONE", priority: "HIGH", description: "רובוט שלוקח מזהה, נכנס לתוכנה, מכין סימונים ושומר CPI" },
-  { title: "ייצוא רשימות מסוננות לאקסל", category: "לקוחות", status: "IDEA", priority: "LOW" },
-  { title: "סימון דגימות למחשב (CPF במקום CPI)", category: "לקוחות", status: "DONE", priority: "MEDIUM" },
-  { title: "מעקב מי קיבל עדכון בזמן האחרון", category: "לוח בקרה", status: "IDEA", priority: "MEDIUM" },
-  { title: "יומן פעילות — תיעוד רכישות, עדכונים, תשלומים", category: "לוח בקרה", status: "DONE", priority: "HIGH" },
-  { title: "החלפת אורגן — כפתור שמחליף מספר אינפו", category: "לקוחות", status: "IDEA", priority: "LOW" },
-  { title: "הפיכת לקוח ללא פעיל עקב מכירת אורגן", category: "לקוחות", status: "DONE", priority: "LOW" },
+  {
+    title: "הוספת לקוח חדש",
+    description: "מחיקת הנתונים והלוח בקרה מהדף ראשי. העברה ללוח בקרה ולא מחיקה לגמרי",
+    category: "דף הבית",
+  },
+  {
+    title: "עריכת לקוח",
+    description: "הגדרת אורגן אוטומטי בעת הכנסת אינפו",
+    category: "דף הבית",
+  },
+  {
+    title: "רשימת לקוחות",
+    description: "שינוי המספרים ל61940",
+    category: "דף הבית",
+  },
+  {
+    title: "שליחת מיילים",
+    description: "הצגת מספר לקוח גם בעת הוספת לקוח חדש",
+    category: "דף הבית",
+  },
+  {
+    title: "עדכונים — אורגן נוסף",
+    description: "כאשר נפתח אורגן נוסף - אז זה רק כפתור הפעלה. מוסיף מקום לעוד אינפו ואוטומטי שוב מקבל את הדגם ע\"י האינפו שמצטרף",
+    category: "דף הבית",
+  },
+  {
+    title: "מבצעים — תשלום אוטומטי",
+    description: "כאשר נפתח תפריט הסטים מתמלא אוטומטי התשלום לפי הנתונים. אלא אם כן אני כותב אחרת או שאני כותב שהיה לו מבצע ולפי זה יש פחות כסך ששולם בתכלס",
+    category: "דף הבית",
+  },
+  {
+    title: "לוח בקרה — תפוגת עדכונים",
+    description: "לא לכל לקוח יש את השורה תפוגת עדכונים אלא אם הוא בנתונים שמאפשרים כמו סט שלם ואורגן מתאים וכו'. התפוגה נטענת כאשר אני משנה בעריכת לקוח ממצב של חצי סט לסט שלם ובזמן שזה קורה",
+    category: "דף הבית",
+  },
+  {
+    title: "הגדרות — גרסת עדכון אוטומטית",
+    description: "גרסת עדכון נהיית אוטומטי ללקוח חדש להכי חדש (אם אין לו סט שלם או מה שבעדכונים שדה זה לא יופעל) שזה כרגע V5 - ולפי הנתונים שיש באקסל זה יהיה על כל משהו אחר איפה הוא אוחז",
+    category: "דף הבית",
+  },
+  {
+    title: "סימון פעיל + מספר עדכון בצבע",
+    description: "על כל לקוח יהיה רשום למעלה פעיל - ומספר עדכון - אם בעדכון האחרון ומעודכן אז זה בצבע ירוק - אם זה עדכון אחר שלא מעודכן אז זה בצבע אדום או משהו כזה",
+    category: "לקוחות",
+  },
+  {
+    title: "כפתורי חזרה בכל מקום",
+    description: null,
+    category: "כללי",
+  },
+  {
+    title: "סנכרון כפתור שדרוג לסט שלם",
+    description: "יש כפתור שדרג לסט שלם אבל הוא לא מסונכרן עם המקום הרגיל שכתוב חצי סט צריך שיהיה מסונכרן - לשים את הכפתור בסמיכות למקום שמשנים",
+    category: "לקוחות",
+  },
+  {
+    title: "כפתור הורדת האינפו",
+    description: "כפתור הורדת האינפו של הלקוח בתוך הכרטיס לקוח",
+    category: "לקוחות",
+  },
+  {
+    title: "כפתור שליחת האינפו ללקוח",
+    description: null,
+    category: "לקוחות",
+  },
+  {
+    title: "שם מזהה של האורגן השני",
+    description: "לסדר את השם מזהה של האורגן השני",
+    category: "לקוחות",
+  },
+  {
+    title: "שליחת קישור להעלאת האינפו",
+    description: null,
+    category: "לקוחות",
+  },
+  {
+    title: "תפריט שליחות — 8 אפשרויות",
+    description: "הכנת כפתור שליחות ששם יהיה מסודר כל מה שקשור לשליחות ברגע שלחצתי על הכפתור נפתח לי תפריט שליחות ככה הכל יהיה יותר מסודר\nיהיה בתפריט:\n1. שליחת מייל ברכה לאחר רכישה + קישורים והוראות מתאימות\n2. שליחת מקצבים בלבד (לפי מה שמוגדר לו יקבל את התיקייה הנכונה אם סט שלם אם חצי סט אם לאורגן וכו')\n3. שליחת דגימות בלבד\n4. שליחת מקצבים ודגימות בלבד\n5. שליחת הוראות בלבד\n6. שליחת מייל חופשי\n7. שליחת טופס לעדכון פרטים\n8. ללקוחות שיש להם יתרת תשלום כפתור לשליחת הצעת מחיר מעודכנת לפי מצב התשלום שלהם",
+    category: "לקוחות",
+  },
+  {
+    title: "שדרוג אוטומטי למעודכן בשליחת מקצבים",
+    description: "ברגע שנשלח ללקוח מייל עם המקצבים - אם זה לצורך העניין רק עדכון והוא מקבל מייל ברכה - אוטמטי משתדרג לו המצב למצב מעודכן V5 (לפי המצב הנתון באותו רגע) כי הוא קיבל את העדכון. כמובן שהמצב שלו מבחינת עדכונים נשאר אותו דבר לפי התאריך קנייה אבל רשום לו שהוא מעודכן בעדכון האחרון",
+    category: "עדכונים",
+  },
+  {
+    title: "כפתור שליחת ווטסאפים",
+    description: "עוד כפתור של כל מה שקשור לשליחת ווסטפים - בהמשך יהיו פרטים על זה, לא דחוף כרגע",
+    category: "לקוחות",
+  },
+  {
+    title: "וי אוטומטי על V3 ללקוח חדש",
+    description: "לכל לקוח חדש מהיום והלאה יש אוטומטי וי על הקוביה V3",
+    category: "לקוחות",
+  },
+  {
+    title: "לקוח מזדמן",
+    description: "כפתור לחיצה על לקוח שהוא לקוח מזדמן - מה שזה אומר שהכל אותו דבר אבל פשוט הוא לא בעדכונים ויש אופציה להכניס אותו לעדכונים בלחיצת כפתור",
+    category: "לקוחות",
+  },
+  {
+    title: "סכום ששולם אוטומטי לפי סוג סט",
+    description: "סכום ששולם אוטומטי עולה לפי סוג הסט - ואני יכול לרשום אם עשיתי לו מבצע או הנחה ואז לפי זה יהיה רשום כמה שילם בפועל",
+    category: "לקוחות",
+  },
+  {
+    title: "מצב תשלומים שנותר לשלם",
+    description: "רשום על כל לקוח מצב התשלומים שנותר לשלם - אם זה לקוח של סט שלם אז חשבון של כל העדכונים החסרים - אם אין לו סט שלם אז הסכום שנותר לתשלום",
+    category: "לקוחות",
+  },
+  {
+    title: "מצב חריג — עדכונים ללא קשר למצב",
+    description: "מצב חריג זה אומר שהוא מקבל את העדכונים בלי קשר למצבו מבחינת עדכונים - רלוונטי לשליחות המיילים שנשלחים אוטומטי לכל מי שמעודכן כשאני מוציא עדכון. זה לא במקום פעיל - זה במצב העדכונים (אפשר במקום שיהיה כתוב V5 וירוק - יהיה אותו דבר בצבע כתום)",
+    category: "לקוחות",
+  },
+  {
+    title: "סימון שיש אינפו + החלפת אינפו",
+    description: "כשיש אינפו צריך להיות מסומן למטה שיש כבר אינפו - ואופציה ללחוץ אם אני רוצה להחליף אינפו. להגדיר שאם אני מחליף אינפו הוא מחליף את האינפו שבתיקייה (דורס את הישן)",
+    category: "לקוחות",
+  },
+  {
+    title: "הכנת תבניות ותשתית למיילים",
+    description: "עדכונים: הכנת תבניות ותשתית למיילים",
+    category: "מיילים",
+  },
+  {
+    title: "תיקיות מסודרות אוטומטי בפתיחת עדכון",
+    description: "הכנת תשתית לתיקיות מסודרות - אוטומטי בפתיחת עדכון חדש נפתח כל התיקיות מוכנות למילוי",
+    category: "עדכונים",
+  },
+  {
+    title: "תיקיות לכל סוגי הסטים והאורגנים",
+    description: "הכנת תשתית לתיקיות של כל סוגי הסטים וכל סוגי האורגנים",
+    category: "עדכונים",
+  },
+  {
+    title: "תשתית מיילים לכל הסוגים",
+    description: "הכנת תשתית של מיילים לכל הסוגים",
+    category: "מיילים",
+  },
+  {
+    title: "שליחת מיילים לכולם בפעם אחת",
+    description: "שליחת מיילים לכולם בפעם אחת לכל מי שמעודכן ויש לו כבר את הקבצים",
+    category: "מיילים",
+  },
+  {
+    title: "שליחת מיילים למי שלא מעודכן + מחיר",
+    description: "שליחת מיילים למי שלא מעודכן - פלוס מחיר כמה עולה לו להשלים וכמה עדכונים חסרים לו",
+    category: "מיילים",
+  },
+  {
+    title: "שליחת מיילים לחצאי סטים",
+    description: "שליחת מיילים למי שיש לו חצאי סטים כמה נשאר לו כדי להשלים - אם יש לו אורגן שלא יכול להכיל עדכונים שיהיה כתוב שהוא צריך להחליף אורגן כדי שיוכל לשדרג לכל הסט",
+    category: "מיילים",
+  },
 ]
 
-// POST /api/tasks/seed - טעינת משימות ראשונית מהאפיון
+// POST /api/tasks/seed - טעינת משימות מהאפיון
 export async function POST() {
   try {
     const session = await auth();
@@ -83,25 +169,18 @@ export async function POST() {
       return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
     }
 
-    // בדוק אם כבר יש משימות
-    const existing = await prisma.task.count();
-    if (existing > 0) {
-      return NextResponse.json(
-        { error: "כבר קיימות משימות במערכת. מחק אותן קודם אם רוצה לטעון מחדש.", count: existing },
-        { status: 409 }
-      );
-    }
+    // מחק את כל המשימות הקיימות
+    await prisma.task.deleteMany();
 
-    // צור את כל המשימות
+    // צור את כל המשימות — הכל בסטטוס "בביצוע"
     const tasks = await prisma.task.createMany({
       data: SEED_TASKS.map((t, i) => ({
         title: t.title,
         description: t.description || null,
-        status: t.status as "IDEA" | "PLANNING" | "IN_PROGRESS" | "DONE",
-        priority: (t.priority || "MEDIUM") as "LOW" | "MEDIUM" | "HIGH",
+        status: "IN_PROGRESS" as const,
+        priority: "MEDIUM" as const,
         category: t.category,
         order: i,
-        completedAt: t.status === "DONE" ? new Date() : null,
       })),
     });
 
