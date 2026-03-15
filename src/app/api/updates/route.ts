@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { updateVersionSchema } from "@/lib/validators";
+import { ensureFolderPath } from "@/lib/file-storage";
 
 // GET /api/updates - רשימת גרסאות עדכון
 export async function GET() {
@@ -90,6 +91,39 @@ export async function POST(request: NextRequest) {
         sortOrder: nextSortOrder,
       },
     });
+
+    // #26/#27: יצירת תיקיות אוטומטית ב-Google Drive
+    try {
+      const organs = await prisma.organ.findMany({
+        where: { isActive: true, supportsUpdates: true },
+        select: { name: true, folderAlias: true },
+      });
+      const setTypes = await prisma.setType.findMany({
+        where: { isActive: true },
+        select: { name: true, folderAlias: true },
+      });
+
+      // תיקייה ראשית לעדכון
+      const versionFolder = `updates/${data.version}`;
+      await ensureFolderPath(versionFolder);
+
+      // תיקייה לכל אורגן
+      for (const organ of organs) {
+        const organFolder = `${versionFolder}/${organ.folderAlias || organ.name}`;
+        await ensureFolderPath(organFolder);
+
+        // תתי-תיקיות לכל סוג סט
+        for (const setType of setTypes) {
+          await ensureFolderPath(`${organFolder}/${setType.folderAlias || setType.name}`);
+        }
+      }
+
+      // תיקיית samples לדגימות מותאמות
+      await ensureFolderPath(`samples/${data.version}`);
+    } catch (folderErr) {
+      console.error("Error creating update folders:", folderErr);
+      // לא נכשל — התיקיות זה bonus
+    }
 
     return NextResponse.json(update, { status: 201 });
   } catch (error) {

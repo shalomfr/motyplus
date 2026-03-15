@@ -103,6 +103,7 @@ model Customer {
   sampleType           SampleType     @default(CPI)
   currentUpdateVersion String?
   hasV3                Boolean        @default(false)
+  isCasual             Boolean        @default(false) // לקוח מזדמן — לא ברשימת עדכונים
   infoFileUrl          String?
   additionalInfoFileUrl String?
   notes                String?        @db.Text

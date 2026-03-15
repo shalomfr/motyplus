@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
-import { Loader2, Save, Upload, FileText, X as XIcon } from "lucide-react"
+import { Loader2, Save, Upload, FileText, X as XIcon, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
@@ -461,30 +461,42 @@ export function CustomerForm({
               )}
             </div>
 
-            {/* Additional Organ */}
+            {/* #5: Additional Organ — כפתור הפעלה */}
             <div className="space-y-2">
               <Label>אורגן נוסף</Label>
-              <Select
-                value={watch("additionalOrganId") || ""}
-                onValueChange={(value) =>
-                  setValue(
-                    "additionalOrganId",
-                    value === "none" ? null : value
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="ללא" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">ללא</SelectItem>
-                  {organs.map((organ) => (
-                    <SelectItem key={organ.id} value={organ.id}>
-                      {organ.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {watch("additionalOrganId") ? (
+                <div className="flex gap-2">
+                  <Select
+                    value={watch("additionalOrganId") || ""}
+                    onValueChange={(value) =>
+                      setValue("additionalOrganId", value === "none" ? null : value)
+                    }
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="ללא" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">ללא</SelectItem>
+                      {organs.map((organ) => (
+                        <SelectItem key={organ.id} value={organ.id}>{organ.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setValue("additionalOrganId", null)} className="shrink-0 text-red-500 hover:text-red-700">
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-muted-foreground"
+                  onClick={() => setValue("additionalOrganId", organs[0]?.id || "")}
+                >
+                  <Upload className="h-4 w-4 ml-2" />
+                  הוסף אורגן נוסף
+                </Button>
+              )}
             </div>
 
             {/* Set Type */}
@@ -562,14 +574,15 @@ export function CustomerForm({
                       : "-"}
                   </p>
                 </div>
+                {/* #7: תפוגת עדכונים — רק אם סט שכולל עדכונים */}
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">
                     תאריך תפוגת עדכון
                   </Label>
                   <p className="text-sm font-medium h-10 flex items-center">
-                    {initialData.updateExpiryDate
+                    {initialData.updateExpiryDate && initialData.status !== "FROZEN"
                       ? formatDate(initialData.updateExpiryDate)
-                      : "-"}
+                      : <span className="text-muted-foreground">לא רלוונטי</span>}
                   </p>
                 </div>
                 <div className="space-y-2">

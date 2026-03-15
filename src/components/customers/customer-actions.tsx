@@ -55,6 +55,12 @@ import {
   MessageCircle,
   PartyPopper,
   Wrench,
+  ChevronDown,
+  ChevronUp,
+  Music,
+  Headphones,
+  BookOpen,
+  Upload,
 } from "lucide-react"
 
 interface CustomerUpdate {
@@ -115,6 +121,7 @@ export function CustomerActions({
   const [emailBody, setEmailBody] = useState("")
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [sendMenuOpen, setSendMenuOpen] = useState(false)
 
   const handleAction = async (
     action: string,
@@ -296,210 +303,127 @@ export function CustomerActions({
 
   return (
     <div className="space-y-4">
-      {/* Quick Actions */}
+      {/* #16: תפריט שליחות — 8 אפשרויות */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">פעולות מהירות</CardTitle>
+          <CardTitle className="text-base cursor-pointer flex items-center justify-between" onClick={() => setSendMenuOpen(!sendMenuOpen)}>
+            <span>תפריט שליחות</span>
+            {sendMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </CardTitle>
+          <CardDescription>8 אפשרויות שליחה ללקוח</CardDescription>
         </CardHeader>
+        {sendMenuOpen && (
         <CardContent className="space-y-2">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleSendUpdateEmail}
-            disabled={loadingAction === "sendUpdate"}
-          >
-            {loadingAction === "sendUpdate" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Mail className="h-4 w-4 ml-2" />
-            )}
-            שליחת מייל עדכון
+          {/* 1. מייל ברכה */}
+          <Button variant="outline" className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50" onClick={handleSendWelcomeEmail} disabled={loadingAction === "welcomeEmail"}>
+            {loadingAction === "welcomeEmail" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <PartyPopper className="h-4 w-4 ml-2" />}
+            1. מייל ברכה לאחר רכישה
           </Button>
-
+          {/* 2. מקצבים בלבד */}
+          <Button variant="outline" className="w-full justify-start" onClick={handleSendUpdateEmail} disabled={loadingAction === "sendUpdate"}>
+            {loadingAction === "sendUpdate" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Music className="h-4 w-4 ml-2" />}
+            2. שליחת מקצבים בלבד
+          </Button>
+          {/* 3. דגימות בלבד */}
+          <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendSamples", `/api/customers/${customerId}/send-update-email`, "POST", { samplesOnly: true })} disabled={loadingAction === "sendSamples"}>
+            {loadingAction === "sendSamples" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
+            3. שליחת דגימות בלבד
+          </Button>
+          {/* 4. מקצבים + דגימות */}
+          <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendBoth", `/api/customers/${customerId}/send-update-email`, "POST", { includeSamples: true })} disabled={loadingAction === "sendBoth"}>
+            {loadingAction === "sendBoth" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
+            4. שליחת מקצבים ודגימות
+          </Button>
+          {/* 5. הוראות בלבד */}
+          <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendInstructions", `/api/customers/${customerId}/send-email`, "POST", { subject: "הוראות שימוש", body: "הוראות שימוש מצורפות" })} disabled={loadingAction === "sendInstructions"}>
+            {loadingAction === "sendInstructions" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <BookOpen className="h-4 w-4 ml-2" />}
+            5. שליחת הוראות בלבד
+          </Button>
+          {/* 6. מייל חופשי */}
           <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
                 <Send className="h-4 w-4 ml-2" />
-                שליחת מייל חופשי
+                6. שליחת מייל חופשי
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>שליחת מייל חופשי</DialogTitle>
-                <DialogDescription>
-                  שליחת מייל ל-{customerName} ({customerEmail})
-                </DialogDescription>
+                <DialogDescription>שליחת מייל ל-{customerName} ({customerEmail})</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="emailSubject">נושא</Label>
-                  <Input
-                    id="emailSubject"
-                    value={emailSubject}
-                    onChange={(e) => setEmailSubject(e.target.value)}
-                    placeholder="נושא המייל"
-                  />
+                  <Input id="emailSubject" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} placeholder="נושא המייל" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="emailBody">תוכן</Label>
-                  <Textarea
-                    id="emailBody"
-                    value={emailBody}
-                    onChange={(e) => setEmailBody(e.target.value)}
-                    placeholder="תוכן המייל..."
-                    rows={6}
-                  />
+                  <Textarea id="emailBody" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} placeholder="תוכן המייל..." rows={6} />
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEmailDialogOpen(false)}
-                >
-                  ביטול
-                </Button>
-                <Button
-                  onClick={handleSendCustomEmail}
-                  disabled={isSendingEmail}
-                >
-                  {isSendingEmail ? (
-                    <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 ml-2" />
-                  )}
+                <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>ביטול</Button>
+                <Button onClick={handleSendCustomEmail} disabled={isSendingEmail}>
+                  {isSendingEmail ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Send className="h-4 w-4 ml-2" />}
                   שלח מייל
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start",
-              status === "BLOCKED" && "border-red-300 text-red-700"
-            )}
-            onClick={handleToggleBlock}
-            disabled={loadingAction === "toggleBlock"}
-          >
-            {loadingAction === "toggleBlock" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Ban className="h-4 w-4 ml-2" />
-            )}
-            {status === "BLOCKED" ? "שחרור חסימה" : "חסימה"}
+          {/* 7. טופס עדכון פרטים */}
+          <Button variant="outline" className="w-full justify-start" onClick={handleSendDetailsForm} disabled={loadingAction === "detailsForm"}>
+            {loadingAction === "detailsForm" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <FileText className="h-4 w-4 ml-2" />}
+            7. שליחת טופס עדכון פרטים
           </Button>
-
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start",
-              status === "EXCEPTION" && "border-orange-300 text-orange-700"
-            )}
-            onClick={handleToggleException}
-            disabled={loadingAction === "toggleException"}
-          >
-            {loadingAction === "toggleException" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <AlertTriangle className="h-4 w-4 ml-2" />
-            )}
-            {status === "EXCEPTION" ? "ביטול חריג" : "סימון חריג"}
+          {/* 8. הצעת מחיר */}
+          <Button variant="outline" className="w-full justify-start" onClick={handleSendQuote} disabled={loadingAction === "priceQuote"}>
+            {loadingAction === "priceQuote" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
+            8. שליחת הצעת מחיר ליתרה
           </Button>
+        </CardContent>
+        )}
+      </Card>
 
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleFreeze}
-            disabled={
-              loadingAction === "freeze" || status === "FROZEN"
-            }
-          >
-            {loadingAction === "freeze" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Snowflake className="h-4 w-4 ml-2" />
-            )}
-            הקפאה
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleToggleSampleType}
-            disabled={loadingAction === "sampleType"}
-          >
-            {loadingAction === "sampleType" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Monitor className="h-4 w-4 ml-2" />
-            )}
-            דגימות למחשב: {sampleType}
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleCopyId}
-          >
+      {/* פעולות מהירות */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">פעולות מהירות</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Button variant="outline" className="w-full justify-start" onClick={handleCopyId}>
             <Copy className="h-4 w-4 ml-2" />
             העתקת מזהה ({customerId})
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleSendDetailsForm}
-            disabled={loadingAction === "detailsForm"}
-          >
-            {loadingAction === "detailsForm" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4 ml-2" />
-            )}
-            שליחת טופס עדכון פרטים
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50"
-            onClick={handleSendWelcomeEmail}
-            disabled={loadingAction === "welcomeEmail"}
-          >
-            {loadingAction === "welcomeEmail" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <PartyPopper className="h-4 w-4 ml-2" />
-            )}
-            מייל ברכה לאחר רכישה
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
-            onClick={handleSendUpdateRequest}
-            disabled={loadingAction === "updateRequest"}
-          >
-            {loadingAction === "updateRequest" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Wrench className="h-4 w-4 ml-2" />
-            )}
+          <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50" onClick={handleSendUpdateRequest} disabled={loadingAction === "updateRequest"}>
+            {loadingAction === "updateRequest" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Wrench className="h-4 w-4 ml-2" />}
             הכנת עדכון (שלח לאדמין)
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
-            onClick={handleWhatsAppGreeting}
-            disabled={loadingAction === "waGreeting"}
-          >
-            {loadingAction === "waGreeting" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <MessageCircle className="h-4 w-4 ml-2" />
-            )}
+          <Button variant="outline" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={handleWhatsAppGreeting} disabled={loadingAction === "waGreeting"}>
+            {loadingAction === "waGreeting" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <MessageCircle className="h-4 w-4 ml-2" />}
             וואטסאפ ברכה
+          </Button>
+
+          <Button variant="outline" className={cn("w-full justify-start", status === "BLOCKED" && "border-red-300 text-red-700")} onClick={handleToggleBlock} disabled={loadingAction === "toggleBlock"}>
+            {loadingAction === "toggleBlock" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Ban className="h-4 w-4 ml-2" />}
+            {status === "BLOCKED" ? "שחרור חסימה" : "חסימה"}
+          </Button>
+
+          <Button variant="outline" className={cn("w-full justify-start", status === "EXCEPTION" && "border-orange-300 text-orange-700")} onClick={handleToggleException} disabled={loadingAction === "toggleException"}>
+            {loadingAction === "toggleException" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <AlertTriangle className="h-4 w-4 ml-2" />}
+            {status === "EXCEPTION" ? "ביטול חריג" : "סימון חריג"}
+          </Button>
+
+          <Button variant="outline" className="w-full justify-start" onClick={handleFreeze} disabled={loadingAction === "freeze" || status === "FROZEN"}>
+            {loadingAction === "freeze" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Snowflake className="h-4 w-4 ml-2" />}
+            הקפאה
+          </Button>
+
+          <Button variant="outline" className="w-full justify-start" onClick={handleToggleSampleType} disabled={loadingAction === "sampleType"}>
+            {loadingAction === "sampleType" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Monitor className="h-4 w-4 ml-2" />}
+            דגימות למחשב: {sampleType}
           </Button>
         </CardContent>
       </Card>
@@ -517,7 +441,7 @@ export function CustomerActions({
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">יתרה</span>
+            <span className="text-sm text-muted-foreground">נותר לתשלום</span>
             <span
               className={cn(
                 "font-semibold",
@@ -525,7 +449,11 @@ export function CustomerActions({
                 balance !== null && balance <= 0 && "text-green-600"
               )}
             >
-              {balance !== null ? formatCurrency(balance) : "-"}
+              {balance !== null && balance > 0
+                ? formatCurrency(balance)
+                : balance !== null && balance <= 0
+                  ? "שולם במלואו"
+                  : "-"}
             </span>
           </div>
           <Button

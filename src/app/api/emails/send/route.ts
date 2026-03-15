@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
       });
 
       for (const customer of customers) {
-        // החלפת משתנים דינמיים
+        // החלפת משתנים דינמיים (#30/#31: משתנים כספיים)
+        const setPrice = Number(customer.setType.price || 0);
+        const paid = Number(customer.amountPaid || 0);
+        const remaining = Math.max(0, setPrice - paid);
         const variables: Record<string, string> = {
           fullName: customer.fullName,
           firstName: customer.fullName.split(" ")[0],
@@ -71,6 +74,10 @@ export async function POST(request: NextRequest) {
           setType: customer.setType.name,
           purchaseDate: customer.purchaseDate.toLocaleDateString("he-IL"),
           updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
+          amountPaid: paid.toLocaleString("he-IL"),
+          remainingAmount: remaining.toLocaleString("he-IL"),
+          remainingForFullSet: remaining > 0 ? `${remaining.toLocaleString("he-IL")} ₪` : "שולם במלואו",
+          currentVersion: customer.currentUpdateVersion || "לא עודכן",
         };
 
         const personalizedSubject = replaceTemplateVariables(finalSubject, variables);

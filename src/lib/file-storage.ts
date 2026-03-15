@@ -11,7 +11,7 @@ const folderCache = new Map<string, string>();
 
 // === Internal helpers ===
 
-async function ensureFolderPath(folderPath: string): Promise<string> {
+export async function ensureFolderPath(folderPath: string): Promise<string> {
   if (folderCache.has(folderPath)) return folderCache.get(folderPath)!;
 
   const drive = getDrive();
