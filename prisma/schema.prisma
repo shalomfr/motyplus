@@ -422,6 +422,37 @@ model FileStorage {
   @@index([path])
 }
 
+// ===== משימות =====
+
+enum TaskStatus {
+  IDEA
+  PLANNING
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?      @db.Text
+  status      TaskStatus   @default(IDEA)
+  priority    TaskPriority @default(MEDIUM)
+  category    String       @default("כללי")
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([category])
+}
+
 // ===== הגדרות מערכת =====
 
 model SystemSetting {

@@ -8,15 +8,29 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
-  Mail, Tags, LayoutDashboard, Settings, Download, Loader2
+  Mail, Tags, LayoutDashboard, Settings, Download, Loader2,
+  ClipboardList, CheckCircle2
 } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function DashboardPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const [isDownloading, setIsDownloading] = useState(false)
+  const [taskCounts, setTaskCounts] = useState<{ DONE: number; total: number } | null>(null)
+
+  useEffect(() => {
+    fetch("/api/tasks?limit=0")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.counts) {
+          const total = data.counts.IDEA + data.counts.PLANNING + data.counts.IN_PROGRESS + data.counts.DONE
+          setTaskCounts({ DONE: data.counts.DONE, total })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const handleDownloadInfoFiles = async () => {
     setIsDownloading(true)
@@ -88,6 +102,35 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* כרטיס משימות */}
+      {taskCounts && taskCounts.total > 0 && (
+        <Card
+          className="bg-indigo-50 border-indigo-200 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => router.push("/tasks")}
+        >
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="h-6 w-6 text-indigo-600" />
+              <div>
+                <p className="font-bold text-gray-800">התקדמות המערכת</p>
+                <p className="text-sm text-muted-foreground">
+                  {taskCounts.DONE} מתוך {taskCounts.total} משימות הושלמו ({Math.round((taskCounts.DONE / taskCounts.total) * 100)}%)
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-24 bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full"
+                  style={{ width: `${(taskCounts.DONE / taskCounts.total) * 100}%` }}
+                />
+              </div>
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <StatsCards />
 

@@ -13,6 +13,7 @@ import {
   Database,
   Percent,
   ScrollText,
+  ClipboardList,
   Settings,
   LogOut,
   X,
@@ -38,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "נתונים", icon: Database, path: "/data" },
   { label: "מבצעים", icon: Percent, path: "/promotions" },
   { label: "יומן פעילות", icon: ScrollText, path: "/activity-log" },
+  { label: "משימות", icon: ClipboardList, path: "/tasks" },
   { label: "הגדרות", icon: Settings, path: "/settings" },
 ];
 
