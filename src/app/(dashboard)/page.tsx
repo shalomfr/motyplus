@@ -1,9 +1,6 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { StatsCards } from "@/components/dashboard/stats-cards"
-import { RecentActivity } from "@/components/dashboard/recent-activity"
-import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,7 +11,7 @@ import {
 import { useSession } from "next-auth/react"
 import { useState, useEffect } from "react"
 
-export default function DashboardPage() {
+export default function HomePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const [isDownloading, setIsDownloading] = useState(false)
@@ -60,10 +57,9 @@ export default function DashboardPage() {
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
         שלום, {session?.user?.name || "admin"}
       </h2>
-      <h3 className="text-xl font-bold text-gray-700 -mt-4">לוח בקרה</h3>
 
       {/* קוביות קיצורי דרך */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
           { label: "הוספת לקוח חדש", icon: UserPlus, href: "/customers/new", bg: "bg-green-50 border-green-200", color: "text-green-600" },
           { label: "עריכת לקוח", icon: UserCog, href: "/customers", bg: "bg-blue-50 border-blue-200", color: "text-blue-600" },
@@ -71,6 +67,7 @@ export default function DashboardPage() {
           { label: "שליחת מיילים", icon: Mail, href: "/emails", bg: "bg-pink-50 border-pink-200", color: "text-pink-600" },
           { label: "עדכונים", icon: RefreshCw, href: "/updates", bg: "bg-orange-50 border-orange-200", color: "text-orange-600" },
           { label: "מבצעים", icon: Tags, href: "/promotions", bg: "bg-red-50 border-red-200", color: "text-red-600" },
+          { label: "לוח בקרה", icon: LayoutDashboard, href: "/dashboard", bg: "bg-cyan-50 border-cyan-200", color: "text-cyan-600" },
           { label: "משימות", icon: ClipboardList, href: "/tasks", bg: "bg-indigo-50 border-indigo-200", color: "text-indigo-600" },
           { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-100 border-gray-200", color: "text-gray-600" },
         ].map((item) => (
@@ -132,8 +129,6 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <StatsCards />
-
       {/* כפתור רשימת עבודה */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-4 flex items-center justify-between">
@@ -162,11 +157,6 @@ export default function DashboardPage() {
           </p>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart />
-        <RecentActivity />
-      </div>
     </div>
   )
 }
