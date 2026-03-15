@@ -71,7 +71,7 @@ export default function DashboardPage() {
           { label: "שליחת מיילים", icon: Mail, href: "/emails", bg: "bg-pink-50 border-pink-200", color: "text-pink-600" },
           { label: "עדכונים", icon: RefreshCw, href: "/updates", bg: "bg-orange-50 border-orange-200", color: "text-orange-600" },
           { label: "מבצעים", icon: Tags, href: "/promotions", bg: "bg-red-50 border-red-200", color: "text-red-600" },
-          { label: "לוח בקרה", icon: LayoutDashboard, href: "/", bg: "bg-indigo-50 border-indigo-200", color: "text-indigo-600" },
+          { label: "משימות", icon: ClipboardList, href: "/tasks", bg: "bg-indigo-50 border-indigo-200", color: "text-indigo-600" },
           { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-100 border-gray-200", color: "text-gray-600" },
         ].map((item) => (
           <Card

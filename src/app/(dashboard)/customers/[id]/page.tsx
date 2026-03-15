@@ -418,6 +418,7 @@ export default function EditCustomerPage() {
             sampleType={customer.sampleType}
             amountPaid={customer.amountPaid}
             balance={customer.balance}
+            infoFileUrl={customer.infoFileUrl}
             linkedCustomer={customer.linkedCustomer}
             updates={customer.updates}
             activityLog={customer.activityLog}

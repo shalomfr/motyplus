@@ -94,6 +94,7 @@ interface CustomerActionsProps {
   sampleType: "CPI" | "CPF"
   amountPaid: number
   balance: number | null
+  infoFileUrl: string | null
   linkedCustomer: LinkedCustomer | null
   updates: CustomerUpdate[]
   activityLog: ActivityLogEntry[]
@@ -110,6 +111,7 @@ export function CustomerActions({
   sampleType,
   amountPaid,
   balance,
+  infoFileUrl,
   linkedCustomer,
   updates,
   activityLog,
@@ -401,9 +403,56 @@ export function CustomerActions({
             הכנת עדכון (שלח לאדמין)
           </Button>
 
+          {/* #18: תפריט WhatsApp מלא */}
           <Button variant="outline" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={handleWhatsAppGreeting} disabled={loadingAction === "waGreeting"}>
             {loadingAction === "waGreeting" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <MessageCircle className="h-4 w-4 ml-2" />}
             וואטסאפ ברכה
+          </Button>
+
+          <Button variant="outline" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            onClick={() => {
+              const phone = (customerWhatsapp || customerPhone).replace(/\D/g, "")
+              const intlPhone = phone.startsWith("0") ? "972" + phone.slice(1) : phone
+              window.open(`https://wa.me/${intlPhone}`, "_blank")
+            }}
+          >
+            <ExternalLink className="h-4 w-4 ml-2" />
+            פתח צ&apos;אט WhatsApp
+          </Button>
+
+          {/* #13: שליחת אינפו ללקוח */}
+          {infoFileUrl && (
+            <Button variant="outline" className="w-full justify-start"
+              onClick={() => handleAction("sendInfo", `/api/customers/${customerId}/send-email`, "POST", {
+                subject: "קובץ אינפו שלך",
+                body: `<p>שלום ${customerName},</p><p>מצורף קישור לקובץ האינפו שלך:</p><p><a href="${infoFileUrl}">לחץ להורדה</a></p>`,
+              })}
+              disabled={loadingAction === "sendInfo"}
+            >
+              {loadingAction === "sendInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Download className="h-4 w-4 ml-2" />}
+              שלח אינפו ללקוח במייל
+            </Button>
+          )}
+
+          {/* #15: קישור להעלאת אינפו */}
+          <Button variant="outline" className="w-full justify-start"
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/customers/${customerId}/upload-link`, { method: "POST" })
+                const data = await res.json()
+                if (data.link) {
+                  navigator.clipboard.writeText(data.link)
+                  toast({ title: "הקישור הועתק!", description: data.link })
+                } else {
+                  toast({ title: "שגיאה", description: data.error || "לא ניתן ליצור קישור", variant: "destructive" })
+                }
+              } catch {
+                toast({ title: "שגיאה", description: "לא ניתן ליצור קישור", variant: "destructive" })
+              }
+            }}
+          >
+            <Upload className="h-4 w-4 ml-2" />
+            צור קישור להעלאת אינפו
           </Button>
 
           <Button variant="outline" className={cn("w-full justify-start", status === "BLOCKED" && "border-red-300 text-red-700")} onClick={handleToggleBlock} disabled={loadingAction === "toggleBlock"}>

@@ -92,6 +92,7 @@ export function CustomerForm({
   const [additionalUploadStatus, setAdditionalUploadStatus] = useState<UploadStatus>("idle")
   const [additionalUploadError, setAdditionalUploadError] = useState("")
   const [pendingInfoFile, setPendingInfoFile] = useState<File | null>(null)
+  const [nextCustomerId, setNextCustomerId] = useState<number | null>(null)
   const [pendingAdditionalInfoFile, setPendingAdditionalInfoFile] = useState<File | null>(null)
   const [infoFileName, setInfoFileName] = useState<string>(() => {
     if (initialData?.infoFileUrl) {
@@ -164,10 +165,15 @@ export function CustomerForm({
   useEffect(() => {
     async function fetchData() {
       try {
-        const [organsRes, setsRes] = await Promise.all([
+        const fetches: Promise<Response>[] = [
           fetch("/api/data/organs"),
           fetch("/api/data/sets"),
-        ])
+        ]
+        // #4: מספר לקוח הבא
+        if (mode === "create") {
+          fetches.push(fetch("/api/customers/next-id"))
+        }
+        const [organsRes, setsRes, nextIdRes] = await Promise.all(fetches)
         if (organsRes.ok) {
           const organsData = await organsRes.json()
           setOrgans(organsData)
@@ -175,6 +181,10 @@ export function CustomerForm({
         if (setsRes.ok) {
           const setsData = await setsRes.json()
           setSetTypes(setsData)
+        }
+        if (nextIdRes?.ok) {
+          const idData = await nextIdRes.json()
+          setNextCustomerId(idData.nextId)
         }
       } catch (error) {
         console.error("Error fetching form data:", error)
@@ -185,9 +195,40 @@ export function CustomerForm({
     fetchData()
   }, [])
 
+  // #2: זיהוי אורגן אוטומטי מקובץ N27 (bytes 0-63 = שם אורגן)
+  const detectOrganFromN27 = async (file: File) => {
+    try {
+      const buffer = await file.arrayBuffer()
+      const bytes = new Uint8Array(buffer)
+      // bytes 0-63 = שם אורגן (null-terminated ASCII)
+      let organName = ""
+      for (let i = 0; i < Math.min(64, bytes.length); i++) {
+        if (bytes[i] === 0) break
+        organName += String.fromCharCode(bytes[i])
+      }
+      organName = organName.trim()
+      if (!organName) return
+
+      // חיפוש אורגן תואם (case-insensitive, גם חלקי)
+      const match = organs.find(o =>
+        o.name.toLowerCase().replace(/[-_ ]/g, "") === organName.toLowerCase().replace(/[-_ ]/g, "") ||
+        organName.toLowerCase().includes(o.name.toLowerCase().replace(/[-_ ]/g, "")) ||
+        o.name.toLowerCase().replace(/[-_ ]/g, "").includes(organName.toLowerCase().replace(/[-_ ]/g, ""))
+      )
+      if (match && !watchedOrganId) {
+        setValue("organId", match.id)
+      }
+    } catch {
+      // שקט — זיהוי הוא bonus
+    }
+  }
+
   const handleInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // #2: זיהוי אורגן אוטומטי
+    detectOrganFromN27(file)
 
     // במצב create - שומרים את הקובץ בזיכרון ומעלים אחרי יצירת הלקוח
     if (mode === "create") {
@@ -311,7 +352,16 @@ export function CustomerForm({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
-            {mode === "create" ? "פרטי לקוח חדש" : "פרטי לקוח"}
+            {mode === "create" ? (
+              <span>
+                פרטי לקוח חדש
+                {nextCustomerId && (
+                  <span className="text-sm font-normal text-muted-foreground mr-2">
+                    (מזהה: {nextCustomerId})
+                  </span>
+                )}
+              </span>
+            ) : "פרטי לקוח"}
           </CardTitle>
           {mode === "edit" && initialData && (
             <div className="flex items-center gap-2">
