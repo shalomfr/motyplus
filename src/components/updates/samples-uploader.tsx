@@ -14,7 +14,7 @@ import {
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { Progress } from "@/components/ui/progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
-import { Upload, Trash2, Loader2, Music, Users, FileText, Send, CheckCircle2, AlertCircle } from "lucide-react"
+import { Upload, Trash2, Loader2, Music, Users, FileText, Send, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
 
 interface SampleFile {
   path: string
@@ -44,6 +44,7 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [deletingFile, setDeletingFile] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [sendResult, setSendResult] = useState<{
     sent: number
@@ -217,30 +218,49 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
             <Music className="h-5 w-5" />
             קבצי דגימות CPI
           </CardTitle>
-          <label>
+          <div className="flex gap-2">
             <Button
-              asChild
-              disabled={isUploading}
+              variant="outline"
+              disabled={isSyncing || isUploading}
+              onClick={async () => {
+                setIsSyncing(true)
+                setLoading(true)
+                await fetchFiles()
+                setIsSyncing(false)
+              }}
             >
-              <span className="cursor-pointer">
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                ) : (
-                  <Upload className="h-4 w-4 ml-2" />
-                )}
-                {isUploading ? "מעלה..." : "בחר קבצי CPI"}
-              </span>
+              {isSyncing ? (
+                <Loader2 className="h-4 w-4 animate-spin ml-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 ml-2" />
+              )}
+              סנכרן מ-Drive
             </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".cpi"
-              multiple
-              className="hidden"
-              disabled={isUploading}
-              onChange={handleFilesSelected}
-            />
-          </label>
+            <label>
+              <Button
+                asChild
+                disabled={isUploading}
+              >
+                <span className="cursor-pointer">
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  ) : (
+                    <Upload className="h-4 w-4 ml-2" />
+                  )}
+                  {isUploading ? "מעלה..." : "בחר קבצי CPI"}
+                </span>
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".cpi"
+                multiple
+                className="hidden"
+                disabled={isUploading}
+                onChange={handleFilesSelected}
+              />
+            </label>
+          </div>
         </div>
 
         {/* Stats */}
