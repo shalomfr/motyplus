@@ -28,9 +28,9 @@ interface RichEmailEditorProps {
 }
 
 export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
-  // אם התוכן הוא HTML מייל מלא (עם טבלאות) — ברירת מחדל Preview
-  const isFullHtmlEmail = content.includes("<table") || content.includes("<!DOCTYPE")
-  const [mode, setMode] = useState<EditorMode>(isFullHtmlEmail ? "preview" : "visual")
+  // אם התוכן הוא HTML מייל מלא (עם טבלאות) — חסום ויזואלי, רק Code + Preview
+  const [isFullHtml, setIsFullHtml] = useState(() => content.includes("<table") || content.includes("<!DOCTYPE"))
+  const [mode, setMode] = useState<EditorMode>(isFullHtml ? "preview" : "visual")
   const [codeContent, setCodeContent] = useState(content)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -60,6 +60,9 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
 
   // Sync when switching modes
   const switchMode = useCallback((newMode: EditorMode) => {
+    // חסום מעבר לויזואלי אם זה HTML מייל — TipTap הורס את הטבלאות
+    if (newMode === "visual" && isFullHtml) return
+
     if (mode === "visual" && newMode !== "visual" && editor) {
       setCodeContent(editor.getHTML())
     }
@@ -70,8 +73,12 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
     if (mode === "code" && newMode === "preview") {
       onChange(codeContent)
     }
+    // עדכון isFullHtml לפי התוכן הנוכחי
+    if (newMode === "preview" || newMode === "code") {
+      setIsFullHtml(codeContent.includes("<table") || codeContent.includes("<!DOCTYPE"))
+    }
     setMode(newMode)
-  }, [mode, editor, codeContent, onChange])
+  }, [mode, editor, codeContent, onChange, isFullHtml])
 
   // Update preview iframe
   useEffect(() => {
@@ -149,7 +156,9 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
     <div className="border rounded-lg overflow-hidden bg-white">
       {/* Mode tabs */}
       <div className="bg-gray-100 px-2 pt-2 flex gap-1 border-b">
-        <TabBtn tabMode="visual" icon={Paintbrush} label="ויזואלי" />
+        {!isFullHtml && (
+          <TabBtn tabMode="visual" icon={Paintbrush} label="ויזואלי" />
+        )}
         <TabBtn tabMode="code" icon={Code} label="HTML קוד" />
         <TabBtn tabMode="preview" icon={Eye} label="תצוגה מקדימה" />
       </div>
