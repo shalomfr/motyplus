@@ -28,7 +28,9 @@ interface RichEmailEditorProps {
 }
 
 export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
-  const [mode, setMode] = useState<EditorMode>("visual")
+  // אם התוכן הוא HTML מייל מלא (עם טבלאות) — ברירת מחדל Preview
+  const isFullHtmlEmail = content.includes("<table") || content.includes("<!DOCTYPE")
+  const [mode, setMode] = useState<EditorMode>(isFullHtmlEmail ? "preview" : "visual")
   const [codeContent, setCodeContent] = useState(content)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 

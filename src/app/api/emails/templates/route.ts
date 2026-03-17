@@ -15,10 +15,20 @@ export async function GET() {
       );
     }
 
-    // Auto-seed: אם אין תבניות בכלל — טען ברירת מחדל
-    const count = await prisma.emailTemplate.count();
-    if (count === 0) {
-      for (const t of DEFAULT_EMAIL_TEMPLATES) {
+    // Auto-seed + auto-update: יצירה/עדכון תבניות ברירת מחדל
+    for (const t of DEFAULT_EMAIL_TEMPLATES) {
+      const existing = await prisma.emailTemplate.findFirst({
+        where: { name: t.name },
+      });
+      if (existing) {
+        // עדכון רק אם הגוף לא מכיל את העיצוב החדש (EEF3FB = רקע הדוגמאות)
+        if (!existing.body.includes("EEF3FB")) {
+          await prisma.emailTemplate.update({
+            where: { id: existing.id },
+            data: { body: t.body, subject: t.subject, variables: t.variables },
+          });
+        }
+      } else {
         await prisma.emailTemplate.create({
           data: {
             name: t.name,
