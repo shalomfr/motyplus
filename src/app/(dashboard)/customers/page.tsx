@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
-import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle } from "lucide-react"
+import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 const PAGE_SIZE = 20
@@ -48,6 +48,7 @@ export default function CustomersListPage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [lastBatchTag, setLastBatchTag] = useState<string | null>(null)
   const [isDeletingImport, setIsDeletingImport] = useState(false)
+  const [isSyncingInfo, setIsSyncingInfo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchCustomers = useCallback(async () => {
@@ -234,10 +235,24 @@ export default function CustomersListPage() {
 
       if (data.created > 0) {
         toast({
-          title: "הייבוא הושלם",
-          description: `${data.created} לקוחות יובאו בהצלחה`,
+          title: "הייבוא הושלם — מסנכרן אינפו...",
+          description: `${data.created} לקוחות יובאו, בודק קבצי אינפו בדרייב...`,
           variant: "success" as "default",
         })
+        // סנכרון אינפו אוטומטי אחרי ייבוא
+        fetch("/api/customers/sync-info", { method: "POST" })
+          .then(r => r.json())
+          .then(syncData => {
+            if (syncData.updated > 0) {
+              toast({
+                title: "סנכרון אינפו הושלם",
+                description: `${syncData.updated} לקוחות עודכנו עם קובץ אינפו`,
+                variant: "success" as "default",
+              })
+              fetchCustomers()
+            }
+          })
+          .catch(() => {})
       }
     } catch (error) {
       toast({
@@ -300,6 +315,28 @@ export default function CustomersListPage() {
     }
   }
 
+  const handleSyncInfo = async () => {
+    setIsSyncingInfo(true)
+    try {
+      const res = await fetch("/api/customers/sync-info", { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        toast({
+          title: "סנכרון אינפו הושלם",
+          description: data.message,
+          variant: "success" as "default",
+        })
+        fetchCustomers()
+      } else {
+        toast({ title: "שגיאה", description: data.error, variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה בסנכרון", variant: "destructive" })
+    } finally {
+      setIsSyncingInfo(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -313,6 +350,18 @@ export default function CustomersListPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSyncInfo}
+            disabled={isSyncingInfo}
+          >
+            {isSyncingInfo ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 ml-2" />
+            )}
+            סנכרן אינפו
+          </Button>
           <Button
             variant="outline"
             onClick={handleImportClick}
