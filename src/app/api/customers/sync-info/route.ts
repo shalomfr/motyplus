@@ -14,22 +14,37 @@ export async function POST() {
 
     const drive = getDrive();
 
-    // מצא את תיקיית customers/info בדרייב
+    // תיקיית info ידועה מראש, fallback ל-ensureFolderPath
+    const KNOWN_INFO_FOLDER_ID = "1pdsud6vexV4WQzGdVjdUUDfFfJUJ7SV9";
     let infoFolderId: string;
     try {
-      infoFolderId = await ensureFolderPath("customers/info");
+      // נסה קודם עם ה-ID הידוע
+      const check = await drive.files.get({
+        fileId: KNOWN_INFO_FOLDER_ID,
+        fields: "id, name, trashed",
+      });
+      if (check.data.id && !check.data.trashed) {
+        infoFolderId = KNOWN_INFO_FOLDER_ID;
+      } else {
+        infoFolderId = await ensureFolderPath("customers/info");
+      }
     } catch {
-      return NextResponse.json({ error: "לא ניתן לגשת לתיקיית אינפו בדרייב" }, { status: 500 });
+      // אם ה-ID הידוע לא עובד — נסה לפי נתיב
+      try {
+        infoFolderId = await ensureFolderPath("customers/info");
+      } catch {
+        return NextResponse.json({ error: "לא ניתן לגשת לתיקיית אינפו בדרייב" }, { status: 500 });
+      }
     }
 
-    // סרוק את כל הקבצים בתיקייה
+    // סרוק את כל הקבצים בתיקייה (כולל תתי תיקיות)
     const allFiles: { name: string; id: string }[] = [];
     let pageToken: string | undefined;
 
     do {
       const res = await drive.files.list({
         q: `'${infoFolderId}' in parents and trashed=false`,
-        fields: "nextPageToken, files(id, name)",
+        fields: "nextPageToken, files(id, name, mimeType)",
         spaces: "drive",
         pageSize: 1000,
         pageToken,
@@ -37,7 +52,7 @@ export async function POST() {
 
       if (res.data.files) {
         for (const f of res.data.files) {
-          if (f.name && f.id) {
+          if (f.name && f.id && f.mimeType !== "application/vnd.google-apps.folder") {
             allFiles.push({ name: f.name, id: f.id });
           }
         }
@@ -51,7 +66,8 @@ export async function POST() {
     const additionalInfoMap = new Map<number, string>();
 
     for (const file of allFiles) {
-      const match = file.name.match(/^(\d+)(?:_02)?\.n27$/i);
+      // תבניות אפשריות: 61452.n27, 61452V5.n27, 61452_02.n27, 61452_V5.n27
+      const match = file.name.match(/^(\d+)(?:[_]?(?:02|V\d+[.\d]*))?\.n27$/i);
       if (!match) continue;
 
       const custId = parseInt(match[1]);
@@ -61,7 +77,10 @@ export async function POST() {
       if (isAdditional) {
         additionalInfoMap.set(custId, drivePath);
       } else {
-        mainInfoMap.set(custId, drivePath);
+        // אם כבר יש — תעדיף קובץ בלי version (הבסיסי)
+        if (!mainInfoMap.has(custId) || !file.name.includes("V")) {
+          mainInfoMap.set(custId, drivePath);
+        }
       }
     }
 
@@ -102,11 +121,18 @@ export async function POST() {
       }
     }
 
+    // דגימה של 5 שמות קבצים ראשונים לדיבוג
+    const sampleFiles = allFiles.slice(0, 5).map(f => f.name);
+
     return NextResponse.json({
       found: allFiles.length,
       matched: customers.length,
       updated,
-      message: `נסרקו ${allFiles.length} קבצים, ${updated} לקוחות עודכנו`,
+      mainInfoCount: mainInfoMap.size,
+      additionalInfoCount: additionalInfoMap.size,
+      folderId: infoFolderId,
+      sampleFiles,
+      message: `נסרקו ${allFiles.length} קבצים, ${customers.length} תואמים, ${updated} עודכנו`,
     });
   } catch (error) {
     console.error("Error syncing info files:", error);
