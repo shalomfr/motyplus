@@ -3,19 +3,32 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
   Mail, Tags, LayoutDashboard, Settings, Download, Loader2,
-  ClipboardList, CheckCircle2
+  ClipboardList, CheckCircle2, Upload, FileText, ChevronDown, ChevronUp
 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
+
+interface MissingInfoCustomer {
+  id: number
+  fullName: string
+  organName: string
+  phone: string
+}
 
 export default function HomePage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [isDownloading, setIsDownloading] = useState(false)
   const [taskCounts, setTaskCounts] = useState<{ DONE: number; total: number } | null>(null)
+  const [missingInfo, setMissingInfo] = useState<MissingInfoCustomer[]>([])
+  const [missingInfoExpanded, setMissingInfoExpanded] = useState(false)
+  const [uploadingId, setUploadingId] = useState<number | null>(null)
 
   useEffect(() => {
     fetch("/api/tasks?limit=0")
@@ -27,7 +40,44 @@ export default function HomePage() {
         }
       })
       .catch(() => {})
+
+    // טעינת לקוחות חסרי אינפו
+    fetch("/api/customers/missing-info")
+      .then((r) => r.ok ? r.json() : { customers: [] })
+      .then((data) => setMissingInfo(data.customers || []))
+      .catch(() => {})
   }, [])
+
+  const handleUploadInfoFor = (customerId: number) => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".n27"
+    input.onchange = async (ev) => {
+      const file = (ev.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      setUploadingId(customerId)
+      try {
+        const fd = new FormData()
+        fd.append("file", file)
+        const res = await fetch(`/api/customers/${customerId}/upload-info`, {
+          method: "POST",
+          body: fd,
+        })
+        if (res.ok) {
+          toast({ title: "הקובץ הועלה בהצלחה", variant: "success" as "default" })
+          setMissingInfo(prev => prev.filter(c => c.id !== customerId))
+        } else {
+          const data = await res.json()
+          toast({ title: "שגיאה", description: data.error, variant: "destructive" })
+        }
+      } catch {
+        toast({ title: "שגיאה בהעלאה", variant: "destructive" })
+      } finally {
+        setUploadingId(null)
+      }
+    }
+    input.click()
+  }
 
   const handleDownloadInfoFiles = async () => {
     setIsDownloading(true)
@@ -145,16 +195,85 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      {/* התראות */}
-      <Card className="bg-yellow-50 border-yellow-200">
+      {/* התראת לקוחות חסרי אינפו */}
+      <Card className={missingInfo.length > 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}>
         <CardContent className="p-4">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            התראות חוסרים
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            הנתונים ייטענו ממסד הנתונים כשיהיו לקוחות במערכת
-          </p>
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setMissingInfoExpanded(!missingInfoExpanded)}
+          >
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              {missingInfo.length > 0 ? (
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              )}
+              לקוחות חסרי אינפו
+              {missingInfo.length > 0 && (
+                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300 mr-2">
+                  {missingInfo.length}
+                </Badge>
+              )}
+            </h3>
+            <div className="flex items-center gap-2">
+              {missingInfo.length === 0 && (
+                <span className="text-sm text-green-600">לכל הלקוחות יש אינפו</span>
+              )}
+              {missingInfo.length > 0 && (
+                missingInfoExpanded
+                  ? <ChevronUp className="h-5 w-5 text-gray-400" />
+                  : <ChevronDown className="h-5 w-5 text-gray-400" />
+              )}
+            </div>
+          </div>
+
+          {missingInfoExpanded && missingInfo.length > 0 && (
+            <div className="mt-4 space-y-2 max-h-[400px] overflow-y-auto">
+              {missingInfo.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="flex items-center justify-between bg-white rounded-lg border p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono text-xs text-muted-foreground">{customer.id}</span>
+                    <span className="font-medium truncate">{customer.fullName}</span>
+                    <span className="text-xs text-muted-foreground">{customer.organName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleUploadInfoFor(customer.id)
+                      }}
+                      disabled={uploadingId === customer.id}
+                    >
+                      {uploadingId === customer.id ? (
+                        <Loader2 className="h-3 w-3 ml-1 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3 ml-1" />
+                      )}
+                      העלה אינפו
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/customers/${customer.id}`)
+                      }}
+                    >
+                      <FileText className="h-3 w-3 ml-1" />
+                      פרטים
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
