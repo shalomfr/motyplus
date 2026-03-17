@@ -193,15 +193,14 @@ export async function POST(request: NextRequest) {
     const organMap = new Map(organs.map((o) => [o.name, o.id]));
     const setTypeMap = new Map(setTypes.map((s) => [s.name, s.id]));
 
-    // Get existing customer IDs to skip duplicates
+    // Get existing customer IDs to skip duplicates (by customerId AND by numeric id)
+    const existingCustomers = await prisma.customer.findMany({
+      select: { id: true, customerId: true },
+    });
     const existingCustomerIds = new Set(
-      (
-        await prisma.customer.findMany({
-          where: { customerId: { not: null } },
-          select: { customerId: true },
-        })
-      ).map((c) => c.customerId)
+      existingCustomers.filter(c => c.customerId).map(c => c.customerId)
     );
+    const existingNumericIds = new Set(existingCustomers.map(c => c.id));
 
     const batchTag = Date.now().toString();
     let created = 0;
@@ -220,8 +219,9 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Skip if already exists
-      if (existingCustomerIds.has(customerIdStr)) {
+      // Skip if already exists (by customerId or numeric id)
+      const numId = parseInt(customerIdStr);
+      if (existingCustomerIds.has(customerIdStr) || (!isNaN(numId) && existingNumericIds.has(numId))) {
         skipped++;
         skippedDetails.push({ row: rowNum, customerId: customerIdStr, reason: "קוד לקוח קיים במערכת" });
         continue;
@@ -318,8 +318,10 @@ export async function POST(request: NextRequest) {
         // Build notes with batch tag
         const notes = `[CSV_IMPORT:${batchTag}]${notesRaw ? " " + notesRaw : ""}`;
 
+        const numericId = parseInt(customerIdStr);
         await prisma.customer.create({
           data: {
+            id: isNaN(numericId) ? undefined : numericId,
             customerId: customerIdStr,
             fullName,
             phone: phone || "",
