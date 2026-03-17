@@ -30,8 +30,6 @@ import {
   ArrowUp,
   ArrowRight,
   ArrowDown,
-  Loader2,
-  RefreshCw,
   Download,
 } from "lucide-react"
 
@@ -85,7 +83,6 @@ export default function TasksPage() {
   const [dragTaskId, setDragTaskId] = useState<number | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [seeding, setSeeding] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const fetchTasks = useCallback(async () => {
@@ -220,23 +217,6 @@ export default function TasksPage() {
   const getColumnTasks = (status: string) =>
     tasks.filter((t) => t.status === status)
 
-  const handleSeed = async () => {
-    setSeeding(true)
-    try {
-      const res = await fetch("/api/tasks/seed", { method: "POST" })
-      const data = await res.json()
-      if (res.ok) {
-        fetchTasks()
-      } else {
-        alert(data.error || "שגיאה")
-      }
-    } catch {
-      alert("שגיאה בטעינת משימות")
-    } finally {
-      setSeeding(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -245,26 +225,6 @@ export default function TasksPage() {
     )
   }
 
-  // No tasks — show seed button
-  if (tasks.length === 0 && !search && filterCategory === "all") {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
-        <Card>
-          <CardContent className="p-8 text-center space-y-4">
-            <ClipboardList className="h-16 w-16 text-gray-300 mx-auto" />
-            <h3 className="text-lg font-semibold text-gray-700">אין משימות עדיין</h3>
-            <p className="text-sm text-muted-foreground">
-              לחץ כדי לטעון את כל המשימות מהאפיון
-            </p>
-            <Button onClick={handleSeed} disabled={seeding} size="lg">
-              {seeding ? <><Loader2 className="h-4 w-4 ml-2 animate-spin" />טוען...</> : "טען משימות מהאפיון"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 
 
   return (
@@ -301,18 +261,6 @@ export default function TasksPage() {
           >
             <Download className="h-4 w-4 ml-1" />
             ייצוא
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (confirm("לטעון מחדש את כל המשימות מהאפיון? זה ימחק את כל המשימות הקיימות")) {
-                handleSeed()
-              }
-            }}
-            disabled={seeding}
-          >
-            {seeding ? <Loader2 className="h-4 w-4 ml-1 animate-spin" /> : <RefreshCw className="h-4 w-4 ml-1" />}
-            טען מהאפיון
           </Button>
           <Button onClick={() => setEditTask({ id: 0, title: "", description: null, status: "IDEA", priority: "MEDIUM", category: "כללי", order: 0, createdAt: "", completedAt: null })}>
             <Plus className="h-4 w-4 ml-1" />
