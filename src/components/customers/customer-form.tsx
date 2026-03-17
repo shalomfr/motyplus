@@ -834,7 +834,80 @@ export function CustomerForm({
           {/* Additional Info File Upload - only when additional organ selected */}
           {watch("additionalOrganId") && (
           <div className="space-y-2">
-            <Label>קובץ אינפו של האורגן הנוסף</Label>
+            <div className="flex items-center gap-2">
+              <Label>קובץ אינפו של האורגן הנוסף</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs text-green-700 border-green-200 hover:bg-green-50"
+                onClick={async () => {
+                  if (pendingAdditionalInfoFile) {
+                    // זיהוי מהקובץ הממתין — עדכון אורגן נוסף
+                    try {
+                      const buffer = await pendingAdditionalInfoFile.arrayBuffer()
+                      const bytes = new Uint8Array(buffer)
+                      let organName = ""
+                      for (let i = 0; i < Math.min(64, bytes.length); i++) {
+                        if (bytes[i] === 0) break
+                        organName += String.fromCharCode(bytes[i])
+                      }
+                      organName = organName.trim()
+                      if (!organName) { setDetectResult("לא זוהה אורגן בקובץ"); return }
+                      const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
+                      const match = organs.find(o => normalize(o.name) === normalize(organName) || normalize(organName).includes(normalize(o.name)) || normalize(o.name).includes(normalize(organName)))
+                      if (match) {
+                        setValue("additionalOrganId", match.id)
+                        setDetectResult(`זוהה: ${match.name}`)
+                      } else {
+                        setDetectResult(`נמצא "${organName}" — לא תואם אורגן במערכת`)
+                      }
+                      setTimeout(() => setDetectResult(null), 4000)
+                    } catch { setDetectResult("שגיאה בקריאת הקובץ") }
+                  } else {
+                    // פתח בחירת קובץ
+                    const input = document.createElement("input")
+                    input.type = "file"
+                    input.accept = ".n27"
+                    input.onchange = async (ev) => {
+                      const file = (ev.target as HTMLInputElement).files?.[0]
+                      if (!file) return
+                      setPendingAdditionalInfoFile(file)
+                      setAdditionalInfoFileName(file.name)
+                      try {
+                        const buffer = await file.arrayBuffer()
+                        const bytes = new Uint8Array(buffer)
+                        let organName = ""
+                        for (let i = 0; i < Math.min(64, bytes.length); i++) {
+                          if (bytes[i] === 0) break
+                          organName += String.fromCharCode(bytes[i])
+                        }
+                        organName = organName.trim()
+                        if (!organName) { setDetectResult("לא זוהה אורגן בקובץ"); return }
+                        const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
+                        const match = organs.find(o => normalize(o.name) === normalize(organName) || normalize(organName).includes(normalize(o.name)) || normalize(o.name).includes(normalize(organName)))
+                        if (match) {
+                          setValue("additionalOrganId", match.id)
+                          setDetectResult(`זוהה: ${match.name}`)
+                        } else {
+                          setDetectResult(`נמצא "${organName}" — לא תואם`)
+                        }
+                        setTimeout(() => setDetectResult(null), 4000)
+                      } catch { setDetectResult("שגיאה") }
+                    }
+                    input.click()
+                  }
+                }}
+              >
+                <Search className="h-3 w-3 ml-1" />
+                זהה אורגן
+              </Button>
+              {detectResult && (
+                <span className={cn("text-xs font-medium", detectResult.startsWith("זוהה") ? "text-green-600" : "text-amber-600")}>
+                  {detectResult}
+                </span>
+              )}
+            </div>
 
             {additionalUploadStatus !== "idle" && (
               <FileUploadProgress
