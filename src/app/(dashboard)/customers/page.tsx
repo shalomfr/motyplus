@@ -28,6 +28,7 @@ const PAGE_SIZE = 20
 interface ImportResult {
   created: number
   skipped: number
+  skippedDetails?: { row: number; customerId: string; reason: string }[]
   errors: { row: number; customerId: string; error: string }[]
   batchTag: string
   total: number
@@ -506,6 +507,27 @@ export default function CustomersListPage() {
                       {importResult.errors.length > 20 && (
                         <li className="font-medium">
                           ...ועוד {importResult.errors.length - 20} שגיאות
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Skipped details */}
+                {importResult.skippedDetails && importResult.skippedDetails.length > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+                    <p className="text-sm font-medium text-yellow-800 mb-2">
+                      פירוט דילוגים:
+                    </p>
+                    <ul className="text-xs text-yellow-700 space-y-1">
+                      {importResult.skippedDetails.slice(0, 30).map((s, i) => (
+                        <li key={i}>
+                          שורה {s.row} (קוד {s.customerId}): {s.reason}
+                        </li>
+                      ))}
+                      {importResult.skippedDetails.length > 30 && (
+                        <li className="font-medium">
+                          ...ועוד {importResult.skippedDetails.length - 30} דילוגים
                         </li>
                       )}
                     </ul>

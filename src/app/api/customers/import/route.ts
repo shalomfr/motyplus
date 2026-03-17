@@ -207,6 +207,7 @@ export async function POST(request: NextRequest) {
     let created = 0;
     let skipped = 0;
     const errors: { row: number; customerId: string; error: string }[] = [];
+    const skippedDetails: { row: number; customerId: string; reason: string }[] = [];
 
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
@@ -215,12 +216,14 @@ export async function POST(request: NextRequest) {
 
       if (!customerIdStr) {
         skipped++;
+        skippedDetails.push({ row: rowNum, customerId: "-", reason: "קוד לקוח ריק" });
         continue;
       }
 
       // Skip if already exists
       if (existingCustomerIds.has(customerIdStr)) {
         skipped++;
+        skippedDetails.push({ row: rowNum, customerId: customerIdStr, reason: "קוד לקוח קיים במערכת" });
         continue;
       }
 
@@ -354,6 +357,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       created,
       skipped,
+      skippedDetails: skippedDetails.slice(0, 50),
       errors,
       batchTag,
       total: dataRows.length,
