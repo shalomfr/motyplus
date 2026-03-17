@@ -390,14 +390,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const tag = `[CSV_IMPORT:${batch}]`;
+    // batch=ALL → מחק את כל הלקוחות שיובאו (כל מי שיש לו תגית CSV_IMPORT)
+    const whereClause = batch === "ALL"
+      ? { notes: { contains: "[CSV_IMPORT:" } }
+      : { notes: { startsWith: `[CSV_IMPORT:${batch}]` } };
 
     const result = await prisma.customer.deleteMany({
-      where: {
-        notes: {
-          startsWith: tag,
-        },
-      },
+      where: whereClause,
     });
 
     await logActivity({

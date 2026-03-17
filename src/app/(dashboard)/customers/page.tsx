@@ -270,17 +270,17 @@ export default function CustomersListPage() {
   }
 
   const handleDeleteImport = async () => {
-    if (!lastBatchTag) return
-
     const confirmed = window.confirm(
-      `האם למחוק את כל הלקוחות שיובאו בייבוא האחרון?`
+      `האם למחוק את כל הלקוחות שיובאו מקובץ CSV?`
     )
     if (!confirmed) return
 
     setIsDeletingImport(true)
     try {
+      // אם יש batch ספציפי — מחק אותו, אחרת מחק הכל
+      const batchParam = lastBatchTag ? `?batch=${lastBatchTag}` : "?batch=ALL"
       const res = await fetch(
-        `/api/customers/import?batch=${lastBatchTag}`,
+        `/api/customers/import${batchParam}`,
         { method: "DELETE" }
       )
       const data = await res.json()
@@ -390,11 +390,11 @@ export default function CustomersListPage() {
         </div>
       </div>
 
-      {/* Last import rollback banner */}
-      {lastBatchTag && !importDialogOpen && (
+      {/* Delete imported customers banner — always visible */}
+      {!importDialogOpen && (
         <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
           <span className="text-sm text-blue-800">
-            ייבוא אחרון בוצע בהצלחה. ניתן למחוק את כל הלקוחות שיובאו.
+            מחיקת כל הלקוחות שיובאו מקובץ CSV
           </span>
           <Button
             variant="outline"
