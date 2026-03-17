@@ -66,12 +66,12 @@ export async function POST() {
     const additionalInfoMap = new Map<number, string>();
 
     for (const file of allFiles) {
-      // תבניות אפשריות: 61452.n27, 61452V5.n27, 61452_02.n27, 61452_V5.n27
-      const match = file.name.match(/^(\d+)(?:[_]?(?:02|V\d+[.\d]*))?\.n27$/i);
+      // תבניות אפשריות: 61452.n27, 61452V5.n27, 61452_2.n27, 61452_02.n27
+      const match = file.name.match(/^(\d+)(?:[_]?(?:0?2|V\d+[.\d]*))?\.n27$/i);
       if (!match) continue;
 
       const custId = parseInt(match[1]);
-      const isAdditional = file.name.includes("_02");
+      const isAdditional = /_0?2\.n27$/i.test(file.name);
       const drivePath = `customers/info/${file.name}`;
 
       if (isAdditional) {
