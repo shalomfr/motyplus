@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
-import { Loader2, Save, Upload, FileText, X as XIcon, Plus } from "lucide-react"
+import { Loader2, Save, Upload, FileText, X as XIcon, Plus, ArrowUpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
@@ -38,6 +38,7 @@ interface SetType {
   id: string
   name: string
   price: number
+  includesUpdates: boolean
 }
 
 interface CustomerFormProps {
@@ -49,7 +50,9 @@ interface CustomerFormProps {
     updateExpiryDate?: string
     currentUpdateVersion?: string | null
     hasV3?: boolean
+    isCasual?: boolean
     sampleType?: string
+    includesUpdates?: boolean
     createdAt?: string
     updatedAt?: string
   }
@@ -142,6 +145,7 @@ export function CustomerForm({
       ...(mode === "edit" && {
         status: initialData?.status as "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
         hasV3: initialData?.hasV3 ?? true,
+        isCasual: initialData?.isCasual ?? false,
         sampleType: initialData?.sampleType as "CPI" | "CPF" | undefined,
         currentUpdateVersion: initialData?.currentUpdateVersion || "",
       }),
@@ -464,7 +468,7 @@ export function CustomerForm({
               />
             </div>
 
-            {/* Email */}
+            {/* Email — auto-append @gmail.com */}
             <div className="space-y-2">
               <Label htmlFor="email">
                 מייל <span className="text-destructive">*</span>
@@ -476,6 +480,12 @@ export function CustomerForm({
                 placeholder="email@example.com"
                 dir="ltr"
                 className="text-right"
+                onBlur={(e) => {
+                  const val = e.target.value.trim()
+                  if (val && !val.includes("@")) {
+                    setValue("email", val + "@gmail.com")
+                  }
+                }}
               />
               {errors.email && (
                 <p className="text-sm text-destructive">
@@ -574,6 +584,29 @@ export function CustomerForm({
                   {errors.setTypeId.message}
                 </p>
               )}
+              {/* כפתור שדרוג לסט שלם — רק כשהסט הנוכחי לא כולל עדכונים */}
+              {mode === "edit" && (() => {
+                const currentSet = setTypes.find(s => s.id === watchedSetTypeId)
+                const fullSet = setTypes.find(s => s.includesUpdates)
+                if (currentSet && !currentSet.includesUpdates && fullSet) {
+                  return (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-green-700 border-green-300 hover:bg-green-50"
+                      onClick={() => {
+                        setValue("setTypeId", fullSet.id)
+                        setUserEditedAmount(false) // יתעדכן אוטומטית לפי מחיר הסט
+                      }}
+                    >
+                      <ArrowUpCircle className="h-4 w-4 ml-1" />
+                      שדרג לסט שלם
+                    </Button>
+                  )
+                }
+                return null
+              })()}
             </div>
 
             {/* Amount Paid */}
@@ -643,17 +676,31 @@ export function CustomerForm({
                 </div>
                 <div className="space-y-2">
                   <Label>&nbsp;</Label>
-                  <div className="flex items-center gap-2 h-10">
-                    <Checkbox
-                      id="hasV3"
-                      checked={Boolean(watch("hasV3" as keyof (CustomerFormData | CustomerUpdateFormData)))}
-                      onCheckedChange={(checked) =>
-                        setValue("hasV3" as keyof (CustomerFormData | CustomerUpdateFormData), (checked === true) as unknown as string)
-                      }
-                    />
-                    <Label htmlFor="hasV3" className="cursor-pointer">
-                      V3
-                    </Label>
+                  <div className="flex items-center gap-4 h-10">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasV3"
+                        checked={Boolean(watch("hasV3" as keyof (CustomerFormData | CustomerUpdateFormData)))}
+                        onCheckedChange={(checked) =>
+                          setValue("hasV3" as keyof (CustomerFormData | CustomerUpdateFormData), (checked === true) as unknown as string)
+                        }
+                      />
+                      <Label htmlFor="hasV3" className="cursor-pointer">
+                        V3
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="isCasual"
+                        checked={Boolean(watch("isCasual" as keyof (CustomerFormData | CustomerUpdateFormData)))}
+                        onCheckedChange={(checked) =>
+                          setValue("isCasual" as keyof (CustomerFormData | CustomerUpdateFormData), (checked === true) as unknown as string)
+                        }
+                      />
+                      <Label htmlFor="isCasual" className="cursor-pointer text-amber-700">
+                        לקוח מזדמן
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </div>

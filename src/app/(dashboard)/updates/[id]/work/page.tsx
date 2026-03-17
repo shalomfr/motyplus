@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { WorkListTable } from "@/components/updates/work-list-table"
-import { ArrowRight, Loader2, ListChecks } from "lucide-react"
+import { ArrowRight, Loader2, ListChecks, SendHorizonal } from "lucide-react"
 
 interface WorkCustomer {
   id: number
@@ -33,6 +33,10 @@ export default function UpdateWorkPage() {
   const [organs, setOrgans] = useState<Organ[]>([])
   const [loading, setLoading] = useState(true)
   const [updateVersion, setUpdateVersion] = useState("")
+  const [sendingAll, setSendingAll] = useState(false)
+  const [sendAllResult, setSendAllResult] = useState<{
+    sent: number; failed: number; skippedNoFile: number; total: number
+  } | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -66,6 +70,32 @@ export default function UpdateWorkPage() {
     fetchData()
   }
 
+  const handleSendAll = async () => {
+    if (!confirm("האם לשלוח את העדכון לכל הלקוחות הזכאים? פעולה זו תשלח מייל ו-WhatsApp לכולם.")) return
+    setSendingAll(true)
+    setSendAllResult(null)
+    try {
+      const res = await fetch(`/api/updates/${id}/send-all`, { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        setSendAllResult({
+          sent: data.sent,
+          failed: data.failed,
+          skippedNoFile: data.skippedNoFile,
+          total: data.total,
+        })
+        fetchData()
+      } else {
+        alert(data.error || "שגיאה בשליחה לכולם")
+      }
+    } catch (err) {
+      console.error("Error sending to all:", err)
+      alert("שגיאה בשליחה לכולם")
+    } finally {
+      setSendingAll(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -83,7 +113,7 @@ export default function UpdateWorkPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push(`/updates/${id}`)}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
             רשימת עבודה - {updateVersion}
           </h2>
@@ -91,7 +121,28 @@ export default function UpdateWorkPage() {
             {customers.length} לקוחות זכאים | {readyCount} מוכנים לשליחה | {sentCount} נשלחו
           </p>
         </div>
+        <Button
+          onClick={handleSendAll}
+          disabled={sendingAll}
+        >
+          {sendingAll ? (
+            <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+          ) : (
+            <SendHorizonal className="h-4 w-4 ml-2" />
+          )}
+          שלח לכולם
+        </Button>
       </div>
+
+      {sendAllResult && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="font-medium text-blue-800">
+            תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות
+            {sendAllResult.skippedNoFile > 0 && ` | ${sendAllResult.skippedNoFile} דולגו (אין קובץ CPI)`}
+            {sendAllResult.failed > 0 && ` | ${sendAllResult.failed} נכשלו`}
+          </p>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

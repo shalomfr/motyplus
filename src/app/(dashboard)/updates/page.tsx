@@ -13,7 +13,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, RefreshCw, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Plus, RefreshCw, Loader2, Trash2 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -40,6 +48,8 @@ export default function UpdatesPage() {
   const router = useRouter()
   const [updates, setUpdates] = useState<UpdateVersion[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<UpdateVersion | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchUpdates = async () => {
     setLoading(true)
@@ -53,6 +63,26 @@ export default function UpdatesPage() {
       console.error("Error fetching updates:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/updates/${deleteTarget.id}`, { method: "DELETE" })
+      if (res.ok) {
+        setDeleteTarget(null)
+        fetchUpdates()
+      } else {
+        const data = await res.json()
+        alert(data.error || "שגיאה במחיקת העדכון")
+      }
+    } catch (err) {
+      console.error("Error deleting update:", err)
+      alert("שגיאה במחיקת העדכון")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -95,6 +125,7 @@ export default function UpdatesPage() {
                   <TableHead>סטטוס</TableHead>
                   <TableHead>תאריך שחרור</TableHead>
                   <TableHead>לקוחות</TableHead>
+                  <TableHead>פעולות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -117,6 +148,19 @@ export default function UpdatesPage() {
                         {update.releaseDate ? formatDate(update.releaseDate) : "לא נקבע"}
                       </TableCell>
                       <TableCell>{update._count?.customerUpdates ?? 0}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteTarget(update)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   )
                 })}
@@ -125,6 +169,34 @@ export default function UpdatesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>מחיקת עדכון</DialogTitle>
+            <DialogDescription>
+              האם למחוק את עדכון {deleteTarget?.version}? פעולה זו תמחק את כל הקבצים ורשומות הלקוחות המשויכים ולא ניתנת לביטול.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-start">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+              מחק
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              ביטול
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

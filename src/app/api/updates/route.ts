@@ -93,37 +93,10 @@ export async function POST(request: NextRequest) {
     });
 
     // #26/#27: יצירת תיקיות אוטומטית ב-Google Drive
-    try {
-      const organs = await prisma.organ.findMany({
-        where: { isActive: true, supportsUpdates: true },
-        select: { name: true, folderAlias: true },
-      });
-      const setTypes = await prisma.setType.findMany({
-        where: { isActive: true },
-        select: { name: true, folderAlias: true },
-      });
-
-      // תיקייה ראשית לעדכון
-      const versionFolder = `updates/${data.version}`;
-      await ensureFolderPath(versionFolder);
-
-      // תיקייה לכל אורגן
-      for (const organ of organs) {
-        const organFolder = `${versionFolder}/${organ.folderAlias || organ.name}`;
-        await ensureFolderPath(organFolder);
-
-        // תתי-תיקיות לכל סוג סט
-        for (const setType of setTypes) {
-          await ensureFolderPath(`${organFolder}/${setType.folderAlias || setType.name}`);
-        }
-      }
-
-      // תיקיית samples לדגימות מותאמות
-      await ensureFolderPath(`samples/${data.version}`);
-    } catch (folderErr) {
-      console.error("Error creating update folders:", folderErr);
-      // לא נכשל — התיקיות זה bonus
-    }
+    // async/best-effort — לא מכשיל את הבקשה
+    createUpdateFolders(data.version).catch((err) =>
+      console.error("Error creating update folders in Drive:", err)
+    );
 
     return NextResponse.json(update, { status: 201 });
   } catch (error) {
@@ -133,4 +106,39 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// === Helper: יצירת מבנה תיקיות Google Drive לגרסת עדכון ===
+
+async function createUpdateFolders(version: string): Promise<void> {
+  // שליפת אורגנים פעילים שתומכים בעדכונים + סוגי סטים פעילים
+  const [organs, setTypes] = await Promise.all([
+    prisma.organ.findMany({
+      where: { isActive: true, supportsUpdates: true },
+      select: { name: true, folderAlias: true },
+    }),
+    prisma.setType.findMany({
+      where: { isActive: true },
+      select: { name: true, folderAlias: true },
+    }),
+  ]);
+
+  // מבנה: עדכונים / V5.0 / <organ> / <setType>
+  const versionFolder = `עדכונים/${version}`;
+  await ensureFolderPath(versionFolder);
+
+  for (const organ of organs) {
+    const organName = organ.folderAlias || organ.name;
+    const organFolder = `${versionFolder}/${organName}`;
+    await ensureFolderPath(organFolder);
+
+    for (const setType of setTypes) {
+      const setTypeName = setType.folderAlias || setType.name;
+      await ensureFolderPath(`${organFolder}/${setTypeName}`);
+    }
+  }
+
+  console.log(
+    `Drive folders created for version ${version}: ${organs.length} organs × ${setTypes.length} setTypes`
+  );
 }

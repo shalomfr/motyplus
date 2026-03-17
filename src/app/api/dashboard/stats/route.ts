@@ -25,6 +25,9 @@ export async function GET() {
       recentActivity,
       customersByOrgan,
       customersByStatus,
+      expiredUpdatesCount,
+      notUpdatedCount,
+      totalDebtResult,
     ] = await Promise.all([
       // סך כל הלקוחות
       prisma.customer.count(),
@@ -95,6 +98,35 @@ export async function GET() {
           id: true,
         },
       }),
+
+      // לקוחות שתפוגת העדכון שלהם עברה (סט שלם בלבד)
+      prisma.customer.count({
+        where: {
+          updateExpiryDate: { lt: now },
+          status: "ACTIVE",
+          setType: { includesUpdates: true },
+          isCasual: false,
+        },
+      }),
+
+      // לקוחות לא מעודכנים (סט שלם, אין currentUpdateVersion)
+      prisma.customer.count({
+        where: {
+          currentUpdateVersion: null,
+          status: { in: ["ACTIVE", "EXCEPTION"] },
+          setType: { includesUpdates: true },
+          isCasual: false,
+        },
+      }),
+
+      // סה"כ חוב (מחיר סט - סכום ששולם, רק למי שחייב)
+      prisma.$queryRaw<[{ total_debt: number }]>`
+        SELECT COALESCE(SUM(CAST(s.price AS DECIMAL) - CAST(c."amountPaid" AS DECIMAL)), 0) as total_debt
+        FROM "Customer" c
+        JOIN "SetType" s ON c."setTypeId" = s.id
+        WHERE CAST(s.price AS DECIMAL) > CAST(c."amountPaid" AS DECIMAL)
+        AND c.status != 'BLOCKED'
+      `,
     ]);
 
     // עיבוד התוצאות
@@ -125,6 +157,9 @@ export async function GET() {
         FROZEN: customersByStatusMap.FROZEN || 0,
         EXCEPTION: customersByStatusMap.EXCEPTION || 0,
       },
+      expiredUpdatesCount,
+      notUpdatedCount,
+      totalDebt: Number((totalDebtResult as [{ total_debt: number }])?.[0]?.total_debt || 0),
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);

@@ -13,8 +13,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Send, Mail, Loader2, Edit } from "lucide-react"
+import { Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface EmailTemplate {
   id: string
@@ -40,8 +41,33 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function EmailsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  const [bulkSending, setBulkSending] = useState<string | null>(null)
+
+  const handleBulkSend = async (type: "not_updated" | "half_set") => {
+    const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
+    if (!confirm(`לשלוח מיילים ${label}? פעולה זו תשלח מיילים לכל הלקוחות המתאימים.`)) return
+    setBulkSending(type)
+    try {
+      const res = await fetch("/api/emails/send-bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast({ title: data.message, variant: "success" as "default" })
+      } else {
+        toast({ title: "שגיאה", description: data.error, variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה בשליחה", variant: "destructive" })
+    } finally {
+      setBulkSending(null)
+    }
+  }
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -74,6 +100,42 @@ export default function EmailsPage() {
             תבנית חדשה
           </Button>
         </div>
+      </div>
+
+      {/* שליחה קבוצתית */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="border-r-4 border-r-red-400">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">שלח למי שלא מעודכן</p>
+                <p className="text-xs text-muted-foreground">מייל עם הצעת מחיר לעדכון</p>
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => handleBulkSend("not_updated")} disabled={!!bulkSending}>
+              {bulkSending === "not_updated" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className="border-r-4 border-r-amber-400">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Users className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">שלח לחצאי סטים</p>
+                <p className="text-xs text-muted-foreground">הצעה לשדרוג לסט שלם</p>
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => handleBulkSend("half_set")} disabled={!!bulkSending}>
+              {bulkSending === "half_set" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

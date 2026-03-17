@@ -26,6 +26,7 @@ export const customerUpdateSchema = customerSchema.partial().extend({
   sampleType: z.enum(["CPI", "CPF"]).optional(),
   currentUpdateVersion: z.string().optional().nullable(),
   hasV3: z.boolean().optional(),
+  isCasual: z.boolean().optional(),
 });
 
 // ===== לידים =====

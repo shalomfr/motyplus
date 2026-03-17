@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
       prisma.customer.findMany({
         where,
         include: {
-          organ: true,
-          setType: true,
+          organ: { select: { id: true, name: true } },
+          setType: { select: { id: true, name: true, includesUpdates: true } },
         },
         orderBy,
         skip,

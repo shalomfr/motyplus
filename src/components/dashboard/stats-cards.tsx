@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, UserCheck, ShieldOff, TrendingUp, Wallet, AlertCircle, Loader2 } from "lucide-react"
+import { Users, UserCheck, ShieldOff, TrendingUp, Wallet, AlertCircle, Loader2, Clock, RefreshCw } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 interface DashboardStats {
@@ -15,6 +15,9 @@ interface DashboardStats {
     FROZEN: number
     EXCEPTION: number
   }
+  expiredUpdatesCount: number
+  notUpdatedCount: number
+  totalDebt: number
 }
 
 interface StatCardConfig {
@@ -59,6 +62,39 @@ const TOP_ROW: StatCardConfig[] = [
   },
 ]
 
+const MIDDLE_ROW: StatCardConfig[] = [
+  {
+    key: "expiredUpdates",
+    label: "תפוגת עדכונים",
+    icon: Clock,
+    borderColor: "border-r-orange-500",
+    iconBg: "bg-orange-100",
+    iconColor: "text-orange-600",
+    getValue: (s) => String(s.expiredUpdatesCount),
+    getSubtext: () => "לקוחות שפג תוקף העדכון שלהם",
+  },
+  {
+    key: "notUpdated",
+    label: "לא מעודכנים",
+    icon: RefreshCw,
+    borderColor: "border-r-red-400",
+    iconBg: "bg-red-100",
+    iconColor: "text-red-500",
+    getValue: (s) => String(s.notUpdatedCount),
+    getSubtext: () => "סט שלם, לא קיבלו עדכון",
+  },
+  {
+    key: "exception",
+    label: "חריגים",
+    icon: AlertCircle,
+    borderColor: "border-r-amber-500",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    getValue: (s) => String(s.customersByStatus.EXCEPTION),
+    getSubtext: () => "מקבלים עדכונים ללא קשר למצב",
+  },
+]
+
 const BOTTOM_ROW: StatCardConfig[] = [
   {
     key: "totalRevenue",
@@ -85,8 +121,7 @@ const BOTTOM_ROW: StatCardConfig[] = [
     borderColor: "border-r-purple-500",
     iconBg: "bg-purple-100",
     iconColor: "text-purple-600",
-    getValue: () => formatCurrency(0),
-    getSubtext: () => "0 לקוחות עם חוב",
+    getValue: (s) => formatCurrency(s.totalDebt),
   },
 ]
 
@@ -118,6 +153,9 @@ export function StatsCards() {
     totalRevenue: 0,
     activeLeadsCount: 0,
     customersByStatus: { ACTIVE: 0, BLOCKED: 0, FROZEN: 0, EXCEPTION: 0 },
+    expiredUpdatesCount: 0,
+    notUpdatedCount: 0,
+    totalDebt: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -168,6 +206,13 @@ export function StatsCards() {
       {/* שורה עליונה — לקוחות */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {TOP_ROW.map((config) => (
+          <StatCard key={config.key} config={config} stats={stats} />
+        ))}
+      </div>
+
+      {/* שורה אמצעית — עדכונים */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {MIDDLE_ROW.map((config) => (
           <StatCard key={config.key} config={config} stats={stats} />
         ))}
       </div>

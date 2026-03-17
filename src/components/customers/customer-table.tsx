@@ -34,6 +34,9 @@ export interface CustomerRow {
   setTypeName: string
   status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   updatedAt: string
+  currentUpdateVersion: string | null
+  includesUpdates: boolean
+  infoFileUrl: string | null
 }
 
 interface CustomerTableProps {
@@ -153,7 +156,8 @@ export function CustomerTable({
               <TableHead>אורגן</TableHead>
               <TableHead>סט</TableHead>
               <TableHead className="w-[100px]">מצב</TableHead>
-              <TableHead>עדכון אחרון</TableHead>
+              <TableHead className="w-[90px]">עדכון</TableHead>
+              <TableHead className="w-[40px] text-center">אינפו</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
           </TableHeader>
@@ -189,8 +193,29 @@ export function CustomerTable({
                       {status.label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(customer.updatedAt)}
+                  <TableCell>
+                    {customer.includesUpdates ? (
+                      customer.currentUpdateVersion ? (
+                        <Badge variant="outline" className="font-normal bg-green-100 text-green-800 border-green-200">
+                          {customer.currentUpdateVersion}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
+                          לא עודכן
+                        </Badge>
+                      )
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={cn(
+                        "inline-block w-2.5 h-2.5 rounded-full",
+                        customer.infoFileUrl ? "bg-green-500" : "bg-red-400"
+                      )}
+                      title={customer.infoFileUrl ? "יש אינפו" : "אין אינפו"}
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

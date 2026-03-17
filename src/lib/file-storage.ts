@@ -180,6 +180,17 @@ export async function deleteFilesWithPrefix(prefix: string): Promise<number> {
   return deleted;
 }
 
+export async function deleteFolder(folderPath: string): Promise<void> {
+  const drive = getDrive();
+  const folderId = await ensureFolderPath(folderPath).catch(() => null);
+  if (!folderId) return;
+
+  // Delete all contents first, then the folder itself
+  await deleteFilesWithPrefix(folderPath);
+  await drive.files.delete({ fileId: folderId });
+  folderCache.delete(folderPath);
+}
+
 export async function listFiles(prefix: string): Promise<{ path: string; size: number }[]> {
   const drive = getDrive();
   const folderId = await ensureFolderPath(prefix).catch(() => null);

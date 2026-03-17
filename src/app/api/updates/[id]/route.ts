@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { updateVersionSchema } from "@/lib/validators";
+import { deleteFolder } from "@/lib/file-storage";
+import { logActivity } from "@/lib/activity-logger";
 
 // GET /api/updates/[id] - קבלת עדכון עם סטטיסטיקות לקוחות
 export async function GET(
@@ -125,6 +127,81 @@ export async function PUT(
     console.error("Error updating version:", error);
     return NextResponse.json(
       { error: "שגיאה בעדכון הגרסה" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/updates/[id] - מחיקת גרסת עדכון
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "לא מורשה. יש להתחבר למערכת" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+
+    const existing = await prisma.updateVersion.findUnique({
+      where: { id },
+      select: { id: true, version: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "העדכון לא נמצא" },
+        { status: 404 }
+      );
+    }
+
+    // Delete all CustomerUpdate records for this version
+    await prisma.customerUpdate.deleteMany({
+      where: { updateVersionId: id },
+    });
+
+    // Delete all UpdateFile records for this version
+    await prisma.updateFile.deleteMany({
+      where: { updateVersionId: id },
+    });
+
+    // Delete the UpdateVersion itself
+    await prisma.updateVersion.delete({
+      where: { id },
+    });
+
+    // Try to delete Google Drive folders (don't block on failure)
+    try {
+      await deleteFolder(`updates/${id}`);
+    } catch (err) {
+      console.error("Failed to delete Drive folder updates/:", err);
+    }
+
+    try {
+      await deleteFolder(`samples/${existing.version}`);
+    } catch (err) {
+      console.error("Failed to delete Drive folder samples/:", err);
+    }
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      action: "DELETE",
+      entityType: "UpdateVersion",
+      entityId: id,
+      details: { version: existing.version },
+    }).catch(() => {});
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting update:", error);
+    return NextResponse.json(
+      { error: "שגיאה במחיקת העדכון" },
       { status: 500 }
     );
   }

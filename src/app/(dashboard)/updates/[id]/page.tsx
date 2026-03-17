@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/table"
 import { UpdateForm } from "@/components/updates/update-form"
 import { SamplesUploader } from "@/components/updates/samples-uploader"
-import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks, Trash2, SendHorizonal } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -59,6 +67,12 @@ export default function UpdateDetailsPage() {
   const [update, setUpdate] = useState<UpdateVersion | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [sendingAll, setSendingAll] = useState(false)
+  const [sendAllResult, setSendAllResult] = useState<{
+    sent: number; failed: number; skippedNoFile: number; total: number
+  } | null>(null)
 
   const fetchUpdate = async () => {
     try {
@@ -71,6 +85,50 @@ export default function UpdateDetailsPage() {
       console.error("Error fetching update:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/updates/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        router.push("/updates")
+      } else {
+        const data = await res.json()
+        alert(data.error || "שגיאה במחיקת העדכון")
+      }
+    } catch (err) {
+      console.error("Error deleting update:", err)
+      alert("שגיאה במחיקת העדכון")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleSendAll = async () => {
+    if (!confirm("האם לשלוח את העדכון לכל הלקוחות הזכאים? פעולה זו תשלח מייל ו-WhatsApp לכולם.")) return
+    setSendingAll(true)
+    setSendAllResult(null)
+    try {
+      const res = await fetch(`/api/updates/${id}/send-all`, { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        setSendAllResult({
+          sent: data.sent,
+          failed: data.failed,
+          skippedNoFile: data.skippedNoFile,
+          total: data.total,
+        })
+        fetchUpdate()
+      } else {
+        alert(data.error || "שגיאה בשליחה לכולם")
+      }
+    } catch (err) {
+      console.error("Error sending to all:", err)
+      alert("שגיאה בשליחה לכולם")
+    } finally {
+      setSendingAll(false)
     }
   }
 
@@ -118,13 +176,34 @@ export default function UpdateDetailsPage() {
             </p>
           )}
         </div>
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/updates/${id}/work`)}
-        >
-          <ListChecks className="h-4 w-4 ml-2" />
-          רשימת עבודה
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/updates/${id}/work`)}
+          >
+            <ListChecks className="h-4 w-4 ml-2" />
+            רשימת עבודה
+          </Button>
+          <Button
+            onClick={handleSendAll}
+            disabled={sendingAll}
+          >
+            {sendingAll ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <SendHorizonal className="h-4 w-4 ml-2" />
+            )}
+            שלח לכולם
+          </Button>
+          <Button
+            variant="outline"
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 ml-2" />
+            מחיקה
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -163,6 +242,19 @@ export default function UpdateDetailsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Send All Result */}
+      {sendAllResult && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <p className="font-medium text-blue-800">
+              תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות
+              {sendAllResult.skippedNoFile > 0 && ` | ${sendAllResult.skippedNoFile} דולגו (אין קובץ CPI)`}
+              {sendAllResult.failed > 0 && ` | ${sendAllResult.failed} נכשלו`}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="details" dir="rtl">
@@ -301,6 +393,34 @@ export default function UpdateDetailsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>מחיקת עדכון</DialogTitle>
+            <DialogDescription>
+              האם למחוק את עדכון {update.version}? פעולה זו תמחק את כל הקבצים ורשומות הלקוחות המשויכים ולא ניתנת לביטול.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-start">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+              מחק
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleting}
+            >
+              ביטול
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

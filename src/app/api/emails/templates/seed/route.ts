@@ -238,6 +238,228 @@ const TEMPLATES = [
 </table>
 `),
   },
+  {
+    name: "ברכת שנה חדשה",
+    subject: "שנה טובה מצוות מוטי פלוס! 🎶✨",
+    category: "general",
+    variables: ["fullName", "firstName"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:26px; font-weight:bold; color:#124F90;">
+      🎵 שנה טובה ומתוקה! 🍯
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:linear-gradient(135deg, #fdfdfe, #f5f0ff);">
+  <tr>
+    <td style="padding:20px; text-align:center;">
+      <p style="margin:0; font-size:16px; line-height:2;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        🎹 מאחל לך שנה מלאה במוזיקה, בשמחה ובהשראה!<br><br>
+        שתהיה שנה של מקצבים חדשים, סאונד מושלם<br>
+        והמון הנאה מהאורגן! 🎶<br><br>
+        <strong style="font-size:20px;">שנה טובה ומבורכת!</strong><br><br>
+        בברכה חמה,<br>
+        <strong>מוטי פלוס</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
+
+  {
+    name: "ברכת חג",
+    subject: "חג שמח ממוטי פלוס! 🎹🎉",
+    category: "general",
+    variables: ["fullName", "firstName"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:26px; font-weight:bold; color:#124F90;">
+      🎉 חג שמח! 🎹
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:center;">
+      <p style="margin:0; font-size:16px; line-height:2;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        מאחלים לך ולמשפחתך חג שמח!<br>
+        שיהיה מלא בשמחה, מוזיקה ורגעים טובים! 🎶<br><br>
+        <strong>חג שמח!</strong><br>
+        מוטי פלוס
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
+
+  {
+    name: "שליחת דגימות",
+    subject: "קובץ דגימות חדש מוכן עבורך",
+    category: "update",
+    variables: ["fullName", "firstName", "organ", "downloadLink"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:22px; font-weight:bold; color:#124F90;">
+      דגימות חדשות מוכנות! 🎧
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:right;">
+      <p style="margin:0; font-size:15px;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        קובץ הדגימות החדש שלך מוכן!<br><br>
+        בהמשך למייל זה יישלח לך קישור להורדה עם הרשאות גישה.<br>
+        יש להוריד ולהעתיק את קובץ ה-CPI לדיסק-און-קי ולהתקין באורגן.
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
+
+  {
+    name: "שליחת מקצבים ודגימות",
+    subject: "עדכון מקצבים ודגימות חדש עבורך!",
+    category: "update",
+    variables: ["fullName", "firstName", "organ", "updateVersion", "downloadLink"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:22px; font-weight:bold; color:#124F90;">
+      מקצבים + דגימות חדשים! 🎹🎧
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:right;">
+      <p style="margin:0; font-size:15px;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        העדכון <span data-var="updateVersion" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{updateVersion}}</span> כולל מקצבים ודגימות חדשים!<br><br>
+        בהמשך למייל זה יישלחו אליך קישורים להורדה:<br>
+        📍 קישור להורדת מקצבים (.bup)<br>
+        📍 קישור להורדת דגימות (.cpi)<br><br>
+        יש להוריד, לחלץ ולהעתיק את שני הקבצים לדיסק-און-קי ולהתקין באורגן.
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
+
+  {
+    name: "הצעה לחצאי סטים",
+    subject: "שדרג את הסט שלך — הצעה מיוחדת",
+    category: "promotion",
+    variables: ["fullName", "firstName", "organ", "setType", "remainingForFullSet"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:24px; font-weight:bold; color:#124F90;">
+      🔥 הצעה מיוחדת לשדרוג!
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:right;">
+      <p style="margin:0; font-size:15px;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        שמנו לב שיש לך <strong><span data-var="setType" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{setType}}</span></strong> לאורגן <strong><span data-var="organ" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{organ}}</span></strong>.<br><br>
+        ⭐ עם שדרוג לסט שלם תקבל:<br>
+        • עדכונים חינם למשך שנה<br>
+        • מגוון מקצבים רחב יותר<br>
+        • דגימות מותאמות אישית<br><br>
+        <strong>עלות השדרוג: <span data-var="remainingForFullSet" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{remainingForFullSet}}</span></strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<div style="margin:20px 0; padding:15px; border:2px solid #124F90; border-radius:15px; text-align:center;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px; border-collapse:collapse; background:#fff;">
+    <tr><td style="border:1px solid #D6E3F5; padding:8px; font-weight:bold; width:30%;">בנק</td><td style="border:1px solid #D6E3F5; padding:8px;">הפועלים (446)</td></tr>
+    <tr><td style="border:1px solid #D6E3F5; padding:8px; font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5; padding:8px;">113689</td></tr>
+    <tr><td style="border:1px solid #D6E3F5; padding:8px; font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5; padding:8px;">חוה גפנר</td></tr>
+  </table>
+  <div style="margin-top:10px; font-weight:bold; color:#d32f2f;">נא לשלוח אסמכתא לאחר ביצוע התשלום.</div>
+</div>
+`),
+  },
+
+  {
+    name: "שליחת עדכון",
+    subject: "עדכון {{updateVersion}} — מוטי פלוס",
+    category: "update",
+    variables: ["fullName", "firstName", "updateVersion", "organ", "downloadLink", "rhythmsLink"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:24px; font-weight:bold; color:#124F90;">
+      עדכון <span data-var="updateVersion" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{updateVersion}}</span> מוכן!
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:right;">
+      <p style="margin:0; font-size:15px;">
+        שלום <strong><span data-var="fullName" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;">{{fullName}}</span></strong>,<br><br>
+        העדכון החדש <strong>{{updateVersion}}</strong> מוכן עבורך!<br>
+        בהמשך למייל זה יישלחו אליך קישורים להורדת הקבצים עם הרשאות גישה.
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
+
+  {
+    name: "ברכת קנייה",
+    subject: "ברוך הבא למוטי פלוס!",
+    category: "welcome",
+    variables: ["customerName", "setType", "organName", "customerId"],
+    body: wrapEmail(`
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;">
+  <tr>
+    <td align="center" style="font-size:24px; font-weight:bold; color:#124F90;">
+      ברוכים הבאים! 🎹
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
+  <tr>
+    <td style="padding:18px; text-align:right;">
+      <p style="margin:0; font-size:16px;">
+        שלום <strong>{{customerName}}</strong>,<br><br>
+        תודה על הרכישה של <strong>{{setType}}</strong> לאורגן <strong>{{organName}}</strong>!<br>
+        מספר הלקוח שלך: <strong>{{customerId}}</strong><br><br>
+        בקרוב יישלחו אליך כל הקבצים הנדרשים.<br>
+        לכל שאלה — כאן בשבילך!<br><br>
+        בברכה,<br>
+        <strong>מוטי פלוס</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+`),
+  },
 ];
 
 export { TEMPLATES as DEFAULT_EMAIL_TEMPLATES };

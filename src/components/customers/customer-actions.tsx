@@ -95,6 +95,7 @@ interface CustomerActionsProps {
   amountPaid: number
   balance: number | null
   infoFileUrl: string | null
+  additionalInfoFileUrl: string | null
   linkedCustomer: LinkedCustomer | null
   updates: CustomerUpdate[]
   activityLog: ActivityLogEntry[]
@@ -112,6 +113,7 @@ export function CustomerActions({
   amountPaid,
   balance,
   infoFileUrl,
+  additionalInfoFileUrl,
   linkedCustomer,
   updates,
   activityLog,
@@ -420,7 +422,50 @@ export function CustomerActions({
             פתח צ&apos;אט WhatsApp
           </Button>
 
-          {/* #13: שליחת אינפו ללקוח */}
+          {/* בדיקת דגימות — האם יש ללקוח קובץ דגימות */}
+          <Button variant="outline" className="w-full justify-start"
+            onClick={async () => {
+              setLoadingAction("checkSamples")
+              try {
+                const res = await fetch(`/api/customers/${customerId}/updates`)
+                const data = await res.json()
+                const hasSamples = data?.some?.((u: { downloadedAt: string | null }) => u.downloadedAt)
+                toast({
+                  title: hasSamples ? "יש דגימות ללקוח" : "אין דגימות ללקוח",
+                  description: hasSamples ? "הלקוח הוריד דגימות בעבר" : "הלקוח לא הוריד דגימות",
+                  variant: hasSamples ? ("success" as "default") : "destructive",
+                })
+              } catch {
+                toast({ title: "שגיאה בבדיקה", variant: "destructive" })
+              } finally {
+                setLoadingAction(null)
+              }
+            }}
+            disabled={loadingAction === "checkSamples"}
+          >
+            {loadingAction === "checkSamples" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
+            בדיקת דגימות
+          </Button>
+
+          {/* הורדת אינפו */}
+          {infoFileUrl && (
+            <a href={infoFileUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50">
+                <Download className="h-4 w-4 ml-2" />
+                הורדת אינפו ראשי
+              </Button>
+            </a>
+          )}
+          {additionalInfoFileUrl && (
+            <a href={additionalInfoFileUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button variant="outline" className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50">
+                <Download className="h-4 w-4 ml-2" />
+                הורדת אינפו אורגן נוסף
+              </Button>
+            </a>
+          )}
+
+          {/* שליחת אינפו ללקוח */}
           {infoFileUrl && (
             <Button variant="outline" className="w-full justify-start"
               onClick={() => handleAction("sendInfo", `/api/customers/${customerId}/send-email`, "POST", {

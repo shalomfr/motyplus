@@ -52,12 +52,16 @@ export default function CustomersListPage() {
       setCustomers(
         (data.customers || []).map((c: {
           id: number; fullName: string; phone: string; email: string;
-          organ?: { name: string }; setType?: { name: string };
+          organ?: { name: string }; setType?: { name: string; includesUpdates?: boolean };
           status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"; updatedAt: string;
+          currentUpdateVersion?: string | null; infoFileUrl?: string | null;
         }) => ({
           ...c,
           organName: c.organ?.name || "",
           setTypeName: c.setType?.name || "",
+          currentUpdateVersion: c.currentUpdateVersion || null,
+          includesUpdates: c.setType?.includesUpdates ?? false,
+          infoFileUrl: c.infoFileUrl || null,
         }))
       )
       setTotalCount(data.pagination?.total || 0)
