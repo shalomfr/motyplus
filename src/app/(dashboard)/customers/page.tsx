@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,10 +12,26 @@ import {
   CustomerTable,
   type CustomerRow,
 } from "@/components/customers/customer-table"
-import { Plus, FileSpreadsheet, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Progress } from "@/components/ui/progress"
+import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 const PAGE_SIZE = 20
+
+interface ImportResult {
+  created: number
+  skipped: number
+  errors: { row: number; customerId: string; error: string }[]
+  batchTag: string
+  total: number
+}
 
 export default function CustomersListPage() {
   const { toast } = useToast()
@@ -25,6 +41,14 @@ export default function CustomersListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [filters, setFilters] = useState<CustomerFilters>(defaultFilters)
+
+  // Import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [lastBatchTag, setLastBatchTag] = useState<string | null>(null)
+  const [isDeletingImport, setIsDeletingImport] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchCustomers = useCallback(async () => {
     setIsLoading(true)
@@ -170,6 +194,112 @@ export default function CustomersListPage() {
     }
   }
 
+  // ===== Import handlers =====
+
+  const handleImportClick = () => {
+    setImportResult(null)
+    setImportDialogOpen(true)
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    setImportResult(null)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/customers/import", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast({
+          title: "שגיאה בייבוא",
+          description: data.error || "שגיאה לא ידועה",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setImportResult(data)
+      setLastBatchTag(data.batchTag)
+      fetchCustomers()
+
+      if (data.created > 0) {
+        toast({
+          title: "הייבוא הושלם",
+          description: `${data.created} לקוחות יובאו בהצלחה`,
+          variant: "success" as "default",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בייבוא הקובץ",
+        variant: "destructive",
+      })
+    } finally {
+      setIsImporting(false)
+      // Reset file input so re-selecting the same file works
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const handleDeleteImport = async () => {
+    if (!lastBatchTag) return
+
+    const confirmed = window.confirm(
+      `האם למחוק את כל הלקוחות שיובאו בייבוא האחרון?`
+    )
+    if (!confirmed) return
+
+    setIsDeletingImport(true)
+    try {
+      const res = await fetch(
+        `/api/customers/import?batch=${lastBatchTag}`,
+        { method: "DELETE" }
+      )
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast({
+          title: "שגיאה",
+          description: data.error || "שגיאה במחיקה",
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "הייבוא נמחק",
+        description: `${data.deleted} לקוחות נמחקו`,
+        variant: "success" as "default",
+      })
+
+      setLastBatchTag(null)
+      setImportResult(null)
+      setImportDialogOpen(false)
+      fetchCustomers()
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה במחיקת הייבוא",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingImport(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -183,6 +313,13 @@ export default function CustomersListPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleImportClick}
+          >
+            <Upload className="h-4 w-4 ml-2" />
+            ייבוא מ-CSV
+          </Button>
           <Button
             variant="outline"
             onClick={handleExportExcel}
@@ -203,6 +340,162 @@ export default function CustomersListPage() {
           </Link>
         </div>
       </div>
+
+      {/* Last import rollback banner */}
+      {lastBatchTag && !importDialogOpen && (
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <span className="text-sm text-blue-800">
+            ייבוא אחרון בוצע בהצלחה. ניתן למחוק את כל הלקוחות שיובאו.
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDeleteImport}
+            disabled={isDeletingImport}
+            className="text-red-600 border-red-300 hover:bg-red-50"
+          >
+            {isDeletingImport ? (
+              <Loader2 className="h-4 w-4 ml-1 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 ml-1" />
+            )}
+            מחק ייבוא אחרון
+          </Button>
+        </div>
+      )}
+
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="sm:max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>ייבוא לקוחות מקובץ CSV</DialogTitle>
+            <DialogDescription>
+              בחר קובץ CSV לייבוא. שורות עם קוד לקוח קיים ידלגו אוטומטית.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* File input */}
+            {!isImporting && !importResult && (
+              <div className="flex flex-col items-center gap-4">
+                <label
+                  htmlFor="csv-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                >
+                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                  <span className="text-sm text-gray-600">
+                    לחץ לבחירת קובץ CSV
+                  </span>
+                  <span className="text-xs text-gray-400 mt-1">
+                    UTF-8, מופרד בפסיקים
+                  </span>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="csv-upload"
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            )}
+
+            {/* Loading */}
+            {isImporting && (
+              <div className="flex flex-col items-center gap-3 py-8">
+                <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+                <p className="text-sm text-gray-600">מייבא לקוחות...</p>
+                <Progress value={50} className="w-full" indicatorClassName="bg-blue-500" />
+              </div>
+            )}
+
+            {/* Results */}
+            {importResult && (
+              <div className="space-y-4">
+                {/* Summary */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-600 mb-1" />
+                    <span className="text-lg font-bold text-green-700">
+                      {importResult.created}
+                    </span>
+                    <span className="text-xs text-green-600">יובאו</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 bg-yellow-50 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mb-1" />
+                    <span className="text-lg font-bold text-yellow-700">
+                      {importResult.skipped}
+                    </span>
+                    <span className="text-xs text-yellow-600">דולגו</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 bg-red-50 rounded-lg">
+                    <XCircle className="h-5 w-5 text-red-600 mb-1" />
+                    <span className="text-lg font-bold text-red-700">
+                      {importResult.errors.length}
+                    </span>
+                    <span className="text-xs text-red-600">שגיאות</span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-500 text-center">
+                  סה&quot;כ {importResult.total} שורות עובדו
+                </p>
+
+                {/* Error details */}
+                {importResult.errors.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+                    <p className="text-sm font-medium text-red-800 mb-2">
+                      פירוט שגיאות:
+                    </p>
+                    <ul className="text-xs text-red-700 space-y-1">
+                      {importResult.errors.slice(0, 20).map((err, i) => (
+                        <li key={i}>
+                          שורה {err.row} (קוד {err.customerId}): {err.error}
+                        </li>
+                      ))}
+                      {importResult.errors.length > 20 && (
+                        <li className="font-medium">
+                          ...ועוד {importResult.errors.length - 20} שגיאות
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 justify-end pt-2">
+                  {importResult.created > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteImport}
+                      disabled={isDeletingImport}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      {isDeletingImport ? (
+                        <Loader2 className="h-4 w-4 ml-1 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 ml-1" />
+                      )}
+                      בטל ייבוא
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setImportDialogOpen(false)
+                      setImportResult(null)
+                    }}
+                  >
+                    סגור
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <CustomerFiltersPanel
