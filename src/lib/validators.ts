@@ -97,6 +97,22 @@ export const setTypeSchema = z.object({
   sortOrder: z.number().optional(),
 });
 
+// ===== הזמנה ציבורית =====
+
+export const publicOrderSchema = z.object({
+  fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
+  phone: z.string().min(9, "מספר טלפון לא תקין"),
+  email: z.string().email("כתובת מייל לא תקינה"),
+  organId: z.string().min(1, "יש לבחור אורגן"),
+  isUpdateOnly: z.boolean().default(false),
+  setTypeId: z.string().optional().nullable(),
+  updateVersionId: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+}).refine(
+  (data) => (data.isUpdateOnly ? !!data.updateVersionId : !!data.setTypeId),
+  { message: "יש לבחור סוג סט או גרסת עדכון", path: ["setTypeId"] }
+);
+
 // ===== Auth =====
 
 export const loginSchema = z.object({
