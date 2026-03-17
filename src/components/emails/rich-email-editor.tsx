@@ -21,6 +21,25 @@ import { useState, useEffect, useCallback, useRef } from "react"
 
 type EditorMode = "visual" | "code" | "preview"
 
+const BODY_START = "<!-- BODY_START -->"
+const BODY_END = "<!-- BODY_END -->"
+
+/** חילוץ הגוף מתוך HTML מייל מלא */
+function extractBody(html: string): string | null {
+  const startIdx = html.indexOf(BODY_START)
+  const endIdx = html.indexOf(BODY_END)
+  if (startIdx === -1 || endIdx === -1) return null
+  return html.substring(startIdx + BODY_START.length, endIdx).trim()
+}
+
+/** הזרקת גוף חדש בתוך שלד HTML קיים */
+function injectBody(fullHtml: string, newBody: string): string {
+  const startIdx = fullHtml.indexOf(BODY_START)
+  const endIdx = fullHtml.indexOf(BODY_END)
+  if (startIdx === -1 || endIdx === -1) return fullHtml
+  return fullHtml.substring(0, startIdx + BODY_START.length) + "\n" + newBody + "\n" + fullHtml.substring(endIdx)
+}
+
 interface RichEmailEditorProps {
   content: string
   onChange: (html: string) => void
@@ -28,11 +47,21 @@ interface RichEmailEditorProps {
 }
 
 export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
-  // אם התוכן הוא HTML מייל מלא (עם טבלאות) — חסום ויזואלי, רק Code + Preview
-  const [isFullHtml, setIsFullHtml] = useState(() => content.includes("<table") || content.includes("<!DOCTYPE"))
-  const [mode, setMode] = useState<EditorMode>(isFullHtml ? "preview" : "visual")
+  // האם יש markers? אם כן — תמיכה מלאה בויזואלי
+  const hasMarkers = content.includes(BODY_START) && content.includes(BODY_END)
+  // HTML מייל בלי markers — רק code+preview
+  const isLegacyFullHtml = !hasMarkers && (content.includes("<table") || content.includes("<!DOCTYPE"))
+
+  const [mode, setMode] = useState<EditorMode>(
+    hasMarkers ? "visual" : isLegacyFullHtml ? "preview" : "visual"
+  )
   const [codeContent, setCodeContent] = useState(content)
+  // שלד העיצוב — שמור בנפרד
+  const shellRef = useRef(content)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // תוכן הגוף בלבד (לעורך הויזואלי)
+  const initialBody = hasMarkers ? (extractBody(content) || "") : content
 
   const editor = useEditor({
     extensions: [
@@ -45,42 +74,62 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       Image,
       VariableBadge,
     ],
-    content,
+    content: initialBody,
     editorProps: {
       attributes: {
         class: "prose prose-sm max-w-none min-h-[300px] p-4 focus:outline-none [direction:rtl]",
       },
     },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      onChange(html)
-      setCodeContent(html)
+    onUpdate: ({ editor: ed }) => {
+      const bodyHtml = ed.getHTML()
+      if (hasMarkers) {
+        // הזרקה חזרה לשלד
+        const full = injectBody(shellRef.current, bodyHtml)
+        shellRef.current = full
+        setCodeContent(full)
+        onChange(full)
+      } else {
+        setCodeContent(bodyHtml)
+        onChange(bodyHtml)
+      }
     },
   })
 
-  // Sync when switching modes
+  // סנכרון בין מצבים
   const switchMode = useCallback((newMode: EditorMode) => {
-    // חסום מעבר לויזואלי אם זה HTML מייל — TipTap הורס את הטבלאות
-    if (newMode === "visual" && isFullHtml) return
+    if (newMode === "visual" && isLegacyFullHtml) return
 
     if (mode === "visual" && newMode !== "visual" && editor) {
-      setCodeContent(editor.getHTML())
+      // שמירת תוכן ויזואלי → code
+      const bodyHtml = editor.getHTML()
+      if (hasMarkers) {
+        const full = injectBody(shellRef.current, bodyHtml)
+        shellRef.current = full
+        setCodeContent(full)
+      } else {
+        setCodeContent(bodyHtml)
+      }
     }
+
     if (mode === "code" && newMode === "visual" && editor) {
-      editor.commands.setContent(codeContent)
-      onChange(codeContent)
+      // code → ויזואלי: חילוץ הגוף בלבד
+      shellRef.current = codeContent
+      const body = extractBody(codeContent)
+      if (body !== null) {
+        editor.commands.setContent(body)
+      } else {
+        editor.commands.setContent(codeContent)
+      }
     }
+
     if (mode === "code" && newMode === "preview") {
       onChange(codeContent)
     }
-    // עדכון isFullHtml לפי התוכן הנוכחי
-    if (newMode === "preview" || newMode === "code") {
-      setIsFullHtml(codeContent.includes("<table") || codeContent.includes("<!DOCTYPE"))
-    }
-    setMode(newMode)
-  }, [mode, editor, codeContent, onChange, isFullHtml])
 
-  // Update preview iframe
+    setMode(newMode)
+  }, [mode, editor, codeContent, onChange, hasMarkers, isLegacyFullHtml])
+
+  // עדכון iframe בתצוגה מקדימה
   useEffect(() => {
     if (mode === "preview" && iframeRef.current) {
       const doc = iframeRef.current.contentDocument
@@ -94,9 +143,12 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
 
   const insertVariable = useCallback((varName: string, label: string) => {
     if (mode === "code") {
-      const span = `<span data-var="${varName}" style="background:#fff3e0;color:#e65100;padding:2px 10px;border-radius:12px;font-weight:600;font-size:13px;display:inline-block;margin:0 2px;">${label}</span>`
-      setCodeContent(prev => prev + span)
-      onChange(codeContent + span)
+      const tag = `{{${varName}}}`
+      setCodeContent(prev => {
+        const updated = prev + tag
+        onChange(updated)
+        return updated
+      })
       return
     }
     if (!editor) return
@@ -104,7 +156,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       type: "variableBadge",
       attrs: { varName, label },
     }).run()
-  }, [editor, mode, codeContent, onChange])
+  }, [editor, mode, onChange])
 
   const addLink = useCallback(() => {
     if (!editor) return
@@ -156,12 +208,19 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
     <div className="border rounded-lg overflow-hidden bg-white">
       {/* Mode tabs */}
       <div className="bg-gray-100 px-2 pt-2 flex gap-1 border-b">
-        {!isFullHtml && (
+        {!isLegacyFullHtml && (
           <TabBtn tabMode="visual" icon={Paintbrush} label="ויזואלי" />
         )}
         <TabBtn tabMode="code" icon={Code} label="HTML קוד" />
         <TabBtn tabMode="preview" icon={Eye} label="תצוגה מקדימה" />
       </div>
+
+      {/* הודעה על עריכת טקסט בלבד */}
+      {mode === "visual" && hasMarkers && (
+        <div className="bg-blue-50 border-b border-blue-100 px-3 py-1.5 text-xs text-blue-600">
+          עורך את תוכן המייל בלבד — העיצוב נשמר אוטומטית
+        </div>
+      )}
 
       {/* Visual mode */}
       {mode === "visual" && (
@@ -287,8 +346,10 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
           <textarea
             value={codeContent}
             onChange={(e) => {
-              setCodeContent(e.target.value)
-              onChange(e.target.value)
+              const val = e.target.value
+              setCodeContent(val)
+              shellRef.current = val
+              onChange(val)
             }}
             className="w-full min-h-[400px] p-4 font-mono text-sm bg-[#1e1e1e] text-[#d4d4d4] focus:outline-none resize-y"
             dir="ltr"

@@ -25,7 +25,9 @@ function wrapEmail(bodyContent: string): string {
 
 <div style="font-size:12px; margin-bottom:10px; font-weight:bold; color:#8fa3b9;">בס"ד</div>
 
+<!-- BODY_START -->
 ${bodyContent}
+<!-- BODY_END -->
 
 <div style="margin-top:25px; padding-top:15px; border-top:1px solid #E3EAF6; text-align:center; font-size:12px; color:#8fa3b9;">
   מוטי פלוס | מקצבים ודגימות לאורגנים

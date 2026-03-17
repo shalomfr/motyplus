@@ -21,8 +21,8 @@ export async function GET() {
         where: { name: t.name },
       });
       if (existing) {
-        // עדכון רק אם הגוף לא מכיל את העיצוב החדש (EEF3FB = רקע הדוגמאות)
-        if (!existing.body.includes("EEF3FB")) {
+        // עדכון אם חסר עיצוב חדש או markers
+        if (!existing.body.includes("BODY_START")) {
           await prisma.emailTemplate.update({
             where: { id: existing.id },
             data: { body: t.body, subject: t.subject, variables: t.variables },
