@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Save, Loader2, Upload, FileText, X as XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SamplesUploader } from "@/components/updates/samples-uploader"
@@ -26,6 +33,14 @@ interface UpdateFormProps {
   updateId?: string
   mode: "create" | "edit"
 }
+
+// רשימת גרסאות קבועות להצעה
+const VERSION_SUGGESTIONS = [
+  "V3.0", "V3.1", "V3.2",
+  "V4.0", "V4.1", "V4.2",
+  "V5.0", "V5.1", "V5.2",
+  "V6.0", "V6.1",
+]
 
 function extractFilename(url: string): string {
   const parts = url.split("/")
@@ -151,13 +166,19 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="version">שם גרסה</Label>
-              <Input
-                id="version"
+              <Select
                 value={form.version}
-                onChange={(e) => handleChange("version", e.target.value)}
-                placeholder="לדוגמה: V4.0"
-                required
-              />
+                onValueChange={(value) => handleChange("version", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר גרסה" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VERSION_SUGGESTIONS.map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="price">מחיר</Label>

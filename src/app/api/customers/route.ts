@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       (orderBy as Record<string, string>)[sortBy] = sortOrder;
     }
 
-    const [customers, total] = await Promise.all([
+    const [customers, total, latestUpdate] = await Promise.all([
       prisma.customer.findMany({
         where,
         include: {
@@ -95,10 +95,15 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       prisma.customer.count({ where }),
+      prisma.updateVersion.findFirst({
+        orderBy: { sortOrder: "desc" },
+        select: { version: true },
+      }),
     ]);
 
     return NextResponse.json({
       customers,
+      latestVersion: latestUpdate?.version || null,
       pagination: {
         page,
         limit,
@@ -168,6 +173,7 @@ export async function POST(request: NextRequest) {
         additionalOrganId: data.additionalOrganId || null,
         setTypeId: data.setTypeId,
         amountPaid: data.amountPaid,
+        discountReason: data.discountReason || null,
         purchaseDate,
         updateExpiryDate,
         notes: data.notes || null,

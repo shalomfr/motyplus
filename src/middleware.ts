@@ -5,7 +5,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // Allow public routes
-  const publicPaths = ["/login", "/api/auth", "/order", "/api/public", "/api/webhooks"];
+  const publicPaths = ["/login", "/api/auth", "/order", "/upload-info", "/api/public", "/api/webhooks"];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   if (isPublicPath) {

@@ -447,24 +447,6 @@ export function CustomerActions({
             בדיקת דגימות
           </Button>
 
-          {/* הורדת אינפו */}
-          {infoFileUrl && (
-            <a href={infoFileUrl} target="_blank" rel="noopener noreferrer" className="block">
-              <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50">
-                <Download className="h-4 w-4 ml-2" />
-                הורדת אינפו ראשי
-              </Button>
-            </a>
-          )}
-          {additionalInfoFileUrl && (
-            <a href={additionalInfoFileUrl} target="_blank" rel="noopener noreferrer" className="block">
-              <Button variant="outline" className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50">
-                <Download className="h-4 w-4 ml-2" />
-                הורדת אינפו אורגן נוסף
-              </Button>
-            </a>
-          )}
-
           {/* שליחת אינפו ללקוח */}
           {infoFileUrl && (
             <Button variant="outline" className="w-full justify-start"
@@ -474,7 +456,7 @@ export function CustomerActions({
               })}
               disabled={loadingAction === "sendInfo"}
             >
-              {loadingAction === "sendInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Download className="h-4 w-4 ml-2" />}
+              {loadingAction === "sendInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
               שלח אינפו ללקוח במייל
             </Button>
           )}

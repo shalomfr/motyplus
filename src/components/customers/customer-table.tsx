@@ -45,6 +45,7 @@ interface CustomerTableProps {
   totalCount: number
   page: number
   pageSize: number
+  latestVersion?: string | null
   onPageChange: (page: number) => void
   onToggleSuspend?: (id: number, currentStatus: string) => Promise<void>
   onDelete?: (id: number, fullName: string) => Promise<void>
@@ -98,6 +99,7 @@ export function CustomerTable({
   totalCount,
   page,
   pageSize,
+  latestVersion,
   onPageChange,
   onToggleSuspend,
   onDelete,
@@ -196,9 +198,15 @@ export function CustomerTable({
                   <TableCell>
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
-                        <Badge variant="outline" className="font-normal bg-green-100 text-green-800 border-green-200">
-                          {customer.currentUpdateVersion}
-                        </Badge>
+                        latestVersion && customer.currentUpdateVersion !== latestVersion ? (
+                          <Badge variant="outline" className="font-normal bg-orange-100 text-orange-800 border-orange-200">
+                            {customer.currentUpdateVersion}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="font-normal bg-green-100 text-green-800 border-green-200">
+                            {customer.currentUpdateVersion}
+                          </Badge>
+                        )
                       ) : (
                         <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
                           לא עודכן

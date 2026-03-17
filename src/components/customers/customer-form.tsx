@@ -243,8 +243,8 @@ export function CustomerForm({
     const file = e.target.files?.[0]
     if (!file) return
 
-    // #2: זיהוי אורגן אוטומטי
-    detectOrganFromN27(file)
+    // #2: זיהוי אורגן אוטומטי בכל העלאה — תמיד מעדכן
+    detectOrganFromN27(file, true)
 
     // במצב create - שומרים את הקובץ בזיכרון ומעלים אחרי יצירת הלקוח
     if (mode === "create") {
@@ -259,6 +259,9 @@ export function CustomerForm({
       e.target.value = ""
       return
     }
+
+    // זיהוי אורגן אוטומטי גם בעריכה
+    detectOrganFromN27(file, true)
 
     setUploadStatus("uploading")
     setUploadProgress(0)
@@ -295,9 +298,40 @@ export function CustomerForm({
     }
   }
 
+  // זיהוי אורגן נוסף אוטומטי מקובץ N27
+  const detectAdditionalOrganFromN27 = async (file: File) => {
+    try {
+      const buffer = await file.arrayBuffer()
+      const bytes = new Uint8Array(buffer)
+      let organName = ""
+      for (let i = 0; i < Math.min(64, bytes.length); i++) {
+        if (bytes[i] === 0) break
+        organName += String.fromCharCode(bytes[i])
+      }
+      organName = organName.trim()
+      if (!organName) return
+      const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
+      const match = organs.find(o =>
+        normalize(o.name) === normalize(organName) ||
+        normalize(organName).includes(normalize(o.name)) ||
+        normalize(o.name).includes(normalize(organName))
+      )
+      if (match) {
+        setValue("additionalOrganId", match.id)
+        setDetectResult(`זוהה: ${match.name}`)
+      } else {
+        setDetectResult(`נמצא "${organName}" — לא תואם אורגן במערכת`)
+      }
+      setTimeout(() => setDetectResult(null), 4000)
+    } catch { /* ignore */ }
+  }
+
   const handleAdditionalInfoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // זיהוי אורגן נוסף אוטומטי
+    detectAdditionalOrganFromN27(file)
 
     if (mode === "create") {
       setPendingAdditionalInfoFile(file)
@@ -311,6 +345,9 @@ export function CustomerForm({
       e.target.value = ""
       return
     }
+
+    // זיהוי אורגן נוסף אוטומטי גם בעריכה
+    detectAdditionalOrganFromN27(file)
 
     setAdditionalUploadStatus("uploading")
     setAdditionalUploadProgress(0)
@@ -643,6 +680,16 @@ export function CustomerForm({
                   {errors.amountPaid.message}
                 </p>
               )}
+            </div>
+
+            {/* Discount Reason */}
+            <div className="space-y-2">
+              <Label htmlFor="discountReason">סיבת הנחה / מבצע</Label>
+              <Input
+                id="discountReason"
+                {...register("discountReason" as keyof (CustomerFormData | CustomerUpdateFormData))}
+                placeholder="לדוגמה: מבצע חנוכה 2025"
+              />
             </div>
 
             {/* Purchase Date */}

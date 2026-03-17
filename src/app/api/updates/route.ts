@@ -138,7 +138,10 @@ async function createUpdateFolders(version: string): Promise<void> {
     }
   }
 
+  // יצירת תיקיית דגימות
+  await ensureFolderPath(`samples/${version}`);
+
   console.log(
-    `Drive folders created for version ${version}: ${organs.length} organs × ${setTypes.length} setTypes`
+    `Drive folders created for version ${version}: ${organs.length} organs × ${setTypes.length} setTypes + samples`
   );
 }

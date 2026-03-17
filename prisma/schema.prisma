@@ -99,6 +99,7 @@ model Customer {
   setTypeId            String
   customerId           String?        @unique // מזהה לקוח לפי שם קובץ האינפו (לדוגמה: 61455)
   amountPaid           Decimal        @db.Decimal(10, 2)
+  discountReason       String?        // סיבת הנחה/מבצע (אם שילם פחות)
   status               CustomerStatus @default(ACTIVE)
   sampleType           SampleType     @default(CPI)
   currentUpdateVersion String?

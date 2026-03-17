@@ -50,6 +50,7 @@ export default function CustomersListPage() {
   const [lastBatchTag, setLastBatchTag] = useState<string | null>(null)
   const [isDeletingImport, setIsDeletingImport] = useState(false)
   const [isSyncingInfo, setIsSyncingInfo] = useState(false)
+  const [latestVersion, setLatestVersion] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchCustomers = useCallback(async () => {
@@ -90,6 +91,7 @@ export default function CustomersListPage() {
           infoFileUrl: c.infoFileUrl || null,
         }))
       )
+      setLatestVersion(data.latestVersion || null)
       setTotalCount(data.pagination?.total || 0)
     } catch (error) {
       toast({
@@ -584,6 +586,7 @@ export default function CustomersListPage() {
         totalCount={totalCount}
         page={page}
         pageSize={PAGE_SIZE}
+        latestVersion={latestVersion}
         onPageChange={setPage}
       />
     </div>

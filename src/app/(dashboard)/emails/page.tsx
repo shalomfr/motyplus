@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle } from "lucide-react"
+import { Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
@@ -101,6 +101,26 @@ export default function EmailsPage() {
           </Button>
         </div>
       </div>
+
+      {/* הסבר על תבניות */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardContent className="p-4">
+          <div className="flex gap-3">
+            <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-sm space-y-1">
+              <p className="font-medium text-blue-800">תבניות קבועות ומשתנות</p>
+              <p className="text-blue-700">
+                <strong>תבניות קבועות</strong> (ברכות, חגים) — התוכן זהה לכל לקוח ולא צריך לשנות אותן.
+              </p>
+              <p className="text-blue-700">
+                <strong>תבניות משתנות</strong> (עדכונים, הצעות מחיר) — משתמשות במשתנים כמו {`{{version}}`}, {`{{downloadLink}}`}, {`{{customerName}}`} שמוחלפים אוטומטית בשליחה.
+                <br />
+                לא צריך לשנות אותן בכל עדכון — המערכת מחליפה את המשתנים לבד.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* שליחה קבוצתית */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
