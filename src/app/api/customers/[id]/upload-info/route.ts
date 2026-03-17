@@ -58,9 +58,9 @@ export async function POST(
       );
     }
 
-    // שינוי שם: ראשי = {id}.n27, נוסף = {id}_01.n27
+    // שינוי שם: ראשי = {id}.n27, נוסף = {id}_2.n27
     const newFileName = isAdditional
-      ? `${customerId}_02.${ext}`
+      ? `${customerId}_2.${ext}`
       : `${customerId}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
