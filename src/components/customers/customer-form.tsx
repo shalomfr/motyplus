@@ -735,37 +735,49 @@ export function CustomerForm({
             <div className="flex items-center gap-2">
               <Label>קובץ אינפו של האורגן</Label>
               {infoFileName && <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">יש אינפו</Badge>}
-              {(pendingInfoFile || infoFileName) && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
-                  onClick={async () => {
-                    if (pendingInfoFile) {
-                      detectOrganFromN27(pendingInfoFile, true)
-                    } else if (mode === "edit" && initialData?.id) {
-                      // במצב עריכה — הורד את הקובץ מהשרת וזהה
-                      try {
-                        setDetectResult("מזהה...")
-                        const res = await fetch(`/api/customers/${initialData.id}/download-info`)
-                        if (res.ok) {
-                          const blob = await res.blob()
-                          const file = new File([blob], "info.n27")
-                          detectOrganFromN27(file, true)
-                        } else {
-                          setDetectResult("לא ניתן להוריד את הקובץ")
-                        }
-                      } catch {
-                        setDetectResult("שגיאה בהורדת הקובץ")
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
+                onClick={async () => {
+                  if (pendingInfoFile) {
+                    // יש קובץ ממתין בזיכרון — זהה ממנו
+                    detectOrganFromN27(pendingInfoFile, true)
+                  } else if (mode === "edit" && initialData?.id && infoFileName) {
+                    // במצב עריכה — הורד את הקובץ מהשרת וזהה
+                    try {
+                      setDetectResult("מזהה...")
+                      const res = await fetch(`/api/customers/${initialData.id}/download-info`)
+                      if (res.ok) {
+                        const blob = await res.blob()
+                        const file = new File([blob], "info.n27")
+                        detectOrganFromN27(file, true)
+                      } else {
+                        setDetectResult("לא ניתן להוריד את הקובץ")
                       }
+                    } catch {
+                      setDetectResult("שגיאה בהורדת הקובץ")
                     }
-                  }}
-                >
-                  <Search className="h-3 w-3 ml-1" />
-                  זהה אורגן
-                </Button>
-              )}
+                  } else {
+                    // אין קובץ — פתח בחירת קובץ, זהה ממנו, ושמור כ-pending
+                    const input = document.createElement("input")
+                    input.type = "file"
+                    input.accept = ".n27"
+                    input.onchange = async (ev) => {
+                      const file = (ev.target as HTMLInputElement).files?.[0]
+                      if (!file) return
+                      setPendingInfoFile(file)
+                      setInfoFileName(file.name)
+                      detectOrganFromN27(file, true)
+                    }
+                    input.click()
+                  }
+                }}
+              >
+                <Search className="h-3 w-3 ml-1" />
+                זהה אורגן
+              </Button>
               {detectResult && (
                 <span className={cn("text-xs font-medium", detectResult.startsWith("זוהה") ? "text-green-600" : "text-amber-600")}>
                   {detectResult}
