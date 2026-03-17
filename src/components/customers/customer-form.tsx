@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
-import { Loader2, Save, Upload, FileText, X as XIcon, Plus, ArrowUpCircle } from "lucide-react"
+import { Loader2, Save, Upload, FileText, X as XIcon, Plus, ArrowUpCircle, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
@@ -199,8 +199,10 @@ export function CustomerForm({
     fetchData()
   }, [])
 
+  const [detectResult, setDetectResult] = useState<string | null>(null)
+
   // #2: זיהוי אורגן אוטומטי מקובץ N27 (bytes 0-63 = שם אורגן)
-  const detectOrganFromN27 = async (file: File) => {
+  const detectOrganFromN27 = async (file: File, forceUpdate = false) => {
     try {
       const buffer = await file.arrayBuffer()
       const bytes = new Uint8Array(buffer)
@@ -211,19 +213,29 @@ export function CustomerForm({
         organName += String.fromCharCode(bytes[i])
       }
       organName = organName.trim()
-      if (!organName) return
+      if (!organName) {
+        if (forceUpdate) setDetectResult("לא זוהה אורגן בקובץ")
+        return
+      }
 
       // חיפוש אורגן תואם (case-insensitive, גם חלקי)
+      const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
       const match = organs.find(o =>
-        o.name.toLowerCase().replace(/[-_ ]/g, "") === organName.toLowerCase().replace(/[-_ ]/g, "") ||
-        organName.toLowerCase().includes(o.name.toLowerCase().replace(/[-_ ]/g, "")) ||
-        o.name.toLowerCase().replace(/[-_ ]/g, "").includes(organName.toLowerCase().replace(/[-_ ]/g, ""))
+        normalize(o.name) === normalize(organName) ||
+        normalize(organName).includes(normalize(o.name)) ||
+        normalize(o.name).includes(normalize(organName))
       )
-      if (match && !watchedOrganId) {
-        setValue("organId", match.id)
+      if (match) {
+        if (!watchedOrganId || forceUpdate) {
+          setValue("organId", match.id)
+        }
+        if (forceUpdate) setDetectResult(`זוהה: ${match.name}`)
+      } else {
+        if (forceUpdate) setDetectResult(`נמצא "${organName}" — לא תואם אורגן במערכת`)
       }
+      if (forceUpdate) setTimeout(() => setDetectResult(null), 4000)
     } catch {
-      // שקט — זיהוי הוא bonus
+      if (forceUpdate) setDetectResult("שגיאה בקריאת הקובץ")
     }
   }
 
@@ -723,6 +735,42 @@ export function CustomerForm({
             <div className="flex items-center gap-2">
               <Label>קובץ אינפו של האורגן</Label>
               {infoFileName && <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">יש אינפו</Badge>}
+              {(pendingInfoFile || infoFileName) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
+                  onClick={async () => {
+                    if (pendingInfoFile) {
+                      detectOrganFromN27(pendingInfoFile, true)
+                    } else if (mode === "edit" && initialData?.id) {
+                      // במצב עריכה — הורד את הקובץ מהשרת וזהה
+                      try {
+                        setDetectResult("מזהה...")
+                        const res = await fetch(`/api/customers/${initialData.id}/download-info`)
+                        if (res.ok) {
+                          const blob = await res.blob()
+                          const file = new File([blob], "info.n27")
+                          detectOrganFromN27(file, true)
+                        } else {
+                          setDetectResult("לא ניתן להוריד את הקובץ")
+                        }
+                      } catch {
+                        setDetectResult("שגיאה בהורדת הקובץ")
+                      }
+                    }
+                  }}
+                >
+                  <Search className="h-3 w-3 ml-1" />
+                  זהה אורגן
+                </Button>
+              )}
+              {detectResult && (
+                <span className={cn("text-xs font-medium", detectResult.startsWith("זוהה") ? "text-green-600" : "text-amber-600")}>
+                  {detectResult}
+                </span>
+              )}
             </div>
 
             {/* Progress indicator - shown during/after upload in edit mode */}
