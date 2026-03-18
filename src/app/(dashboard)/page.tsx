@@ -128,7 +128,7 @@ export default function HomePage() {
           >
             <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center">
               <item.icon className={`h-8 w-8 ${item.color}`} />
-              <span className="font-medium text-white text-sm">{item.label}</span>
+              <span className="font-medium text-gray-700 text-sm">{item.label}</span>
             </CardContent>
           </Card>
         ))}
@@ -143,7 +143,7 @@ export default function HomePage() {
             ) : (
               <Download className="h-8 w-8 text-teal-600" />
             )}
-            <span className="font-medium text-white text-sm">
+            <span className="font-medium text-gray-700 text-sm">
               {isDownloading ? "מוריד..." : "הורד קבצי אינפו"}
             </span>
           </CardContent>

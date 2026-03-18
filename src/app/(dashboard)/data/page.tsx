@@ -220,7 +220,7 @@ function OrgansTab() {
                 {organ.supportsUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
                 ) : (
-                  <Badge className="bg-gray-100 text-white border-white/10">לא</Badge>
+                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">לא</Badge>
                 )}
               </TableCell>
               <TableCell>{organ.sortOrder}</TableCell>
@@ -464,7 +464,7 @@ function SetsTab() {
                 {set.includesUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
                 ) : (
-                  <Badge className="bg-gray-100 text-white border-white/10">לא</Badge>
+                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">לא</Badge>
                 )}
               </TableCell>
               <TableCell>{set.sortOrder}</TableCell>
