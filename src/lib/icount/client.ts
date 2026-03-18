@@ -265,6 +265,15 @@ export class ICountClient {
     return data.doc_url || "";
   }
 
+  async getDocument(docId: string): Promise<{ doc_url: string; pdf_url: string; docnum: string }> {
+    const data = await this.request<{ doc_url?: string; pdf_url?: string; docnum?: string }>("doc/get", { doc_id: docId });
+    return {
+      doc_url: String(data.doc_url || ""),
+      pdf_url: String(data.pdf_url || ""),
+      docnum: String(data.docnum || ""),
+    };
+  }
+
   async createQuote(request: CreateDocumentRequest): Promise<CreateDocumentResponse> {
     const docData = this.buildDocumentData({ ...request, docType: "quote" });
     const raw = await this.request<ICountRawDocResponse>("doc/create", docData);
