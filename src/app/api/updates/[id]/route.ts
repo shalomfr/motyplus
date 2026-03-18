@@ -175,17 +175,12 @@ export async function DELETE(
       where: { id },
     });
 
-    // Try to delete Google Drive folders (don't block on failure)
+    // Try to delete Google Drive beats folder (don't block on failure)
+    // Samples are shared across versions — don't delete them
     try {
-      await deleteFolder(`updates/${id}`);
+      await deleteFolder(`updates/beats/${existing.version}`);
     } catch (err) {
-      console.error("Failed to delete Drive folder updates/:", err);
-    }
-
-    try {
-      await deleteFolder(`samples/${existing.version}`);
-    } catch (err) {
-      console.error("Failed to delete Drive folder samples/:", err);
+      console.error("Failed to delete Drive folder beats/:", err);
     }
 
     // Log activity

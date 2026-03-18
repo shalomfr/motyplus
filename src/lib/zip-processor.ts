@@ -31,9 +31,16 @@ interface ProcessResult {
  */
 export async function processUpdateZip(
   zipBuffer: Buffer,
-  updateVersionId: string
+  updateVersionId: string,
+  version?: string
 ): Promise<ProcessResult> {
   const zip = await JSZip.loadAsync(zipBuffer);
+
+  // Resolve version name if not provided
+  if (!version) {
+    const uv = await prisma.updateVersion.findUnique({ where: { id: updateVersionId }, select: { version: true } });
+    version = uv?.version || updateVersionId;
+  }
 
   // Load set types and organs from DB
   const setTypes = await prisma.setType.findMany({
@@ -122,8 +129,10 @@ export async function processUpdateZip(
         compressionOptions: { level: 6 },
       });
 
-      // Upload to Azure
-      const blobPath = `updates/${updateVersionId}/${setType.id}_${organ.id}.zip`;
+      // Upload to Google Drive
+      const setAlias = setType.folderAlias || setType.name;
+      const organAlias = organ.folderAlias || organ.name;
+      const blobPath = `updates/beats/${version}/${setAlias}/${organAlias}.zip`;
       const fileUrl = await uploadFileWithPath(subZipBuffer, blobPath);
 
       matched.push({

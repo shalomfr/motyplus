@@ -61,18 +61,20 @@ export async function POST(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const version = updateVersion.version;
+
     // Delete old files for this update version
-    await deleteFilesWithPrefix(`updates/${id}/`);
+    await deleteFilesWithPrefix(`updates/beats/${version}`);
     await prisma.updateFile.deleteMany({
       where: { updateVersionId: id },
     });
 
     // Upload master ZIP
-    const masterZipPath = `updates/${id}/master.zip`;
+    const masterZipPath = `updates/beats/${version}/master.zip`;
     const masterZipUrl = await uploadFileWithPath(buffer, masterZipPath);
 
     // Process and split into per-combination ZIPs
-    const result = await processUpdateZip(buffer, id);
+    const result = await processUpdateZip(buffer, id, version);
 
     // Update the master ZIP URL on the version
     await prisma.updateVersion.update({

@@ -54,7 +54,14 @@ export async function POST(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const blobPath = `updates/${id}/${setTypeId}_${organId}.zip`;
+    // Resolve folder aliases for Drive path
+    const [setType, organ] = await Promise.all([
+      prisma.setType.findUnique({ where: { id: setTypeId }, select: { name: true, folderAlias: true } }),
+      prisma.organ.findUnique({ where: { id: organId }, select: { name: true, folderAlias: true } }),
+    ]);
+    const setAlias = setType?.folderAlias || setType?.name || setTypeId;
+    const organAlias = organ?.folderAlias || organ?.name || organId;
+    const blobPath = `updates/beats/${updateVersion.version}/${setAlias}/${organAlias}.zip`;
     const fileUrl = await uploadFileWithPath(buffer, blobPath);
 
     const updateFile = await prisma.updateFile.upsert({

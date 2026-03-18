@@ -90,8 +90,8 @@ export async function generateCPIsForCustomers(
       const safeVersion = versionNumber.replace(/[^a-zA-Z0-9._-]/g, '_');
       const cpiFileName = `${fileIdentifier}_${safeVersion}.cpi`;
 
-      // Upload CPI to storage
-      const blobPath = `updates/${updateVersionId}/cpi/${cpiFileName}`;
+      // Upload CPI to storage (flat samples folder)
+      const blobPath = `updates/samples/${cpiFileName}`;
       const cpiBuffer = Buffer.from(cpiData.buffer, cpiData.byteOffset, cpiData.byteLength);
       const cpiUrl = await uploadFileWithPath(cpiBuffer, blobPath);
 

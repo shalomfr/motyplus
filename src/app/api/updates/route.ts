@@ -111,37 +111,25 @@ export async function POST(request: NextRequest) {
 // === Helper: יצירת מבנה תיקיות Google Drive לגרסת עדכון ===
 
 async function createUpdateFolders(version: string): Promise<void> {
-  // שליפת אורגנים פעילים שתומכים בעדכונים + סוגי סטים פעילים
-  const [organs, setTypes] = await Promise.all([
-    prisma.organ.findMany({
-      where: { isActive: true, supportsUpdates: true },
-      select: { name: true, folderAlias: true },
-    }),
-    prisma.setType.findMany({
-      where: { isActive: true },
-      select: { name: true, folderAlias: true },
-    }),
-  ]);
+  // שליפת סוגי סטים פעילים
+  const setTypes = await prisma.setType.findMany({
+    where: { isActive: true },
+    select: { name: true, folderAlias: true },
+  });
 
-  // מבנה: עדכונים / V5.0 / <organ> / <setType>
-  const versionFolder = `עדכונים/${version}`;
+  // מבנה: updates/beats/{version}/{setType}
+  const versionFolder = `updates/beats/${version}`;
   await ensureFolderPath(versionFolder);
 
-  for (const organ of organs) {
-    const organName = organ.folderAlias || organ.name;
-    const organFolder = `${versionFolder}/${organName}`;
-    await ensureFolderPath(organFolder);
-
-    for (const setType of setTypes) {
-      const setTypeName = setType.folderAlias || setType.name;
-      await ensureFolderPath(`${organFolder}/${setTypeName}`);
-    }
+  for (const setType of setTypes) {
+    const setTypeName = setType.folderAlias || setType.name;
+    await ensureFolderPath(`${versionFolder}/${setTypeName}`);
   }
 
-  // יצירת תיקיית דגימות
-  await ensureFolderPath(`samples/${version}`);
+  // וידוא שתיקיית הדגימות קיימת (שטוחה, בלי גרסה)
+  await ensureFolderPath("updates/samples");
 
   console.log(
-    `Drive folders created for version ${version}: ${organs.length} organs × ${setTypes.length} setTypes + samples`
+    `Drive folders created for version ${version}: ${setTypes.length} setTypes + samples`
   );
 }

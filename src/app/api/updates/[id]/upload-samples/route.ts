@@ -51,7 +51,7 @@ export async function POST(
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const folder = `samples/${update.version}`
+    const folder = "updates/samples"
 
     const path = await uploadFile(buffer, file.name, folder)
 
@@ -90,7 +90,7 @@ export async function GET(
       return NextResponse.json({ error: "עדכון לא נמצא" }, { status: 404 })
     }
 
-    const folder = `samples/${update.version}`
+    const folder = "updates/samples"
     const rawFiles = await listFiles(folder)
 
     const files = rawFiles.map((f) => {
@@ -155,7 +155,7 @@ export async function DELETE(
       return NextResponse.json({ error: "לא סופק שם קובץ" }, { status: 400 })
     }
 
-    const filePath = `samples/${update.version}/${fileName}`
+    const filePath = `updates/samples/${fileName}`
     await deleteFile(filePath)
 
     return NextResponse.json({ success: true })

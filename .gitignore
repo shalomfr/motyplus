@@ -6,3 +6,4 @@ deploy.zip
 source.zip
 *.log
 .env
+generated-info-files/
