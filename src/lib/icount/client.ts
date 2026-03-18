@@ -67,7 +67,8 @@ export class ICountClient {
 
   private getAuthParams(): Record<string, string> {
     if (this.apiToken) {
-      return { cid: this.companyId, api_token: this.apiToken };
+      // Bearer mode — auth is in header only, no body params needed
+      return {};
     }
     return { sid: this.sid || "" };
   }
@@ -175,24 +176,16 @@ export class ICountClient {
   }
 
   private buildDocumentData(request: CreateDocumentRequest): Record<string, unknown> {
-    const items = request.items.map((item, i) => ({
-      [`description_${i + 1}`]: item.description,
-      [`quantity_${i + 1}`]: item.quantity,
-      [`unitprice_${i + 1}`]: item.unitprice,
-    }));
-
-    const flatItems: Record<string, unknown> = {};
-    for (const item of items) {
-      Object.assign(flatItems, item);
-    }
-
     return {
       doctype: this.mapDocType(request.docType),
       client_name: request.customer.client_name,
       email: request.customer.email,
       phone: request.customer.phone,
-      ...flatItems,
-      items_count: request.items.length,
+      items: request.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitprice: item.unitprice,
+      })),
       currency_code: request.currency || "ILS",
       lang: request.lang || this.settings.defaultLanguage || "he",
       send_email: request.sendEmail ?? this.settings.autoSendEmail ?? false,
