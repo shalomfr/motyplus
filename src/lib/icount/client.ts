@@ -267,6 +267,7 @@ export class ICountClient {
     const data = await this.request<{ payment_url?: string; page_id?: string }>(
       "paypage/create",
       {
+        page_name: request.pageName || "MotyPlus - תשלום",
         client_name: request.customer.client_name,
         email: request.customer.email,
         phone: request.customer.phone,

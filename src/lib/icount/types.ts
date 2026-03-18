@@ -67,6 +67,7 @@ export interface ICountRawDocResponse {
 export interface CreatePaymentPageRequest {
   customer: ICountCustomer;
   items: ICountDocumentItem[];
+  pageName?: string;
   successUrl: string;
   cancelUrl: string;
   webhookUrl?: string;
