@@ -78,9 +78,13 @@ export class ICountClient {
     }
 
     const authParams = this.getAuthParams();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (this.apiToken) {
+      headers["Authorization"] = `Bearer ${this.apiToken}`;
+    }
     const res = await fetch(`${BASE_URL}/${endpoint}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ ...body, ...authParams }),
     });
 
