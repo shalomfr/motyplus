@@ -31,8 +31,9 @@ model User {
   customerUpdates CustomerUpdate[]
   emailLogs       EmailLog[]
   leadNotes       LeadNote[]
-  assignedLeads   Lead[]        @relation("AssignedAgent")
-  activityLogs    ActivityLog[]
+  assignedLeads    Lead[]            @relation("AssignedAgent")
+  activityLogs     ActivityLog[]
+  billingProviders BillingProvider[]
 }
 
 model Account {
@@ -359,6 +360,36 @@ model Promotion {
   payments Payment[]
 }
 
+// ===== ספקי חיוב =====
+
+enum BillingProviderType {
+  ICOUNT
+  GREEN_INVOICE
+  SUMIT
+}
+
+model BillingProvider {
+  id          String              @id @default(cuid())
+  userId      String
+  provider    BillingProviderType
+  displayName String
+  apiKey      String              @db.Text // מוצפן — Company ID
+  apiSecret   String?             @db.Text // מוצפן — email|||password
+  isActive    Boolean             @default(true)
+  isPrimary   Boolean             @default(false)
+  settings    Json?               // הגדרות ספציפיות לספק
+  lastSyncAt  DateTime?
+  lastError   String?             @db.Text
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([provider])
+}
+
 // ===== תשלומים =====
 
 enum PaymentStatus {
@@ -377,6 +408,9 @@ model Payment {
   paymentMethod     String?
   externalPaymentId String?
   promotionId       String?
+  receiptNumber     String?       // מספר קבלה מ-iCount
+  receiptUrl        String?       // URL לצפייה/הורדה
+  hasReceipt        Boolean       @default(false)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

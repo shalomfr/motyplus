@@ -461,6 +461,64 @@ export function CustomerActions({
             </Button>
           )}
 
+          {/* סנכרון ל-iCount */}
+          <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
+            onClick={async () => {
+              setLoadingAction("syncIcount")
+              try {
+                const res = await fetch(`/api/customers/${customerId}/sync-icount`, { method: "POST" })
+                const data = await res.json()
+                if (data.success) {
+                  toast({ title: "סונכרן ל-iCount!", description: `מזהה: ${data.icountClientId}` })
+                } else {
+                  toast({ title: "שגיאה", description: data.error, variant: "destructive" })
+                }
+              } catch {
+                toast({ title: "שגיאה בסנכרון", variant: "destructive" })
+              } finally {
+                setLoadingAction(null)
+              }
+            }}
+            disabled={loadingAction === "syncIcount"}
+          >
+            {loadingAction === "syncIcount" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
+            סנכרן ל-iCount
+          </Button>
+
+          {/* הנפקת קבלה ידנית */}
+          <Button variant="outline" className="w-full justify-start text-purple-700 border-purple-200 hover:bg-purple-50"
+            onClick={async () => {
+              const amountStr = prompt("סכום הקבלה:")
+              if (!amountStr) return
+              const amount = parseFloat(amountStr)
+              if (isNaN(amount) || amount <= 0) { toast({ title: "סכום לא תקין", variant: "destructive" }); return }
+              const description = prompt("תיאור (אופציונלי):") || "תשלום"
+              setLoadingAction("receipt")
+              try {
+                const res = await fetch(`/api/customers/${customerId}/receipt`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ amount, description }),
+                })
+                const data = await res.json()
+                if (data.receiptNumber) {
+                  toast({ title: `קבלה ${data.receiptNumber} הונפקה!` })
+                  onStatusChange()
+                } else {
+                  toast({ title: "שגיאה", description: data.error, variant: "destructive" })
+                }
+              } catch {
+                toast({ title: "שגיאה בהנפקת קבלה", variant: "destructive" })
+              } finally {
+                setLoadingAction(null)
+              }
+            }}
+            disabled={loadingAction === "receipt"}
+          >
+            {loadingAction === "receipt" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
+            הנפק קבלה
+          </Button>
+
           {/* #15: קישור להעלאת אינפו */}
           <Button variant="outline" className="w-full justify-start"
             onClick={async () => {

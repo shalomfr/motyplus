@@ -132,7 +132,7 @@ export default function OrderPage() {
       if (notes) fd.append("notes", notes);
       fd.append("infoFile", infoFile);
 
-      const res = await fetch("/api/public/create-checkout", {
+      const res = await fetch("/api/public/create-payment", {
         method: "POST",
         body: fd,
       });

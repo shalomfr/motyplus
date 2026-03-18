@@ -48,6 +48,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
+import { ConnectionsTab } from "@/components/settings/connections-tab"
 
 interface SystemUser {
   id: string
@@ -735,6 +736,13 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* חיבורים */}
+      <Separator className="my-4" />
+      <div>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">חיבורים</h3>
+        <ConnectionsTab />
+      </div>
 
       {/* Add User Dialog */}
       <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
