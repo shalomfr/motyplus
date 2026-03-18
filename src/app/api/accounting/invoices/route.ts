@@ -13,6 +13,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "לא מורשה. יש להתחבר למערכת" }, { status: 401 });
     }
 
+    // Normalize date strings like "07-02-2023" (dd-MM-yyyy) → ISO format
+    const normalizeDate = (s: string): string => {
+      if (!s) return "";
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return d.toISOString();
+      const parts = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if (parts) return new Date(`${parts[3]}-${parts[2]}-${parts[1]}`).toISOString();
+      return s;
+    };
+
     const { searchParams } = new URL(request.url);
     const fromDate = searchParams.get("fromDate") || undefined;
     const toDate = searchParams.get("toDate") || undefined;
@@ -49,7 +59,7 @@ export async function GET(request: NextRequest) {
             amount: Number(doc.totalwithvat || doc.total || 0),
             docUrl,
             pdfUrl: docUrl,
-            createdAt: String(doc.dateissued || ""),
+            createdAt: normalizeDate(String(doc.dateissued || "")),
             customer: {
               id: Number(doc.client_id || 0),
               fullName: String(doc.client_name || `לקוח ${doc.client_id || ""}`),
@@ -103,7 +113,17 @@ export async function GET(request: NextRequest) {
     }
 
     // מיון לפי תאריך (חדש ראשון)
-    invoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Parse dates safely — handles "07-02-2023" (dd-MM-yyyy) and ISO formats
+    const parseDate = (s: string): number => {
+      if (!s) return 0;
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return d.getTime();
+      // Try dd-MM-yyyy format
+      const parts = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if (parts) return new Date(`${parts[3]}-${parts[2]}-${parts[1]}`).getTime();
+      return 0;
+    };
+    invoices.sort((a, b) => parseDate(b.createdAt) - parseDate(a.createdAt));
 
     return NextResponse.json({ invoices });
   } catch (error) {
