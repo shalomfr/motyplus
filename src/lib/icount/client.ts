@@ -111,17 +111,17 @@ export class ICountClient {
 
   // ===== Connection Test =====
 
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
       if (this.apiToken) {
         // Test API token by fetching doc types
         await this.request("doc/get_doc_types", {});
-        return true;
+        return { success: true };
       }
       await this.login();
-      return true;
-    } catch {
-      return false;
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
 
@@ -226,6 +226,24 @@ export class ICountClient {
   async getDocumentUrl(docId: string): Promise<string> {
     const data = await this.request<{ doc_url?: string }>("doc/get", { doc_id: docId });
     return data.doc_url || "";
+  }
+
+  async createQuote(request: CreateDocumentRequest): Promise<CreateDocumentResponse> {
+    const docData = this.buildDocumentData({ ...request, docType: "quote" });
+    const raw = await this.request<ICountRawDocResponse>("doc/create", docData);
+    return this.normalizeDocResponse(raw);
+  }
+
+  async createCreditNote(request: CreateDocumentRequest): Promise<CreateDocumentResponse> {
+    const docData = this.buildDocumentData({ ...request, docType: "credit_note" });
+    const raw = await this.request<ICountRawDocResponse>("doc/create", docData);
+    return this.normalizeDocResponse(raw);
+  }
+
+  async getDocuments(filters?: { doctype?: number; from_date?: string; to_date?: string }): Promise<ICountRawDocResponse[]> {
+    const data = await this.request<ICountRawDocResponse[] | { docs?: ICountRawDocResponse[] }>("doc/get_list", filters || {});
+    if (Array.isArray(data)) return data;
+    return (data as { docs?: ICountRawDocResponse[] }).docs || [];
   }
 
   // ===== Payment Pages (Clearing) =====
