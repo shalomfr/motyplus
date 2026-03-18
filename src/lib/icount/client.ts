@@ -153,15 +153,15 @@ export class ICountClient {
 
   // ===== Documents =====
 
-  private mapDocType(docType: ICountDocumentType): number {
-    const map: Record<ICountDocumentType, number> = {
-      receipt: 400,
-      tax_invoice: 305,
-      invoice_receipt: 320,
-      credit_note: 330,
-      quote: 10,
+  private mapDocType(docType: ICountDocumentType): string {
+    const map: Record<ICountDocumentType, string> = {
+      receipt: "receipt",
+      tax_invoice: "invoice",
+      invoice_receipt: "invrec",
+      credit_note: "creditnote",
+      quote: "quote",
     };
-    return map[docType] || 400;
+    return map[docType] || "receipt";
   }
 
   private mapPaymentType(paymentType: ICountPaymentType): number {
@@ -280,7 +280,7 @@ export class ICountClient {
         cancel_url: request.cancelUrl,
         webhook_url: request.webhookUrl,
         auto_create_doc: request.autoCreateDoc ?? true,
-        doctype: request.docType ? this.mapDocType(request.docType) : 320,
+        doctype: request.docType ? this.mapDocType(request.docType) : "invrec",
         ...(request.metadata
           ? { custom_fields: JSON.stringify(request.metadata) }
           : {}),
