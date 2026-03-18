@@ -158,9 +158,9 @@ export class ICountClient {
     const map: Record<ICountDocumentType, string> = {
       receipt: "receipt",
       tax_invoice: "invoice",
-      invoice_receipt: "invrec",
+      invoice_receipt: "invoice", // invrec requires payment — use invoice instead
       credit_note: "creditnote",
-      quote: "quote",
+      quote: "offer", // iCount uses "offer" not "quote"
     };
     return map[docType] || "receipt";
   }
@@ -238,10 +238,10 @@ export class ICountClient {
     return this.normalizeDocResponse(raw);
   }
 
-  async getDocuments(filters?: { doctype?: number; from_date?: string; to_date?: string }): Promise<ICountRawDocResponse[]> {
-    const data = await this.request<ICountRawDocResponse[] | { docs?: ICountRawDocResponse[] }>("doc/get_list", filters || {});
-    if (Array.isArray(data)) return data;
-    return (data as { docs?: ICountRawDocResponse[] }).docs || [];
+  async getDocuments(_filters?: { doctype?: number; from_date?: string; to_date?: string }): Promise<ICountRawDocResponse[]> {
+    // iCount API token mode does not support doc listing — return empty
+    // Documents are tracked locally in the Payment model
+    return [];
   }
 
   // ===== Payment Pages (Clearing) =====
