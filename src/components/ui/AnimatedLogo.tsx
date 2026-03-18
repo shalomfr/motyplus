@@ -20,7 +20,7 @@ export function AnimatedLogo({ size = 80, showText = false }: AnimatedLogoProps)
         style={{ width: size, height: size }}
         whileHover={{ scale: 1.05 }}
         transition={{ type: 'spring', stiffness: 300 }}
-        aria-label="לוגו MotyPlus"
+        aria-label="לוגו Motty Beats"
       >
         <div
           className="absolute inset-0 rounded-full blur-xl opacity-40"
@@ -29,7 +29,7 @@ export function AnimatedLogo({ size = 80, showText = false }: AnimatedLogoProps)
 
         <Image
           src="/logo.png"
-          alt="MotyPlus"
+          alt="Motty Beats"
           width={size}
           height={size}
           className="relative z-10 rounded-full"

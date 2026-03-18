@@ -6,14 +6,14 @@ export default function PublicLayout({
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <header className="py-6 text-center border-b bg-white/80 backdrop-blur-sm">
-        <h1 className="text-3xl font-bold text-blue-600">MotyPlus</h1>
+        <h1 className="text-3xl font-bold text-blue-600">Motty Beats</h1>
         <p className="text-sm text-muted-foreground mt-1">
           סטים, ריתמוסים ועדכוני תוכנה לקלידים
         </p>
       </header>
       <main className="container mx-auto max-w-2xl px-4 py-8">{children}</main>
       <footer className="text-center py-6 text-xs text-muted-foreground border-t">
-        MotyPlus &copy; {new Date().getFullYear()}
+        Motty Beats &copy; {new Date().getFullYear()}
       </footer>
     </div>
   );

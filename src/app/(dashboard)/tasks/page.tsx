@@ -237,7 +237,7 @@ export default function TasksPage() {
             onClick={() => {
               const statusLabels: Record<string, string> = { IDEA: "רעיון", PLANNING: "תכנון", IN_PROGRESS: "בביצוע", DONE: "הושלם" }
               const priorityLabels: Record<string, string> = { HIGH: "גבוהה", MEDIUM: "בינונית", LOW: "נמוכה" }
-              const lines = ["# משימות MotyPlus", ""]
+              const lines = ["# משימות Motty Beats", ""]
               for (const col of COLUMNS) {
                 const colTasks = tasks.filter(t => t.status === col.key)
                 if (colTasks.length === 0) continue

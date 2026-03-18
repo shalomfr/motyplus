@@ -123,7 +123,7 @@ export default function UploadInfoPage() {
             <div className="flex flex-col items-center gap-3 py-8">
               <AlertTriangle className="h-12 w-12 text-amber-500" />
               <p className="text-lg font-medium text-amber-700">הקישור פג תוקף</p>
-              <p className="text-sm text-muted-foreground">בקש קישור חדש מ-MotyPlus.</p>
+              <p className="text-sm text-muted-foreground">בקש קישור חדש מ-Motty Beats.</p>
             </div>
           )}
 

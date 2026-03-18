@@ -22,7 +22,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
       body: JSON.stringify({
         api_key: apiKey,
         to: [to],
-        sender: from || `MotyPlus <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
+        sender: from || `Motty Beats <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
         subject,
         html_body: html,
       }),

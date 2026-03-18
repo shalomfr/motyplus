@@ -3,7 +3,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 export const metadata: Metadata = {
-  title: "MotyPlus - מערכת ניהול לקוחות",
+  title: "Motty Beats - מערכת ניהול לקוחות",
   description: "מערכת CRM לניהול לקוחות, עדכונים, מיילים ולידים",
 };
 

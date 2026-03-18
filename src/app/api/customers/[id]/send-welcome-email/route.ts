@@ -55,7 +55,7 @@ export async function POST(
 
     const subject = template
       ? replaceTemplateVariables(template.subject, variables)
-      : `ברוכים הבאים ל-MotyPlus!`;
+      : `ברוכים הבאים ל-Motty Beats!`;
 
     const result = await sendEmail({
       to: customer.email,

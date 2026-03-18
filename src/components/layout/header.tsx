@@ -26,7 +26,7 @@ function getPageTitle(pathname: string): string {
   const match = Object.entries(ROUTE_TITLES).find(
     ([path]) => path !== "/" && pathname.startsWith(path)
   );
-  return match ? match[1] : "MotyPlus";
+  return match ? match[1] : "Motty Beats";
 }
 
 interface HeaderProps {
