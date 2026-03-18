@@ -215,7 +215,7 @@ export default function InvoicesPage() {
                 <TableCell>{formatCurrency(inv.amount)}</TableCell>
                 <TableCell>{formatDate(inv.createdAt)}</TableCell>
                 <TableCell>
-                  {inv.docUrl || inv.id ? (
+                  {inv.docUrl || inv.pdfUrl || inv.id ? (
                     <div className="flex items-center gap-2">
                       {inv.docUrl && (
                         <a
@@ -228,15 +228,21 @@ export default function InvoicesPage() {
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       )}
-                      {inv.id && (
-                        <a
-                          href={`/api/accounting/invoices/download?docId=${encodeURIComponent(inv.id)}`}
-                          className="text-green-600 hover:underline"
-                          title="הורדת PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
-                      )}
+                      <a
+                        href={
+                          inv.pdfUrl
+                            ? inv.pdfUrl
+                            : inv.id
+                              ? `/api/accounting/invoices/download?docId=${encodeURIComponent(inv.id)}`
+                              : inv.docUrl || "#"
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-600 hover:underline"
+                        title="הורדת PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
                     </div>
                   ) : (
                     "-"

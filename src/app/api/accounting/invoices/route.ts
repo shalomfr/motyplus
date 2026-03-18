@@ -55,15 +55,24 @@ export async function GET(request: NextRequest) {
           offer: "הצעת מחיר",
         };
 
+        // Log first doc to debug field names from iCount
+        if (docs.length > 0) {
+          console.log("iCount doc/search sample response keys:", Object.keys(docs[0]));
+        }
+
         for (const doc of docs) {
           const rawDoctype = String(doc.doctype || "");
+          // iCount may return doc_url, docurl, link, or doc_link depending on version
+          const docUrl = String(doc.doc_url || doc.docurl || doc.link || doc.doc_link || "");
+          const pdfUrl = String(doc.pdf_url || doc.pdfurl || doc.pdf_link || "");
+
           invoices.push({
-            id: String(doc.doc_id || doc.docnum || ""),
+            id: String(doc.doc_id || ""),
             docNumber: String(doc.docnum || doc.doc_id || ""),
             docType: doctypeStringToLabel[rawDoctype] || doctypeNumberToName[Number(rawDoctype)] || rawDoctype,
-            amount: Number(doc.total || doc.amount || 0),
-            docUrl: String(doc.doc_url || ""),
-            pdfUrl: String(doc.pdf_url || ""),
+            amount: Number(doc.total || doc.amount || doc.totalwithvat || 0),
+            docUrl,
+            pdfUrl,
             createdAt: String(doc.dateissued || doc.date || doc.created_at || ""),
             customer: {
               id: Number(doc.client_id || 0),
@@ -187,6 +196,7 @@ export async function POST(request: NextRequest) {
         client_name: customer.fullName,
         email: customer.email,
         phone: customer.phone,
+        ...(customer.icountClientId ? { client_id: customer.icountClientId } : {}),
       },
       items: items.map((item: { description: string; quantity: number; unitprice?: number; unitPrice?: number }) => ({
         description: item.description,

@@ -243,6 +243,7 @@ export class ICountClient {
     return {
       doctype: this.mapDocType(request.docType),
       client_name: request.customer.client_name,
+      ...(request.customer.client_id ? { client_id: request.customer.client_id } : {}),
       email: request.customer.email,
       phone: request.customer.phone,
       ...(request.customer.address ? { address: request.customer.address } : {}),

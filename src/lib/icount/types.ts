@@ -9,6 +9,7 @@ export interface ICountResponse<T = unknown> {
 
 export interface ICountCustomer {
   client_name: string;
+  client_id?: string; // מזהה לקוח קיים ב-iCount (מונע כפילויות)
   email?: string;
   phone?: string;
   address?: string;
@@ -134,8 +135,10 @@ export interface ICountIpnPayload extends ICountWebhookPayload {
   // IPN-specific fields
   doctype?: string;
   docnum?: string;
+  doc_url?: string;
   status?: string;
   custom_fields?: Record<string, string> | string;
   payment_id?: string;
+  client_id?: string | number;
   total?: number | string;
 }

@@ -109,6 +109,7 @@ model Customer {
   infoFileUrl          String?
   additionalInfoFileUrl String?
   notes                String?        @db.Text
+  icountClientId       String?        // מזהה לקוח ב-iCount (מונע כפילויות)
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 

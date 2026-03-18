@@ -67,6 +67,7 @@ async function handlePaymentPageWebhook(payloadBody: ICountIpnPayload) {
       cp,
       customer_email,
       customer_name,
+      client_id,
     } = payloadBody;
 
     // Parse metadata from custom_fields
@@ -145,7 +146,7 @@ async function handlePaymentPageWebhook(payloadBody: ICountIpnPayload) {
       }
     }
 
-    // Create customer
+    // Create customer (with iCount client_id if provided)
     const customer = await prisma.customer.create({
       data: {
         fullName: pendingOrder.fullName,
@@ -161,6 +162,7 @@ async function handlePaymentPageWebhook(payloadBody: ICountIpnPayload) {
         currentUpdateVersion,
         status: "ACTIVE",
         notes: pendingOrder.notes,
+        icountClientId: client_id ? String(client_id) : null,
       },
     });
 

@@ -41,6 +41,7 @@ export async function issueReceipt(
         client_name: payment.customer.fullName,
         email: payment.customer.email,
         phone: payment.customer.phone,
+        ...(payment.customer.icountClientId ? { client_id: payment.customer.icountClientId } : {}),
       },
       items: [
         {
@@ -110,6 +111,9 @@ export async function syncCustomerToICount(customerId: number): Promise<string |
 
   if (!customer) return null;
 
+  // If already synced, return existing iCount client ID
+  if (customer.icountClientId) return customer.icountClientId;
+
   const icount = await getICountClient();
   if (!icount) return null;
 
@@ -120,6 +124,14 @@ export async function syncCustomerToICount(customerId: number): Promise<string |
       phone: customer.phone,
       address: customer.address || undefined,
     });
+
+    // Save iCount client ID to prevent duplicates
+    if (clientId) {
+      await prisma.customer.update({
+        where: { id: customerId },
+        data: { icountClientId: clientId },
+      });
+    }
 
     return clientId;
   } catch (error) {
