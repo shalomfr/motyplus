@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Plus, ExternalLink, Loader2, Trash2 } from "lucide-react"
+import { Plus, ExternalLink, Download, Loader2, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
@@ -54,8 +54,10 @@ interface LineItem {
 }
 
 const docTypeLabel: Record<string, string> = {
+  receipt: "קבלה",
   invoice: "חשבונית מס",
   invoice_receipt: "חשבונית מס-קבלה",
+  credit_note: "חשבונית זיכוי",
   quote: "הצעת מחיר",
 }
 
@@ -213,14 +215,27 @@ export default function InvoicesPage() {
                 <TableCell>{formatDate(inv.createdAt)}</TableCell>
                 <TableCell>
                   {inv.docUrl ? (
-                    <a
-                      href={inv.docUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={inv.docUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                        title="צפייה"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                      <a
+                        href={inv.docUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-600 hover:underline"
+                        title="הורדה"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    </div>
                   ) : (
                     "-"
                   )}

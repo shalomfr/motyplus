@@ -19,20 +19,21 @@ async function getICountClient() {
   return { client: createICountClient(companyId, credentials, settings), provider };
 }
 
-// GET /api/accounting/invoices — רשימת מסמכים מ-iCount
+// מיפוי doctype מספרי לשם
+const doctypeNumberToName: Record<number, string> = {
+  400: "receipt",
+  305: "invoice",
+  320: "invoice_receipt",
+  330: "credit_note",
+  10: "quote",
+};
+
+// GET /api/accounting/invoices — רשימת מסמכים (iCount + קבלות מקומיות)
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "לא מורשה. יש להתחבר למערכת" }, { status: 401 });
-    }
-
-    const icount = await getICountClient();
-    if (!icount) {
-      return NextResponse.json(
-        { error: "לא הוגדר חיבור ל-iCount. יש להגדיר ספק חיוב בהגדרות" },
-        { status: 400 }
-      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -42,16 +43,93 @@ export async function GET(request: NextRequest) {
       ? parseInt(searchParams.get("doctype")!)
       : undefined;
 
-    const docs = await icount.client.getDocuments({
-      ...(doctype ? { doctype } : {}),
-      ...(fromDate ? { from_date: fromDate } : {}),
-      ...(toDate ? { to_date: toDate } : {}),
+    const invoices: Array<{
+      id: string;
+      docNumber: string | null;
+      docType: string;
+      amount: number;
+      docUrl: string | null;
+      createdAt: string;
+      customer: { id: number; fullName: string };
+    }> = [];
+
+    // 1. שליפת מסמכים מ-iCount
+    const icount = await getICountClient();
+    if (icount) {
+      try {
+        const docs = await icount.client.getDocuments({
+          ...(doctype ? { doctype } : {}),
+          ...(fromDate ? { from_date: fromDate } : {}),
+          ...(toDate ? { to_date: toDate } : {}),
+        });
+
+        for (const doc of docs) {
+          const rawDoctype = Number(doc.doctype || doc.doc_type || 0);
+          invoices.push({
+            id: String(doc.doc_id || doc.docnum || ""),
+            docNumber: String(doc.docnum || doc.doc_id || ""),
+            docType: doctypeNumberToName[rawDoctype] || "invoice",
+            amount: Number(doc.total || doc.amount || 0),
+            docUrl: String(doc.doc_url || doc.pdf_url || ""),
+            createdAt: String(doc.date || doc.created_at || ""),
+            customer: {
+              id: 0,
+              fullName: String(doc.client_name || doc.customer_name || "לקוח"),
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching docs from iCount:", err);
+      }
+    }
+
+    // 2. שליפת קבלות מקומיות (שנוצרו דרך "הנפק קבלה")
+    const receiptPayments = await prisma.payment.findMany({
+      where: {
+        hasReceipt: true,
+        ...(fromDate ? { createdAt: { gte: new Date(fromDate) } } : {}),
+        ...(toDate ? { createdAt: { lte: new Date(toDate) } } : {}),
+      },
+      include: { customer: { select: { id: true, fullName: true } } },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(docs);
+    // הוספת קבלות שלא נמצאות כבר ברשימת iCount (לפי מספר קבלה)
+    const existingDocNumbers = new Set(invoices.map((inv) => inv.docNumber));
+    for (const payment of receiptPayments) {
+      if (payment.receiptNumber && existingDocNumbers.has(payment.receiptNumber)) {
+        // עדכון הלקוח במסמך הקיים מ-iCount עם מזהה מקומי
+        const existing = invoices.find((inv) => inv.docNumber === payment.receiptNumber);
+        if (existing && existing.customer.id === 0) {
+          existing.customer = {
+            id: payment.customer.id,
+            fullName: payment.customer.fullName,
+          };
+        }
+        continue;
+      }
+
+      invoices.push({
+        id: payment.id,
+        docNumber: payment.receiptNumber || null,
+        docType: "receipt",
+        amount: Number(payment.amount),
+        docUrl: payment.receiptUrl || null,
+        createdAt: payment.createdAt.toISOString(),
+        customer: {
+          id: payment.customer.id,
+          fullName: payment.customer.fullName,
+        },
+      });
+    }
+
+    // מיון לפי תאריך (חדש ראשון)
+    invoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json({ invoices });
   } catch (error) {
-    console.error("Error fetching invoices from iCount:", error);
-    return NextResponse.json({ error: "שגיאה בטעינת מסמכים מ-iCount" }, { status: 500 });
+    console.error("Error fetching invoices:", error);
+    return NextResponse.json({ error: "שגיאה בטעינת מסמכים" }, { status: 500 });
   }
 }
 

@@ -31,20 +31,22 @@ export async function POST(request: NextRequest) {
     const settings = (provider.settings as ICountSettings) || {};
 
     const client = createICountClient(companyId, credentials, settings);
-    const connected = await client.testConnection();
+    const result = await client.testConnection();
 
-    if (connected) {
+    if (result.success) {
       await prisma.billingProvider.update({
         where: { id: providerId },
         data: { lastSyncAt: new Date(), lastError: null },
       });
       return NextResponse.json({ success: true, message: "החיבור תקין" });
     } else {
+      const errorMsg = result.error || "התחברות נכשלה — בדוק פרטי גישה";
+      console.error("iCount connection test failed:", errorMsg);
       await prisma.billingProvider.update({
         where: { id: providerId },
-        data: { lastError: "התחברות נכשלה — בדוק פרטי גישה" },
+        data: { lastError: errorMsg },
       });
-      return NextResponse.json({ success: false, message: "החיבור נכשל" }, { status: 400 });
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });
     }
   } catch (error) {
     console.error("Error testing billing connection:", error);
