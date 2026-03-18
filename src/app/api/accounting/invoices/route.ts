@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { createICountClient } from "@/lib/icount";
-import { decrypt } from "@/lib/crypto";
+import { getICountClient } from "@/lib/icount";
 import { logActivity } from "@/lib/activity-logger";
-import type { ICountSettings, ICountDocumentType } from "@/lib/icount";
-
-async function getICountClient() {
-  const provider = await prisma.billingProvider.findFirst({
-    where: { provider: "ICOUNT", isActive: true, isPrimary: true },
-  });
-  if (!provider) return null;
-
-  const companyId = decrypt(provider.apiKey);
-  const credentials = provider.apiSecret ? decrypt(provider.apiSecret) : "";
-  const settings = (provider.settings as ICountSettings) || {};
-
-  return { client: createICountClient(companyId, credentials, settings), provider };
-}
+import type { ICountDocumentType } from "@/lib/icount";
 
 // מיפוי doctype מספרי לשם
 const doctypeNumberToName: Record<number, string> = {
@@ -47,6 +33,7 @@ export async function GET(request: NextRequest) {
       docType: string;
       amount: number;
       docUrl: string | null;
+      pdfUrl: string | null;
       createdAt: string;
       customer: { id: number; fullName: string };
     }> = [];
@@ -75,7 +62,8 @@ export async function GET(request: NextRequest) {
             docNumber: String(doc.docnum || doc.doc_id || ""),
             docType: doctypeStringToLabel[rawDoctype] || doctypeNumberToName[Number(rawDoctype)] || rawDoctype,
             amount: Number(doc.total || doc.amount || 0),
-            docUrl: String(doc.doc_url || doc.pdf_url || ""),
+            docUrl: String(doc.doc_url || ""),
+            pdfUrl: String(doc.pdf_url || ""),
             createdAt: String(doc.dateissued || doc.date || doc.created_at || ""),
             customer: {
               id: Number(doc.client_id || 0),
@@ -120,6 +108,7 @@ export async function GET(request: NextRequest) {
         docType: "receipt",
         amount: Number(payment.amount),
         docUrl: payment.receiptUrl || null,
+        pdfUrl: payment.receiptUrl || null,
         createdAt: payment.createdAt.toISOString(),
         customer: {
           id: payment.customer.id,

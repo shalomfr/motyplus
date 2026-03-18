@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { decrypt } from "@/lib/crypto";
-import { createICountClient } from "@/lib/icount";
-import type { ICountSettings } from "@/lib/icount";
+import { getICountClientById } from "@/lib/icount";
 
 // POST /api/integrations/billing/test — בדיקת חיבור
 export async function POST(request: NextRequest) {
@@ -18,24 +16,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "חסר מזהה ספק" }, { status: 400 });
     }
 
-    const provider = await prisma.billingProvider.findUnique({
-      where: { id: providerId },
-    });
+    const icount = await getICountClientById(providerId);
 
-    if (!provider) {
+    if (!icount) {
       return NextResponse.json({ error: "ספק לא נמצא" }, { status: 404 });
     }
 
-    const companyId = decrypt(provider.apiKey);
-    const credentials = provider.apiSecret ? decrypt(provider.apiSecret) : "";
-    const settings = (provider.settings as ICountSettings) || {};
-
-    const client = createICountClient(companyId, credentials, settings);
-    const result = await client.testConnection();
+    const result = await icount.client.testConnection();
 
     if (result.success) {
       await prisma.billingProvider.update({
-        where: { id: providerId },
+        where: { id: icount.provider.id },
         data: { lastSyncAt: new Date(), lastError: null },
       });
       return NextResponse.json({ success: true, message: "החיבור תקין" });
@@ -43,7 +34,7 @@ export async function POST(request: NextRequest) {
       const errorMsg = result.error || "התחברות נכשלה — בדוק פרטי גישה";
       console.error("iCount connection test failed:", errorMsg);
       await prisma.billingProvider.update({
-        where: { id: providerId },
+        where: { id: icount.provider.id },
         data: { lastError: errorMsg },
       });
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 });

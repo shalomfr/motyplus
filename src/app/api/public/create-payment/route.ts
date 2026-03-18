@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { decrypt } from "@/lib/crypto";
-import { createICountClient } from "@/lib/icount";
-import type { ICountSettings } from "@/lib/icount";
+import { getICountClient } from "@/lib/icount";
 
 // POST /api/public/create-payment — יצירת דף תשלום iCount (מחליף Stripe Checkout)
 export async function POST(request: NextRequest) {
@@ -55,18 +53,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get iCount provider
-    const provider = await prisma.billingProvider.findFirst({
-      where: { provider: "ICOUNT", isActive: true, isPrimary: true },
-    });
+    const icount = await getICountClient();
 
-    if (!provider) {
+    if (!icount) {
       return NextResponse.json({ error: "לא הוגדר ספק חיוב — פנה למנהל" }, { status: 503 });
     }
 
-    const companyId = decrypt(provider.apiKey);
-    const credentials = provider.apiSecret ? decrypt(provider.apiSecret) : "";
-    const settings = (provider.settings as ICountSettings) || {};
-    const client = createICountClient(companyId, credentials, settings);
+    const client = icount.client;
 
     // Save pending order
     const pendingOrder = await prisma.pendingOrder.create({
@@ -107,8 +100,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
     console.error("Error creating iCount payment:", error);
+    // Don't expose internal error details to public endpoint
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "שגיאה ביצירת תשלום" },
+      { error: "שגיאה ביצירת דף תשלום — יתכן שהתוכנה לא זמינה כרגע" },
       { status: 500 }
     );
   }

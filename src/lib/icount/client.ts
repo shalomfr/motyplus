@@ -46,23 +46,38 @@ export class ICountClient {
       return this.sid;
     }
 
-    const res = await fetch(`${BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cid: this.companyId,
-        user: this.username,
-        pass: this.password,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    const data = (await res.json()) as ICountResponse<{ sid?: string }>;
-    if (!data.status || !data.data?.sid) {
-      throw new Error(data.reason || data.error_description || "iCount login failed");
+    try {
+      const res = await fetch(`${BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cid: this.companyId,
+          user: this.username,
+          pass: this.password,
+        }),
+        signal: controller.signal,
+      });
+
+      const data = (await res.json()) as ICountResponse<{ sid?: string }>;
+      // Support both { status: true, data: { sid: "..." } } and { status: true, sid: "..." }
+      const sid = data.data?.sid ?? (data as { sid?: string }).sid;
+      if (!data.status || !sid) {
+        throw new Error(data.reason || data.error_description || "iCount login failed");
+      }
+
+      this.sid = sid;
+      return this.sid;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("iCount login timeout (30s)");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    this.sid = data.data.sid;
-    return this.sid;
   }
 
   private getAuthParams(): Record<string, string> {
@@ -78,41 +93,63 @@ export class ICountClient {
       await this.login();
     }
 
-    const authParams = this.getAuthParams();
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (this.apiToken) {
-      headers["Authorization"] = `Bearer ${this.apiToken}`;
-    }
-    const res = await fetch(`${BASE_URL}/${endpoint}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ...body, ...authParams }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    const data = (await res.json()) as ICountResponse<T>;
-
-    // Session expired — retry once (only for SID mode)
-    if (!this.apiToken && !data.status && (data.reason?.includes("session") || data.reason?.includes("sid"))) {
-      this.sid = null;
-      await this.login();
-      const retryRes = await fetch(`${BASE_URL}/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, ...this.getAuthParams() }),
-      });
-      const retryData = (await retryRes.json()) as ICountResponse<T>;
-      if (!retryData.status) {
-        throw new Error(retryData.reason || retryData.error_description || "iCount request failed");
+    try {
+      const authParams = this.getAuthParams();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (this.apiToken) {
+        headers["Authorization"] = `Bearer ${this.apiToken}`;
       }
-      return retryData.data as T;
-    }
+      const res = await fetch(`${BASE_URL}/${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, ...authParams }),
+        signal: controller.signal,
+      });
 
-    if (!data.status) {
-      throw new Error(data.reason || data.error_description || "iCount request failed");
-    }
+      const data = (await res.json()) as ICountResponse<T>;
 
-    // iCount returns fields at root level, not nested in data
-    return (data.data || data) as T;
+      // Session expired — retry once (only for SID mode)
+      if (!this.apiToken && !data.status && (data.reason?.includes("session") || data.reason?.includes("sid"))) {
+        this.sid = null;
+        await this.login();
+
+        const retryAuthParams = this.getAuthParams();
+        const retryHeaders: Record<string, string> = { "Content-Type": "application/json" };
+        if (this.apiToken) {
+          retryHeaders["Authorization"] = `Bearer ${this.apiToken}`;
+        }
+
+        const retryRes = await fetch(`${BASE_URL}/${endpoint}`, {
+          method: "POST",
+          headers: retryHeaders,
+          body: JSON.stringify({ ...body, ...retryAuthParams }),
+          signal: controller.signal,
+        });
+        const retryData = (await retryRes.json()) as ICountResponse<T>;
+        if (!retryData.status) {
+          throw new Error(retryData.reason || retryData.error_description || "iCount request failed");
+        }
+        // Use consistent fallback pattern (root level or nested)
+        return (retryData.data || retryData) as T;
+      }
+
+      if (!data.status) {
+        throw new Error(data.reason || data.error_description || "iCount request failed");
+      }
+
+      // iCount returns fields at root level, not nested in data
+      return (data.data || data) as T;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("iCount request timeout (30s)");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   // ===== Connection Test =====
@@ -181,6 +218,8 @@ export class ICountClient {
       client_name: request.customer.client_name,
       email: request.customer.email,
       phone: request.customer.phone,
+      ...(request.customer.address ? { address: request.customer.address } : {}),
+      ...(request.customer.city ? { city: request.customer.city } : {}),
       items: request.items.map((item) => ({
         description: item.description,
         quantity: item.quantity,

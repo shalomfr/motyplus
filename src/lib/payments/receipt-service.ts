@@ -1,20 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { createICountClient } from "@/lib/icount";
-import { decrypt } from "@/lib/crypto";
+import { getICountClient } from "@/lib/icount";
 import { logActivity } from "@/lib/activity-logger";
-import type { ICountSettings } from "@/lib/icount";
+import type { ICountPaymentType } from "@/lib/icount";
 
-async function getICountClient() {
-  const provider = await prisma.billingProvider.findFirst({
-    where: { provider: "ICOUNT", isActive: true, isPrimary: true },
-  });
-  if (!provider) return null;
-
-  const companyId = decrypt(provider.apiKey);
-  const credentials = provider.apiSecret ? decrypt(provider.apiSecret) : "";
-  const settings = (provider.settings as ICountSettings) || {};
-
-  return { client: createICountClient(companyId, credentials, settings), provider };
+// Map payment method from payment model to iCount payment type
+function mapPaymentMethodToICount(method: string | null): ICountPaymentType {
+  const m = method?.toLowerCase() || "";
+  if (m === "cash") return "cash";
+  if (m === "check") return "check";
+  if (m === "bank_transfer" || m === "transfer") return "bank_transfer";
+  // Default: ICOUNT, STRIPE, MANUAL, credit_card
+  return "credit_card";
 }
 
 export async function issueReceipt(
@@ -46,7 +42,7 @@ export async function issueReceipt(
         },
       ],
       docType: "invoice_receipt",
-      paymentType: (payment.paymentMethod?.toLowerCase() as "credit_card") || "credit_card",
+      paymentType: mapPaymentMethodToICount(payment.paymentMethod),
       sendEmail: true,
     });
 

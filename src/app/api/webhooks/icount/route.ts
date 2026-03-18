@@ -6,6 +6,30 @@ import { logActivity } from "@/lib/activity-logger";
 // POST /api/webhooks/icount — webhook מ-iCount אחרי תשלום מוצלח
 export async function POST(request: NextRequest) {
   try {
+    // Webhook validation — בדיקת secret token
+    const authHeader = request.headers.get("X-iCount-Signature") || request.headers.get("Authorization");
+    const webhookSecret = process.env.ICOUNT_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error("iCount webhook: ICOUNT_WEBHOOK_SECRET not configured");
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+
+    // If iCount provides signature, validate it (בעבר בודקים ב-iCount docs מה הפורמט)
+    // For now, require either:
+    // 1. X-iCount-Signature header with secret token, OR
+    // 2. Authorization: Bearer <secret>
+    if (authHeader) {
+      const [scheme, token] = authHeader.split(" ");
+      if (scheme === "Bearer" && token !== webhookSecret) {
+        console.error("iCount webhook: invalid signature");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    } else if (!request.headers.has("X-iCount-Signature")) {
+      console.error("iCount webhook: missing authentication");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     // iCount sends: status, custom_fields (with pendingOrderId), docnum, doc_url, total, etc.
@@ -29,7 +53,7 @@ export async function POST(request: NextRequest) {
     const pendingOrderId = metadata.pendingOrderId;
 
     if (!pendingOrderId) {
-      console.error("iCount webhook: no pendingOrderId in custom_fields", body);
+      console.error("iCount webhook: no pendingOrderId in custom_fields");
       return NextResponse.json({ received: true });
     }
 

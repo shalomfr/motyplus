@@ -38,6 +38,7 @@ interface InvoiceRow {
   docType: string
   amount: number
   docUrl: string | null
+  pdfUrl: string | null
   createdAt: string
   customer: { id: number; fullName: string }
 }
@@ -214,27 +215,31 @@ export default function InvoicesPage() {
                 <TableCell>{formatCurrency(inv.amount)}</TableCell>
                 <TableCell>{formatDate(inv.createdAt)}</TableCell>
                 <TableCell>
-                  {inv.docUrl ? (
+                  {inv.docUrl || inv.pdfUrl ? (
                     <div className="flex items-center gap-2">
-                      <a
-                        href={inv.docUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                        title="צפייה"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                      <a
-                        href={inv.docUrl}
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-600 hover:underline"
-                        title="הורדה"
-                      >
-                        <Download className="h-4 w-4" />
-                      </a>
+                      {inv.docUrl && (
+                        <a
+                          href={inv.docUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                          title="צפייה"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                      {inv.pdfUrl && (
+                        <a
+                          href={inv.pdfUrl}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 hover:underline"
+                          title="הורדה"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      )}
                     </div>
                   ) : (
                     "-"
