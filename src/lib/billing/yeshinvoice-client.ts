@@ -114,7 +114,7 @@ export class YeshInvoiceClient implements BillingClient {
           "Content-Type": "application/json",
           Authorization: this.authHeader,
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: JSON.stringify(body || {}),
         signal: controller.signal,
       });
 
