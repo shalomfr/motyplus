@@ -13,9 +13,15 @@ function mapPaymentMethodToICount(method: string | null): ICountPaymentType {
   return "credit_card";
 }
 
+/**
+ * Issue a receipt/invoice in iCount
+ * Supports multiple document types (invoice_receipt, tax_invoice, receipt)
+ * This is called when a payment is received (e.g., from iCount paypage webhook).
+ */
 export async function issueReceipt(
   paymentId: string,
-  userId?: string
+  userId?: string,
+  docType: "receipt" | "tax_invoice" | "invoice_receipt" = "invoice_receipt"
 ): Promise<{ receiptNumber: string; receiptUrl: string } | null> {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
@@ -28,7 +34,9 @@ export async function issueReceipt(
   if (!icount) return null;
 
   try {
-    const result = await icount.client.createReceipt({
+    // Map to the appropriate iCount method based on docType
+    let result;
+    const docRequest = {
       customer: {
         client_name: payment.customer.fullName,
         email: payment.customer.email,
@@ -41,10 +49,19 @@ export async function issueReceipt(
           unitprice: Number(payment.amount),
         },
       ],
-      docType: "invoice_receipt",
+      docType: docType as "receipt" | "tax_invoice" | "invoice_receipt",
       paymentType: mapPaymentMethodToICount(payment.paymentMethod),
       sendEmail: true,
-    });
+    };
+
+    if (docType === "receipt") {
+      result = await icount.client.createReceipt(docRequest);
+    } else if (docType === "tax_invoice") {
+      result = await icount.client.createInvoice(docRequest);
+    } else {
+      // invoice_receipt (חשבונית מס-קבלה)
+      result = await icount.client.createInvoiceReceipt(docRequest);
+    }
 
     await prisma.payment.update({
       where: { id: paymentId },
@@ -61,17 +78,24 @@ export async function issueReceipt(
       action: "הנפקת קבלה",
       entityType: "PAYMENT",
       entityId: paymentId,
-      details: { receiptNumber: result.number, amount: Number(payment.amount) },
+      details: {
+        receiptNumber: result.number,
+        amount: Number(payment.amount),
+        docType,
+      },
     });
 
     return { receiptNumber: result.number, receiptUrl: result.url };
   } catch (error) {
-    console.error("Error issuing receipt:", error);
+    console.error(`Error issuing ${docType}:`, error);
 
-    // עדכון שגיאה בספק
+    // Update provider with error
     await prisma.billingProvider.update({
       where: { id: icount.provider.id },
-      data: { lastError: error instanceof Error ? error.message : "שגיאה בהנפקת קבלה" },
+      data: {
+        lastError: error instanceof Error ? error.message : "שגיאה בהנפקת קבלה",
+        lastSyncAt: new Date(),
+      },
     });
 
     return null;

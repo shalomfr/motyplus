@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uploadFile } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
+import type { ICountIpnPayload } from "@/lib/icount";
 
-// POST /api/webhooks/icount — webhook מ-iCount אחרי תשלום מוצלח
+// POST /api/webhooks/icount — webhook מ-iCount
+// תומך בשני מצבים:
+// 1. Document webhook (סעיף 22) — כשמופק מסמך
+// 2. IPN / Payment page webhook (סעיף 22א) — כשמתקבל תשלום בעמוד סליקה
 export async function POST(request: NextRequest) {
   try {
     // Webhook validation — בדיקת secret token
@@ -15,10 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
     }
 
-    // If iCount provides signature, validate it (בעבר בודקים ב-iCount docs מה הפורמט)
-    // For now, require either:
-    // 1. X-iCount-Signature header with secret token, OR
-    // 2. Authorization: Bearer <secret>
+    // Validate signature
+    // iCount can send either:
+    // 1. Authorization: Bearer <secret>, OR
+    // 2. X-iCount-Signature header
     if (authHeader) {
       const [scheme, token] = authHeader.split(" ");
       if (scheme === "Bearer" && token !== webhookSecret) {
@@ -30,9 +34,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as ICountIpnPayload;
 
-    // iCount sends: status, custom_fields (with pendingOrderId), docnum, doc_url, total, etc.
+    // Determine webhook type
+    const isPaymentPageWebhook = body.cp !== undefined || body.custom_fields !== undefined;
+
+    if (isPaymentPageWebhook) {
+      return handlePaymentPageWebhook(body);
+    } else {
+      return handleDocumentWebhook(body);
+    }
+  } catch (error) {
+    console.error("iCount webhook error:", error);
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 400 });
+  }
+}
+
+/**
+ * Handle payment page (עמוד סליקה) webhooks from iCount
+ * Triggered when a payment is received on an iCount payment page.
+ * Reference: Section 22א (IPN) in iCount-api-docs-index.md
+ */
+async function handlePaymentPageWebhook(payloadBody: ICountIpnPayload) {
+  try {
     const {
       status,
       custom_fields,
@@ -40,35 +64,39 @@ export async function POST(request: NextRequest) {
       doc_url,
       total,
       payment_id,
-    } = body;
+      cp,
+      customer_email,
+      customer_name,
+    } = payloadBody;
 
-    // Parse metadata
-    let metadata: Record<string, string> = {};
+    // Parse metadata from custom_fields
+    let paymentMetadata: Record<string, string> = {};
     try {
-      metadata = typeof custom_fields === "string" ? JSON.parse(custom_fields) : custom_fields || {};
+      paymentMetadata = typeof custom_fields === "string" ? JSON.parse(custom_fields) : (custom_fields as Record<string, string>) || {};
     } catch {
-      metadata = {};
+      paymentMetadata = {};
     }
 
-    const pendingOrderId = metadata.pendingOrderId;
+    const pendingOrderId = paymentMetadata.pendingOrderId;
 
     if (!pendingOrderId) {
-      console.error("iCount webhook: no pendingOrderId in custom_fields");
+      console.log("iCount webhook: no pendingOrderId in custom_fields, might be payment confirmation");
       return NextResponse.json({ received: true });
     }
 
     // Only process successful payments
-    if (status !== "success" && status !== "approved" && status !== true) {
+    const isSuccess = status === "success" || status === "approved" || String(status) === "true";
+    if (!isSuccess) {
       console.log("iCount webhook: payment not successful, status:", status);
       return NextResponse.json({ received: true });
     }
 
     // Fetch pending order (idempotency check)
-    const order = await prisma.pendingOrder.findUnique({
+    const pendingOrder = await prisma.pendingOrder.findUnique({
       where: { id: pendingOrderId },
     });
 
-    if (!order || order.status !== "PENDING") {
+    if (!pendingOrder || pendingOrder.status !== "PENDING") {
       return NextResponse.json({ received: true });
     }
 
@@ -79,9 +107,9 @@ export async function POST(request: NextRequest) {
 
     // Determine currentUpdateVersion
     let currentUpdateVersion: string | null = null;
-    let setTypeId = order.setTypeId;
+    let setTypeId = pendingOrder.setTypeId;
 
-    if (order.isUpdateOnly) {
+    if (pendingOrder.isUpdateOnly) {
       let updateOnlySet = await prisma.setType.findFirst({
         where: { name: "עדכון בלבד" },
       });
@@ -98,9 +126,9 @@ export async function POST(request: NextRequest) {
       }
       setTypeId = updateOnlySet.id;
 
-      if (order.updateVersionId) {
+      if (pendingOrder.updateVersionId) {
         const ver = await prisma.updateVersion.findUnique({
-          where: { id: order.updateVersionId },
+          where: { id: pendingOrder.updateVersionId },
           select: { version: true },
         });
         currentUpdateVersion = ver?.version || null;
@@ -120,26 +148,26 @@ export async function POST(request: NextRequest) {
     // Create customer
     const customer = await prisma.customer.create({
       data: {
-        fullName: order.fullName,
-        phone: order.phone,
-        email: order.email,
-        organId: order.organId,
+        fullName: pendingOrder.fullName,
+        phone: pendingOrder.phone,
+        email: pendingOrder.email,
+        organId: pendingOrder.organId,
         setTypeId: setTypeId!,
-        amountPaid: order.amount,
+        amountPaid: pendingOrder.amount,
         purchaseDate,
         updateExpiryDate,
         hasV3: true,
         sampleType: "CPI",
         currentUpdateVersion,
         status: "ACTIVE",
-        notes: order.notes,
+        notes: pendingOrder.notes,
       },
     });
 
     // Upload info file to Google Drive
     try {
       const fileName = `${customer.id}.n27`;
-      const url = await uploadFile(Buffer.from(order.infoFileData), fileName, "customers/info");
+      const url = await uploadFile(Buffer.from(pendingOrder.infoFileData), fileName, "customers/info");
       await prisma.customer.update({
         where: { id: customer.id },
         data: { infoFileUrl: url },
@@ -152,8 +180,8 @@ export async function POST(request: NextRequest) {
     await prisma.payment.create({
       data: {
         customerId: customer.id,
-        amount: total || order.amount,
-        description: order.isUpdateOnly ? "עדכון תוכנה" : "רכישת סט",
+        amount: total || pendingOrder.amount,
+        description: pendingOrder.isUpdateOnly ? "עדכון תוכנה" : "רכישת סט",
         status: "COMPLETED",
         paymentMethod: "ICOUNT",
         externalPaymentId: payment_id ? String(payment_id) : null,
@@ -173,6 +201,7 @@ export async function POST(request: NextRequest) {
         fullName: customer.fullName,
         source: "icount_payment",
         receiptNumber: docnum,
+        paymentPageId: cp,
       },
     });
 
@@ -184,7 +213,83 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("iCount webhook error:", error);
+    console.error("iCount payment page webhook error:", error);
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 400 });
+  }
+}
+
+/**
+ * Handle document webhooks from iCount
+ * Triggered when a document is issued in iCount.
+ * Reference: Section 22 (WebHooks) in icount-api-docs-index.md
+ *
+ * This webhook is useful for:
+ * - Updating receipt info for existing payments
+ * - Auditing document creation
+ * - Syncing document metadata
+ */
+async function handleDocumentWebhook(body: ICountIpnPayload) {
+  try {
+    const {
+      doctype,
+      docnum,
+      doc_link,
+      pdf_link,
+      totalwithvat,
+      totalsum,
+      clientname,
+      dateissued,
+    } = body;
+
+    // Log the document webhook for auditing
+    console.log("iCount document webhook:", {
+      doctype,
+      docnum,
+      doclink: doc_link,
+      clientname,
+      dateissued,
+    });
+
+    // Check if this document already exists in our system
+    if (docnum) {
+      const existingPayment = await prisma.payment.findFirst({
+        where: { receiptNumber: String(docnum) },
+      });
+
+      if (existingPayment) {
+        // Update receipt URL if not already set
+        if (!existingPayment.receiptUrl && doc_link) {
+          await prisma.payment.update({
+            where: { id: existingPayment.id },
+            data: {
+              receiptUrl: String(doc_link),
+              hasReceipt: true,
+            },
+          });
+
+          // Log the update
+          if (existingPayment.customerId) {
+            await logActivity({
+              customerId: existingPayment.customerId,
+              action: "UPDATE",
+              entityType: "PAYMENT",
+              entityId: existingPayment.id,
+              details: {
+                receiptNumber: docnum,
+                receiptUrl: doc_link,
+                doctype,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Webhook received and processed
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error("iCount document webhook error:", error);
+    // Don't fail the webhook — iCount expects success
+    return NextResponse.json({ received: true });
   }
 }

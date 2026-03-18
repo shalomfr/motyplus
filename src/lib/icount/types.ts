@@ -89,3 +89,53 @@ export interface ICountSettings {
   defaultLanguage?: string;
   autoSendEmail?: boolean;
 }
+
+export interface ICountWebhookPayload {
+  // Document webhook (סעיף 22 בתיעוד)
+  doctype?: string;
+  docnum?: string;
+  timeissued?: string;
+  dateissued?: string;
+  clientname?: string;
+  clientaddress?: string;
+  totalsum?: string;
+  totalvat?: string;
+  totalwithvat?: string;
+  items?: Array<{
+    item_id?: string;
+    description?: string;
+    unitprice?: string;
+    quantity?: string;
+  }>;
+  doc_link?: string;
+  pdf_link?: string;
+  client?: {
+    email?: string;
+    phone?: string;
+    client_vat_id?: string;
+  };
+
+  // Payment page webhook / IPN (סעיף 22א בתיעוד)
+  cp?: number; // payment page number
+  sum?: number;
+  currency_code?: string;
+  num_of_payments?: number;
+  confirmation_code?: string;
+  customer_id?: number;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  customer_vat_id?: string;
+  // Custom fields (m__ prefix parameters are returned without prefix)
+  [key: string]: unknown;
+}
+
+export interface ICountIpnPayload extends ICountWebhookPayload {
+  // IPN-specific fields
+  doctype?: string;
+  docnum?: string;
+  status?: string;
+  custom_fields?: Record<string, string> | string;
+  payment_id?: string;
+  total?: number | string;
+}

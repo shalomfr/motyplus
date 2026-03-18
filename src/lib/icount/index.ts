@@ -11,4 +11,6 @@ export type {
   CreatePaymentPageRequest,
   CreatePaymentPageResponse,
   ICountSettings,
+  ICountWebhookPayload,
+  ICountIpnPayload,
 } from "./types";

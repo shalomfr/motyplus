@@ -156,15 +156,42 @@ export class ICountClient {
 
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
-      if (this.apiToken) {
-        // Test API token by fetching doc types
-        await this.request("doc/get_doc_types", {});
-        return { success: true };
-      }
-      await this.login();
+      // Test connection by fetching available doc types
+      await this.getAvailableDocTypes();
       return { success: true };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  async getAvailableDocTypes(): Promise<string[]> {
+    try {
+      if (this.apiToken) {
+        // Bearer token mode — use doc/get_doc_types
+        const data = await this.request<Record<string, unknown> | string[]>(
+          "doc/get_doc_types",
+          {}
+        );
+        // Response could be an object or array depending on iCount version
+        if (Array.isArray(data)) {
+          return data.map(String);
+        }
+        // If it's an object, return the keys
+        if (typeof data === "object" && data !== null) {
+          return Object.keys(data);
+        }
+        return [];
+      } else {
+        // SID mode — use doc/types
+        const data = await this.request<{ doctypes?: Record<string, unknown> }>(
+          "doc/types",
+          {}
+        );
+        return data.doctypes ? Object.keys(data.doctypes) : [];
+      }
+    } catch (error) {
+      console.error("Error fetching available doc types:", error);
+      return [];
     }
   }
 
@@ -195,7 +222,7 @@ export class ICountClient {
     const map: Record<ICountDocumentType, string> = {
       receipt: "receipt",
       tax_invoice: "invoice",
-      invoice_receipt: "invoice", // invrec requires payment — use invoice instead
+      invoice_receipt: "invrec", // חשבונית מס-קבלה (קוד 320) — עם תשלום
       credit_note: "creditnote",
       quote: "offer", // iCount uses "offer" not "quote"
     };
