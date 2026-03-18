@@ -218,13 +218,38 @@ export function CustomerForm({
         return
       }
 
+      // קריאת waveCapacity מ-N27 לזיהוי 1G/2G
+      let waveCapacity = 0
+      if (bytes.length >= 0x7C) {
+        const waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
+        waveCapacity = waveUnits * 1024
+      }
+
       // חיפוש אורגן תואם (case-insensitive, גם חלקי)
       const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
-      const match = organs.find(o =>
-        normalize(o.name) === normalize(organName) ||
-        normalize(organName).includes(normalize(o.name)) ||
-        normalize(o.name).includes(normalize(organName))
-      )
+      const normalizedName = normalize(organName)
+
+      // קודם ניסיון התאמה מדויקת
+      let match = organs.find(o => normalize(o.name) === normalizedName)
+
+      // אם אין התאמה מדויקת — התאמה חלקית עם זיהוי 1G/2G לפי waveCapacity
+      if (!match) {
+        const candidates = organs.filter(o =>
+          normalizedName.includes(normalize(o.name)) ||
+          normalize(o.name).includes(normalizedName)
+        )
+
+        if (candidates.length > 1 && normalizedName.includes("tyros5") && waveCapacity > 0) {
+          // Tyros5-1G vs Tyros5-2G: הבדלה לפי נפח wave memory
+          // מעל 1.5GB = 2G, מתחת = 1G
+          const threshold = 1.5 * 1024 * 1024 * 1024
+          const suffix = waveCapacity > threshold ? "2g" : "1g"
+          match = candidates.find(c => normalize(c.name).includes(suffix)) || candidates[0]
+        } else {
+          match = candidates[0]
+        }
+      }
+
       if (match) {
         if (!watchedOrganId || forceUpdate) {
           setValue("organId", match.id)
@@ -298,29 +323,58 @@ export function CustomerForm({
     }
   }
 
+  // פונקציית עזר: זיהוי אורגן מ-bytes של N27
+  const matchOrganFromBytes = (bytes: Uint8Array): Organ | null => {
+    let organName = ""
+    for (let i = 0; i < Math.min(64, bytes.length); i++) {
+      if (bytes[i] === 0) break
+      organName += String.fromCharCode(bytes[i])
+    }
+    organName = organName.trim()
+    if (!organName) return null
+
+    let waveCapacity = 0
+    if (bytes.length >= 0x7C) {
+      const waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
+      waveCapacity = waveUnits * 1024
+    }
+
+    const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
+    const normalizedName = normalize(organName)
+
+    let match = organs.find(o => normalize(o.name) === normalizedName)
+    if (!match) {
+      const candidates = organs.filter(o =>
+        normalizedName.includes(normalize(o.name)) ||
+        normalize(o.name).includes(normalizedName)
+      )
+      if (candidates.length > 1 && normalizedName.includes("tyros5") && waveCapacity > 0) {
+        const threshold = 1.5 * 1024 * 1024 * 1024
+        const suffix = waveCapacity > threshold ? "2g" : "1g"
+        match = candidates.find(c => normalize(c.name).includes(suffix)) || candidates[0]
+      } else {
+        match = candidates[0]
+      }
+    }
+    return match || null
+  }
+
   // זיהוי אורגן נוסף אוטומטי מקובץ N27
   const detectAdditionalOrganFromN27 = async (file: File) => {
     try {
       const buffer = await file.arrayBuffer()
       const bytes = new Uint8Array(buffer)
-      let organName = ""
-      for (let i = 0; i < Math.min(64, bytes.length); i++) {
-        if (bytes[i] === 0) break
-        organName += String.fromCharCode(bytes[i])
-      }
-      organName = organName.trim()
-      if (!organName) return
-      const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
-      const match = organs.find(o =>
-        normalize(o.name) === normalize(organName) ||
-        normalize(organName).includes(normalize(o.name)) ||
-        normalize(o.name).includes(normalize(organName))
-      )
+      const match = matchOrganFromBytes(bytes)
       if (match) {
         setValue("additionalOrganId", match.id)
         setDetectResult(`זוהה: ${match.name}`)
       } else {
-        setDetectResult(`נמצא "${organName}" — לא תואם אורגן במערכת`)
+        let organName = ""
+        for (let i = 0; i < Math.min(64, bytes.length); i++) {
+          if (bytes[i] === 0) break
+          organName += String.fromCharCode(bytes[i])
+        }
+        setDetectResult(`נמצא "${organName.trim()}" — לא תואם אורגן במערכת`)
       }
       setTimeout(() => setDetectResult(null), 4000)
     } catch { /* ignore */ }
@@ -894,20 +948,12 @@ export function CustomerForm({
                     try {
                       const buffer = await pendingAdditionalInfoFile.arrayBuffer()
                       const bytes = new Uint8Array(buffer)
-                      let organName = ""
-                      for (let i = 0; i < Math.min(64, bytes.length); i++) {
-                        if (bytes[i] === 0) break
-                        organName += String.fromCharCode(bytes[i])
-                      }
-                      organName = organName.trim()
-                      if (!organName) { setDetectResult("לא זוהה אורגן בקובץ"); return }
-                      const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
-                      const match = organs.find(o => normalize(o.name) === normalize(organName) || normalize(organName).includes(normalize(o.name)) || normalize(o.name).includes(normalize(organName)))
+                      const match = matchOrganFromBytes(bytes)
                       if (match) {
                         setValue("additionalOrganId", match.id)
                         setDetectResult(`זוהה: ${match.name}`)
                       } else {
-                        setDetectResult(`נמצא "${organName}" — לא תואם אורגן במערכת`)
+                        setDetectResult("לא זוהה אורגן בקובץ")
                       }
                       setTimeout(() => setDetectResult(null), 4000)
                     } catch { setDetectResult("שגיאה בקריאת הקובץ") }
@@ -924,20 +970,12 @@ export function CustomerForm({
                       try {
                         const buffer = await file.arrayBuffer()
                         const bytes = new Uint8Array(buffer)
-                        let organName = ""
-                        for (let i = 0; i < Math.min(64, bytes.length); i++) {
-                          if (bytes[i] === 0) break
-                          organName += String.fromCharCode(bytes[i])
-                        }
-                        organName = organName.trim()
-                        if (!organName) { setDetectResult("לא זוהה אורגן בקובץ"); return }
-                        const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
-                        const match = organs.find(o => normalize(o.name) === normalize(organName) || normalize(organName).includes(normalize(o.name)) || normalize(o.name).includes(normalize(organName)))
+                        const match = matchOrganFromBytes(bytes)
                         if (match) {
                           setValue("additionalOrganId", match.id)
                           setDetectResult(`זוהה: ${match.name}`)
                         } else {
-                          setDetectResult(`נמצא "${organName}" — לא תואם`)
+                          setDetectResult("לא זוהה אורגן בקובץ")
                         }
                         setTimeout(() => setDetectResult(null), 4000)
                       } catch { setDetectResult("שגיאה") }
