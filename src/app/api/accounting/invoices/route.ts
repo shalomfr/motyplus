@@ -55,28 +55,21 @@ export async function GET(request: NextRequest) {
           offer: "הצעת מחיר",
         };
 
-        // Log first doc to debug field names from iCount
-        if (docs.length > 0) {
-          console.log("iCount doc/search sample response keys:", Object.keys(docs[0]));
-        }
-
         for (const doc of docs) {
           const rawDoctype = String(doc.doctype || "");
-          // iCount may return doc_url, docurl, link, or doc_link depending on version
-          const docUrl = String(doc.doc_url || doc.docurl || doc.link || doc.doc_link || "");
-          const pdfUrl = String(doc.pdf_url || doc.pdfurl || doc.pdf_link || "");
+          const docUrl = String(doc.doc_url || "");
 
           invoices.push({
-            id: String(doc.doc_id || ""),
-            docNumber: String(doc.docnum || doc.doc_id || ""),
+            id: String(doc.docnum || doc.doc_id || ""),
+            docNumber: String(doc.docnum || ""),
             docType: doctypeStringToLabel[rawDoctype] || doctypeNumberToName[Number(rawDoctype)] || rawDoctype,
-            amount: Number(doc.total || doc.amount || doc.totalwithvat || 0),
+            amount: Number(doc.totalwithvat || doc.total || 0),
             docUrl,
-            pdfUrl,
-            createdAt: String(doc.dateissued || doc.date || doc.created_at || ""),
+            pdfUrl: docUrl, // iCount doc_url is the viewable/printable page
+            createdAt: String(doc.dateissued || ""),
             customer: {
               id: Number(doc.client_id || 0),
-              fullName: String(doc.client_name || doc.customer_name || `לקוח ${doc.client_id || ""}`),
+              fullName: String(doc.client_name || `לקוח ${doc.client_id || ""}`),
             },
           });
         }
