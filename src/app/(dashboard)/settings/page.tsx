@@ -277,7 +277,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `motyplus-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.download = `motty-beats-backup-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
       setLastBackupDate(new Date().toISOString())
@@ -359,7 +359,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">כתובת שולח:</span>
-                <span dir="ltr">noreply@motyplus.com</span>
+                <span dir="ltr">noreply@motty-beats.com</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">מפתח API:</span>

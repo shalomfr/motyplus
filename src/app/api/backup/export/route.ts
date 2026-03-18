@@ -26,7 +26,7 @@ export async function GET() {
     return new Response(json, {
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="motyplus-backup-${date}.json"`,
+        "Content-Disposition": `attachment; filename="motty-beats-backup-${date}.json"`,
       },
     })
   } catch (error) {

@@ -32,7 +32,7 @@ export async function POST(
       return NextResponse.json({ error: "הלקוח לא נמצא" }, { status: 404 });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@motyplus.com";
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@motty-beats.com";
 
     const html = `
 <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

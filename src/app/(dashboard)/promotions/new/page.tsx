@@ -62,7 +62,7 @@ export default function NewPromotionPage() {
     }
   }
 
-  const basePaymentUrl = "https://pay.motyplus.com/checkout"
+  const basePaymentUrl = "https://pay.motty-beats.com/checkout"
   const previewLink = couponCode
     ? `${basePaymentUrl}?coupon=${couponCode}`
     : basePaymentUrl

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe Checkout Session
     const stripe = getStripe();
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "https://motyplus-2hvb.onrender.com";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "https://motty-beats-2hvb.onrender.com";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
