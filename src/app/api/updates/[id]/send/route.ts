@@ -82,7 +82,6 @@ export async function POST(
     const now = new Date()
     const eligible = customers.filter((c) => {
       if (alreadyReceivedIds.has(c.id)) return false
-      if (!c.setType?.includesUpdates) return false // חצי סט — לא זכאי
       if (c.status === "EXCEPTION") return true
       if (c.updateExpiryDate && c.updateExpiryDate >= now) return true
       return false
@@ -95,8 +94,8 @@ export async function POST(
       )
     }
 
-    // טעינת קבצי CPI מתיקיית samples/{version}
-    const folder = `samples/${updateVersion.version}`
+    // טעינת קבצי CPI מתיקיית updates/samples (שטוח)
+    const folder = "updates/samples"
     const sampleFiles = await listFiles(folder)
 
     // בניית מפה: customerId → { main?: path, additional?: path }

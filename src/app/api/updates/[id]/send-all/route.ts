@@ -50,7 +50,8 @@ export async function POST(
       where: {
         id: { notIn: alreadyReceivedIds.length > 0 ? alreadyReceivedIds : [-1] },
         status: { in: ["ACTIVE", "EXCEPTION"] },
-        setType: { includesUpdates: true },
+        isCasual: false,
+        organ: { supportsUpdates: true },
         OR: [
           { updateExpiryDate: { gte: now } },
           { status: "EXCEPTION" },
@@ -78,8 +79,8 @@ export async function POST(
       )
     }
 
-    // טעינת קבצי CPI מתיקיית samples/{version}
-    const folder = `samples/${updateVersion.version}`
+    // טעינת קבצי CPI מתיקיית updates/samples (שטוח)
+    const folder = "updates/samples"
     let sampleFiles: { path: string }[] = []
     try {
       sampleFiles = await listFiles(folder)
