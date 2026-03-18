@@ -31,8 +31,10 @@ export function ConnectionsTab() {
 
   // iCount form
   const [companyId, setCompanyId] = useState("")
+  const [apiToken, setApiToken] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [useApiToken, setUseApiToken] = useState(true)
 
   const fetchProviders = async () => {
     try {
@@ -55,10 +57,20 @@ export function ConnectionsTab() {
   const icountProvider = providers.find((p) => p.provider === "ICOUNT")
 
   const handleSave = async () => {
-    if (!companyId || !email || !password) {
-      toast({ title: "יש למלא את כל השדות", variant: "destructive" })
+    if (!companyId) {
+      toast({ title: "יש להזין Company ID", variant: "destructive" })
       return
     }
+    if (useApiToken && !apiToken) {
+      toast({ title: "יש להזין API Token", variant: "destructive" })
+      return
+    }
+    if (!useApiToken && (!email || !password)) {
+      toast({ title: "יש למלא אימייל וסיסמה", variant: "destructive" })
+      return
+    }
+
+    const secret = useApiToken ? apiToken : `${email}|||${password}`
 
     setSaving(true)
     try {
@@ -68,7 +80,7 @@ export function ConnectionsTab() {
         body: JSON.stringify({
           provider: "ICOUNT",
           apiKey: companyId,
-          apiSecret: `${email}|||${password}`,
+          apiSecret: secret,
           displayName: "iCount",
         }),
       })
@@ -76,6 +88,7 @@ export function ConnectionsTab() {
       if (res.ok) {
         toast({ title: data.message || "נשמר בהצלחה" })
         setCompanyId("")
+        setApiToken("")
         setEmail("")
         setPassword("")
         fetchProviders()
@@ -282,25 +295,60 @@ export function ConnectionsTab() {
                     dir="ltr"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label>אימייל (שם משתמש)</Label>
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@email.com"
-                    dir="ltr"
-                  />
+
+                <div className="flex gap-2 text-sm">
+                  <Button
+                    type="button"
+                    variant={useApiToken ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseApiToken(true)}
+                  >
+                    API Token
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!useApiToken ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseApiToken(false)}
+                  >
+                    אימייל + סיסמה
+                  </Button>
                 </div>
-                <div className="space-y-1">
-                  <Label>סיסמה</Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="סיסמת iCount"
-                    dir="ltr"
-                  />
-                </div>
+
+                {useApiToken ? (
+                  <div className="space-y-1">
+                    <Label>API Token</Label>
+                    <Input
+                      value={apiToken}
+                      onChange={(e) => setApiToken(e.target.value)}
+                      placeholder="API3E8-XXXX-XXXX-XXXX"
+                      dir="ltr"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <Label>אימייל (שם משתמש)</Label>
+                      <Input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="user@email.com"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>סיסמה</Label>
+                      <Input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="סיסמת iCount"
+                        dir="ltr"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? (
                     <Loader2 className="h-4 w-4 ml-2 animate-spin" />

@@ -18,21 +18,34 @@ export class ICountClient {
   private companyId: string;
   private username: string;
   private password: string;
+  private apiToken: string | null = null;
   private sid: string | null = null;
   private settings: ICountSettings;
 
   constructor(companyId: string, credentials: string, settings?: ICountSettings) {
     this.companyId = companyId;
-    // credentials format: "email|||password"
-    const parts = credentials.split("|||");
-    this.username = parts[0] || "";
-    this.password = parts[1] || "";
+    // credentials format: "email|||password" OR just API token (starts with "API")
+    if (credentials.startsWith("API")) {
+      this.apiToken = credentials;
+      this.username = "";
+      this.password = "";
+    } else {
+      const parts = credentials.split("|||");
+      this.username = parts[0] || "";
+      this.password = parts[1] || "";
+    }
     this.settings = settings || {};
   }
 
   // ===== Auth =====
 
   private async login(): Promise<string> {
+    // API token mode — no login needed
+    if (this.apiToken) {
+      this.sid = this.apiToken;
+      return this.sid;
+    }
+
     const res = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -52,27 +65,35 @@ export class ICountClient {
     return this.sid;
   }
 
+  private getAuthParams(): Record<string, string> {
+    if (this.apiToken) {
+      return { cid: this.companyId, api_token: this.apiToken };
+    }
+    return { sid: this.sid || "" };
+  }
+
   private async request<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
-    if (!this.sid) {
+    if (!this.sid && !this.apiToken) {
       await this.login();
     }
 
+    const authParams = this.getAuthParams();
     const res = await fetch(`${BASE_URL}/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, sid: this.sid }),
+      body: JSON.stringify({ ...body, ...authParams }),
     });
 
     const data = (await res.json()) as ICountResponse<T>;
 
-    // Session expired — retry once
-    if (!data.status && (data.reason?.includes("session") || data.reason?.includes("sid"))) {
+    // Session expired — retry once (only for SID mode)
+    if (!this.apiToken && !data.status && (data.reason?.includes("session") || data.reason?.includes("sid"))) {
       this.sid = null;
       await this.login();
       const retryRes = await fetch(`${BASE_URL}/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, sid: this.sid }),
+        body: JSON.stringify({ ...body, ...this.getAuthParams() }),
       });
       const retryData = (await retryRes.json()) as ICountResponse<T>;
       if (!retryData.status) {
@@ -92,6 +113,11 @@ export class ICountClient {
 
   async testConnection(): Promise<boolean> {
     try {
+      if (this.apiToken) {
+        // Test API token by fetching doc types
+        await this.request("doc/get_doc_types", {});
+        return true;
+      }
       await this.login();
       return true;
     } catch {
