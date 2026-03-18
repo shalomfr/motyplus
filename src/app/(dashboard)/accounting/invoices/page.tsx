@@ -71,7 +71,7 @@ export default function InvoicesPage() {
   const [customers, setCustomers] = useState<CustomerOption[]>([])
   const [saving, setSaving] = useState(false)
   const [customerId, setCustomerId] = useState("")
-  const [docType, setDocType] = useState("invoice")
+  const [docType, setDocType] = useState("tax_invoice")
   const [items, setItems] = useState<LineItem[]>([
     { description: "", quantity: 1, unitPrice: 0 },
   ])
@@ -275,7 +275,7 @@ export default function InvoicesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="invoice">חשבונית מס</SelectItem>
+                  <SelectItem value="tax_invoice">חשבונית מס</SelectItem>
                   <SelectItem value="invoice_receipt">חשבונית מס-קבלה</SelectItem>
                   <SelectItem value="quote">הצעת מחיר</SelectItem>
                 </SelectContent>
