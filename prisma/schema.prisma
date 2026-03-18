@@ -365,6 +365,7 @@ model Promotion {
 
 enum BillingProviderType {
   ICOUNT
+  YESHINVOICE
   GREEN_INVOICE
   SUMIT
 }

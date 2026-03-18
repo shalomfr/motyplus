@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getICountClient } from "@/lib/icount";
+import { getBillingClient } from "@/lib/billing";
 
 // POST /api/public/create-payment — יצירת דף תשלום iCount (מחליף Stripe Checkout)
 export async function POST(request: NextRequest) {
@@ -52,19 +52,19 @@ export async function POST(request: NextRequest) {
       infoFileName = infoFile.name;
     }
 
-    // Get iCount provider
-    const icount = await getICountClient();
+    // Get billing provider
+    const billing = await getBillingClient();
 
-    if (!icount) {
+    if (!billing) {
       return NextResponse.json({ error: "לא הוגדר ספק חיוב — פנה למנהל" }, { status: 503 });
     }
 
-    const client = icount.client;
+    const client = billing.client;
 
     // Save pending order
     const pendingOrder = await prisma.pendingOrder.create({
       data: {
-        stripeSessionId: `icount_${Date.now()}`, // unique ID (field is @unique)
+        stripeSessionId: `billing_${Date.now()}`, // unique ID (field is @unique)
         fullName,
         phone,
         email,
@@ -79,15 +79,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create iCount payment page
+    // Create payment page via billing provider
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
 
+    // Determine webhook URL based on provider type
+    const webhookPath = billing.provider.provider === "YESHINVOICE"
+      ? "/api/webhooks/yeshinvoice"
+      : "/api/webhooks/icount";
+
     const paymentPage = await client.createPaymentPage({
-      customer: { client_name: fullName, email, phone },
-      items: [{ description, quantity: 1, unitprice: amount }],
+      customer: { name: fullName, email, phone },
+      items: [{ description, quantity: 1, unitPrice: amount }],
       successUrl: `${baseUrl}/order/success`,
       cancelUrl: `${baseUrl}/order/cancel`,
-      webhookUrl: `${baseUrl}/api/webhooks/icount`,
+      webhookUrl: `${baseUrl}${webhookPath}`,
       autoCreateDoc: true,
       docType: "invoice_receipt",
       metadata: { pendingOrderId: pendingOrder.id },
@@ -99,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
-    console.error("Error creating iCount payment:", error);
+    console.error("Error creating payment:", error);
     // Don't expose internal error details to public endpoint
     return NextResponse.json(
       { error: "שגיאה ביצירת דף תשלום — יתכן שהתוכנה לא זמינה כרגע" },

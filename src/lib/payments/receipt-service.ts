@@ -1,15 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { getICountClient } from "@/lib/icount";
+import { getBillingClient } from "@/lib/billing";
+import type { PaymentType } from "@/lib/billing";
 import { logActivity } from "@/lib/activity-logger";
-import type { ICountPaymentType } from "@/lib/icount";
 
-// Map payment method from payment model to iCount payment type
-function mapPaymentMethodToICount(method: string | null): ICountPaymentType {
+// Map payment method from payment model to billing payment type
+function mapPaymentMethod(method: string | null): PaymentType {
   const m = method?.toLowerCase() || "";
   if (m === "cash") return "cash";
   if (m === "check") return "check";
   if (m === "bank_transfer" || m === "transfer") return "bank_transfer";
-  // Default: ICOUNT, STRIPE, MANUAL, credit_card
   return "credit_card";
 }
 
@@ -30,39 +29,28 @@ export async function issueReceipt(
 
   if (!payment || payment.hasReceipt) return null;
 
-  const icount = await getICountClient();
-  if (!icount) return null;
+  const billing = await getBillingClient();
+  if (!billing) return null;
 
   try {
-    // Map to the appropriate iCount method based on docType
-    let result;
-    const docRequest = {
+    const result = await billing.client.createDocument({
       customer: {
-        client_name: payment.customer.fullName,
+        name: payment.customer.fullName,
         email: payment.customer.email,
         phone: payment.customer.phone,
-        ...(payment.customer.icountClientId ? { client_id: payment.customer.icountClientId } : {}),
+        id: payment.customer.icountClientId || undefined,
       },
       items: [
         {
           description: payment.description || "תשלום",
           quantity: 1,
-          unitprice: Number(payment.amount),
+          unitPrice: Number(payment.amount),
         },
       ],
-      docType: docType as "receipt" | "tax_invoice" | "invoice_receipt",
-      paymentType: mapPaymentMethodToICount(payment.paymentMethod),
+      docType,
+      paymentType: mapPaymentMethod(payment.paymentMethod),
       sendEmail: true,
-    };
-
-    if (docType === "receipt") {
-      result = await icount.client.createReceipt(docRequest);
-    } else if (docType === "tax_invoice") {
-      result = await icount.client.createInvoice(docRequest);
-    } else {
-      // invoice_receipt (חשבונית מס-קבלה)
-      result = await icount.client.createInvoiceReceipt(docRequest);
-    }
+    });
 
     await prisma.payment.update({
       where: { id: paymentId },
@@ -92,7 +80,7 @@ export async function issueReceipt(
 
     // Update provider with error
     await prisma.billingProvider.update({
-      where: { id: icount.provider.id },
+      where: { id: billing.provider.id },
       data: {
         lastError: error instanceof Error ? error.message : "שגיאה בהנפקת קבלה",
         lastSyncAt: new Date(),
@@ -114,12 +102,12 @@ export async function syncCustomerToICount(customerId: number): Promise<string |
   // If already synced, return existing iCount client ID
   if (customer.icountClientId) return customer.icountClientId;
 
-  const icount = await getICountClient();
-  if (!icount) return null;
+  const billing = await getBillingClient();
+  if (!billing) return null;
 
   try {
-    const clientId = await icount.client.createCustomer({
-      client_name: customer.fullName,
+    const clientId = await billing.client.createCustomer({
+      name: customer.fullName,
       email: customer.email,
       phone: customer.phone,
       address: customer.address || undefined,
@@ -135,7 +123,7 @@ export async function syncCustomerToICount(customerId: number): Promise<string |
 
     return clientId;
   } catch (error) {
-    console.error("Error syncing customer to iCount:", error);
+    console.error("Error syncing customer to billing provider:", error);
     return null;
   }
 }

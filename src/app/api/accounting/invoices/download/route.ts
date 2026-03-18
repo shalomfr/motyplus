@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getICountClient } from "@/lib/icount";
+import { getBillingClient } from "@/lib/billing";
 
 // GET /api/accounting/invoices/download?docId=xxx — הורדת PDF של מסמך מ-iCount
 export async function GET(request: NextRequest) {
@@ -15,22 +15,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "חסר מזהה מסמך" }, { status: 400 });
     }
 
-    const icount = await getICountClient();
-    if (!icount) {
-      return NextResponse.json({ error: "לא הוגדר חיבור ל-iCount" }, { status: 400 });
+    const billing = await getBillingClient();
+    if (!billing) {
+      return NextResponse.json({ error: "לא הוגדר ספק חיוב" }, { status: 400 });
     }
 
-    // Get document details from iCount (including pdf_url)
+    // Get document details from billing provider
     let downloadUrl = "";
     let docnum = docId;
 
     try {
-      const doc = await icount.client.getDocument(docId);
-      downloadUrl = doc.pdf_url || doc.doc_url;
-      docnum = doc.docnum || docId;
+      const doc = await billing.client.getDocument(docId);
+      downloadUrl = doc.pdfUrl || doc.docUrl;
+      docnum = doc.docNumber || docId;
     } catch (err) {
-      console.error("Error fetching doc from iCount:", err);
-      // If doc/get fails, try constructing URL from iCount pattern
+      console.error("Error fetching doc from billing provider:", err);
     }
 
     if (!downloadUrl) {

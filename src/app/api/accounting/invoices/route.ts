@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { getICountClient } from "@/lib/icount";
+import { getBillingClient } from "@/lib/billing";
+import type { DocumentType } from "@/lib/billing";
 import { logActivity } from "@/lib/activity-logger";
-import type { ICountDocumentType } from "@/lib/icount";
-
-// מיפוי doctype מספרי לשם
-const doctypeNumberToName: Record<number, string> = {
-  400: "receipt",
-  305: "invoice",
-  320: "invoice_receipt",
-  330: "credit_note",
-  10: "quote",
-};
 
 // GET /api/accounting/invoices — רשימת מסמכים (iCount + קבלות מקומיות)
 export async function GET(request: NextRequest) {
@@ -38,34 +29,26 @@ export async function GET(request: NextRequest) {
       customer: { id: number; fullName: string };
     }> = [];
 
-    // 1. שליפת מסמכים מ-iCount
-    const icount = await getICountClient();
-    if (icount) {
+    // 1. שליפת מסמכים מספק חיוב
+    const billing = await getBillingClient();
+    if (billing) {
       try {
-        const docs = await icount.client.getDocuments({
-          ...(doctype ? { doctype } : {}),
-          ...(fromDate ? { from_date: fromDate } : {}),
-          ...(toDate ? { to_date: toDate } : {}),
+        const docs = await billing.client.getDocuments({
+          docType: doctype,
+          fromDate,
+          toDate,
         });
 
-        const doctypeStringToLabel: Record<string, string> = {
-          invoice: "חשבונית מס",
-          receipt: "קבלה",
-          invrec: "חשבונית מס-קבלה",
-          offer: "הצעת מחיר",
-        };
-
         for (const doc of docs) {
-          const rawDoctype = String(doc.doctype || "");
-          const docUrl = String(doc.doc_url || "");
+          const docUrl = String(doc.doc_url || doc.pdfUrl || "");
 
           invoices.push({
             id: String(doc.docnum || doc.doc_id || ""),
             docNumber: String(doc.docnum || ""),
-            docType: doctypeStringToLabel[rawDoctype] || doctypeNumberToName[Number(rawDoctype)] || rawDoctype,
+            docType: String(doc.doctype || ""),
             amount: Number(doc.totalwithvat || doc.total || 0),
             docUrl,
-            pdfUrl: docUrl, // iCount doc_url is the viewable/printable page
+            pdfUrl: docUrl,
             createdAt: String(doc.dateissued || ""),
             customer: {
               id: Number(doc.client_id || 0),
@@ -74,7 +57,7 @@ export async function GET(request: NextRequest) {
           });
         }
       } catch (err) {
-        console.error("Error fetching docs from iCount:", err);
+        console.error("Error fetching docs from billing provider:", err);
       }
     }
 
@@ -147,7 +130,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validDocTypes: ICountDocumentType[] = ["tax_invoice", "invoice_receipt", "quote"];
+    const validDocTypes: DocumentType[] = ["tax_invoice", "invoice_receipt", "quote"];
     if (!docType || !validDocTypes.includes(docType)) {
       return NextResponse.json(
         { error: "סוג מסמך לא תקין. אפשרויות: tax_invoice, invoice_receipt, quote" },
@@ -175,45 +158,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "לקוח לא נמצא" }, { status: 404 });
     }
 
-    const icount = await getICountClient();
-    if (!icount) {
+    const billing = await getBillingClient();
+    if (!billing) {
       return NextResponse.json(
-        { error: "לא הוגדר חיבור ל-iCount. יש להגדיר ספק חיוב בהגדרות" },
+        { error: "לא הוגדר ספק חיוב. יש להגדיר ספק בהגדרות" },
         { status: 400 }
       );
     }
 
-    // יצירת המסמך ב-iCount
-    const docRequest = {
+    // יצירת המסמך דרך ספק החיוב
+    const result = await billing.client.createDocument({
       customer: {
-        client_name: customer.fullName,
+        name: customer.fullName,
         email: customer.email,
         phone: customer.phone,
-        ...(customer.icountClientId ? { client_id: customer.icountClientId } : {}),
+        id: customer.icountClientId || undefined,
       },
       items: items.map((item: { description: string; quantity: number; unitprice?: number; unitPrice?: number }) => ({
         description: item.description,
         quantity: item.quantity,
-        unitprice: item.unitprice ?? item.unitPrice ?? 0,
+        unitPrice: item.unitprice ?? item.unitPrice ?? 0,
       })),
-      docType: docType as ICountDocumentType,
+      docType: docType as DocumentType,
       sendEmail: true,
-    };
-
-    let result;
-    switch (docType) {
-      case "tax_invoice":
-        result = await icount.client.createInvoice(docRequest);
-        break;
-      case "invoice_receipt":
-        result = await icount.client.createInvoiceReceipt(docRequest);
-        break;
-      case "quote":
-        result = await icount.client.createQuote(docRequest);
-        break;
-      default:
-        result = await icount.client.createInvoice(docRequest);
-    }
+    });
 
     const docTypeLabels: Record<string, string> = {
       tax_invoice: "חשבונית מס",
@@ -241,6 +209,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     console.error("Error creating invoice:", error);
-    return NextResponse.json({ error: "שגיאה ביצירת מסמך ב-iCount" }, { status: 500 });
+    return NextResponse.json({ error: "שגיאה ביצירת מסמך" }, { status: 500 });
   }
 }

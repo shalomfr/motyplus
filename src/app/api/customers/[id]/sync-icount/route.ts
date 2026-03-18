@@ -22,14 +22,14 @@ export async function POST(
     const clientId = await syncCustomerToICount(customerId);
     if (!clientId) {
       return NextResponse.json(
-        { error: "לא ניתן לסנכרן — בדוק חיבור iCount" },
+        { error: "לא ניתן לסנכרן — בדוק חיבור ספק חיוב" },
         { status: 400 }
       );
     }
 
     return NextResponse.json({ success: true, icountClientId: clientId });
   } catch (error) {
-    console.error("Error syncing customer to iCount:", error);
+    console.error("Error syncing customer:", error);
     return NextResponse.json({ error: "שגיאה בסנכרון" }, { status: 500 });
   }
 }
