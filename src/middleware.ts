@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const ALLOWED_ORIGINS = [
-  "https://motty-beats-order.onrender.com",
+  "https://motyplus-order.onrender.com",
   "http://localhost:3001",
 ];
 

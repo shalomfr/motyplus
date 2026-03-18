@@ -42,6 +42,6 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: motty-beats-app
+          app-name: motyplus-app
           package: .next/standalone
           startup-command: node server.js
