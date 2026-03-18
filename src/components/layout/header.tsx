@@ -45,19 +45,19 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMobileMenuToggle}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors md:hidden text-white"
+          className="p-2 rounded-lg hover:bg-gray-100/60 transition-colors md:hidden text-gray-700"
           aria-label="פתח תפריט"
         >
           <Menu size={22} />
         </button>
-        <h1 className="text-lg sm:text-xl font-bold text-white truncate">
+        <h1 className="text-lg sm:text-xl font-bold text-gray-800 truncate">
           {pageTitle}
         </h1>
       </div>
 
       {/* Left side: user info */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-300 hidden sm:block">
+        <span className="text-sm text-gray-600 hidden sm:block">
           {userName}
         </span>
         <div

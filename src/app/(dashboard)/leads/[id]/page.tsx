@@ -180,7 +180,7 @@ export default function LeadDetailsPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
               {lead.fullName}
             </h2>
             <Badge className={`${stageConfig.color} text-white border-0`}>

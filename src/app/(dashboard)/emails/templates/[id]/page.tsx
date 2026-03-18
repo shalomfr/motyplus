@@ -130,7 +130,7 @@ export default function EditTemplatePage() {
           <Button variant="ghost" size="icon" onClick={() => router.push("/emails")}>
             <ArrowRight className="h-5 w-5" />
           </Button>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
             {isNew ? "תבנית חדשה" : "עריכת תבנית"}
           </h2>
         </div>

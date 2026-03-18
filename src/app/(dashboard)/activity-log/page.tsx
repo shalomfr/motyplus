@@ -144,7 +144,7 @@ export default function ActivityLogPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Activity className="h-7 w-7 text-gray-600" />
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">יומן פעילות</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">יומן פעילות</h2>
       </div>
 
       {/* Filters */}

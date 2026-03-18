@@ -104,7 +104,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl sm:text-3xl font-bold text-white">
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
         שלום, {session?.user?.name || "admin"}
       </h2>
 
@@ -160,7 +160,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <ClipboardList className="h-6 w-6 text-indigo-600" />
               <div>
-                <p className="font-bold text-white">התקדמות המערכת</p>
+                <p className="font-bold text-gray-800">התקדמות המערכת</p>
                 <p className="text-sm text-muted-foreground">
                   {taskCounts.DONE} מתוך {taskCounts.total} משימות הושלמו ({Math.round((taskCounts.DONE / taskCounts.total) * 100)}%)
                 </p>
@@ -185,7 +185,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <RefreshCw className="h-6 w-6 text-blue-600" />
             <div>
-              <p className="font-bold text-white">לקוחות צריכים עדכון</p>
+              <p className="font-bold text-gray-800">לקוחות צריכים עדכון</p>
               <p className="text-sm text-muted-foreground">עברה שנה מאז הקנייה - הגיע זמן עדכון</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function HomePage() {
             className="flex items-center justify-between cursor-pointer"
             onClick={() => setMissingInfoExpanded(!missingInfoExpanded)}
           >
-            <h3 className="font-bold text-white flex items-center gap-2">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
               {missingInfo.length > 0 ? (
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               ) : (

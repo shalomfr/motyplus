@@ -345,7 +345,7 @@ export default function CustomersListPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             רשימת לקוחות
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -395,8 +395,8 @@ export default function CustomersListPage() {
 
       {/* Delete imported customers banner — always visible */}
       {!importDialogOpen && (
-        <div className="flex items-center justify-between glass border border-blue-500/20 rounded-lg p-3">
-          <span className="text-sm text-blue-300">
+        <div className="flex items-center justify-between glass border border-blue-200 rounded-lg p-3">
+          <span className="text-sm text-blue-700">
             מחיקת כל הלקוחות שיובאו מקובץ CSV
           </span>
           <Button

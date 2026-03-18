@@ -628,7 +628,7 @@ export default function DataPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Database className="h-7 w-7 text-gray-600" />
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">ניהול נתונים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">ניהול נתונים</h2>
       </div>
 
       <Card>

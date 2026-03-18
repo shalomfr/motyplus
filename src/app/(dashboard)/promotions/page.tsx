@@ -66,7 +66,7 @@ export default function PromotionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">מבצעים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מבצעים</h2>
         <Button onClick={() => router.push("/promotions/new")}>
           <Plus className="h-4 w-4 ml-2" />
           מבצע חדש

@@ -112,7 +112,7 @@ export default function NewCustomerPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             הוספת לקוח חדש
           </h1>
           <p className="text-muted-foreground mt-1">

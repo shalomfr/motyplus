@@ -13,7 +13,7 @@ export default function NewLeadPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/leads")}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">ליד חדש</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">ליד חדש</h2>
       </div>
       <LeadForm mode="create" />
     </div>

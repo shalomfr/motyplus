@@ -230,7 +230,7 @@ export default function TasksPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">משימות והתקדמות</h2>
+        <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"

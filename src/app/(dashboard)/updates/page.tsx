@@ -93,7 +93,7 @@ export default function UpdatesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">עדכונים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכונים</h2>
         <Button onClick={() => router.push("/updates/new")}>
           <Plus className="h-4 w-4 ml-2" />
           הוסף עדכון

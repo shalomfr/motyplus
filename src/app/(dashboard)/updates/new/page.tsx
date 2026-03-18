@@ -13,7 +13,7 @@ export default function NewUpdatePage() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/updates")}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">עדכון חדש</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכון חדש</h2>
       </div>
       <UpdateForm mode="create" />
     </div>

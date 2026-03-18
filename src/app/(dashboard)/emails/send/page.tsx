@@ -227,7 +227,7 @@ export default function SendEmailPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/emails")}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">שליחת מייל</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">שליחת מייל</h2>
       </div>
 
       {error && (

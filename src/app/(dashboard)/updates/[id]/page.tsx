@@ -165,7 +165,7 @@ export default function UpdateDetailsPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
               עדכון {update.version}
             </h2>
             <Badge className={statusConfig.className}>{statusConfig.label}</Badge>

@@ -57,19 +57,19 @@ const statusConfig: Record<
 > = {
   ACTIVE: {
     label: "פעיל",
-    className: "bg-green-500/20 text-green-300 border-green-500/30",
+    className: "bg-green-100 text-green-800 border-green-200",
   },
   BLOCKED: {
     label: "חסום",
-    className: "bg-red-500/20 text-red-300 border-red-500/30",
+    className: "bg-red-100 text-red-800 border-red-200",
   },
   FROZEN: {
     label: "מוקפא",
-    className: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    className: "bg-blue-100 text-blue-800 border-blue-200",
   },
   EXCEPTION: {
     label: "חריג",
-    className: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    className: "bg-amber-100 text-amber-800 border-amber-200",
   },
 }
 
@@ -137,8 +137,8 @@ export function CustomerTable({
   if (customers.length === 0) {
     return (
       <div className="rounded-xl glass-card p-12 text-center">
-        <p className="text-gray-400 text-lg">לא נמצאו לקוחות</p>
-        <p className="text-gray-500 text-sm mt-2">
+        <p className="text-gray-500 text-lg">לא נמצאו לקוחות</p>
+        <p className="text-gray-400 text-sm mt-2">
           נסה לשנות את הסינון או להוסיף לקוח חדש
         </p>
       </div>
@@ -199,16 +199,16 @@ export function CustomerTable({
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
                         latestVersion && customer.currentUpdateVersion !== latestVersion ? (
-                          <Badge variant="outline" className="font-normal bg-orange-500/20 text-orange-300 border-orange-500/30">
+                          <Badge variant="outline" className="font-normal bg-orange-100 text-orange-800 border-orange-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="font-normal bg-green-500/20 text-green-300 border-green-500/30">
+                          <Badge variant="outline" className="font-normal bg-green-100 text-green-800 border-green-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         )
                       ) : (
-                        <Badge variant="outline" className="font-normal bg-red-500/20 text-red-300 border-red-500/30">
+                        <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
                           לא עודכן
                         </Badge>
                       )
@@ -244,7 +244,7 @@ export function CustomerTable({
                           title={customer.status === "FROZEN" ? "חידוש" : "השהייה"}
                           disabled={loadingId === customer.id}
                           onClick={() => handleSuspend(customer.id, customer.status)}
-                          className={customer.status === "FROZEN" ? "text-blue-400 hover:text-blue-300" : "text-amber-400 hover:text-amber-300"}
+                          className={customer.status === "FROZEN" ? "text-blue-600 hover:text-blue-700" : "text-amber-600 hover:text-amber-700"}
                         >
                           {loadingId === customer.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -261,7 +261,7 @@ export function CustomerTable({
                           size="icon"
                           title="מחיקה"
                           onClick={() => setDeleteTarget({ id: customer.id, fullName: customer.fullName })}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -303,7 +303,7 @@ export function CustomerTable({
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-gray-500">
           מציג {(page - 1) * pageSize + 1}-
           {Math.min(page * pageSize, totalCount)} מתוך {totalCount} לקוחות
         </div>

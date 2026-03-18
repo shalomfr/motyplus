@@ -325,7 +325,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <SettingsIcon className="h-7 w-7 text-gray-600" />
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">הגדרות</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">הגדרות</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -740,7 +740,7 @@ export default function SettingsPage() {
       {/* חיבורים */}
       <Separator className="my-4" />
       <div>
-        <h3 className="text-xl font-bold text-white mb-4">חיבורים</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">חיבורים</h3>
         <ConnectionsTab />
       </div>
 

@@ -114,7 +114,7 @@ export default function UpdateWorkPage() {
           <ArrowRight className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
             רשימת עבודה - {updateVersion}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
