@@ -110,7 +110,8 @@ export class ICountClient {
       throw new Error(data.reason || data.error_description || "iCount request failed");
     }
 
-    return data.data as T;
+    // iCount returns fields at root level, not nested in data
+    return (data.data || data) as T;
   }
 
   // ===== Connection Test =====
@@ -264,7 +265,7 @@ export class ICountClient {
       Object.assign(flatItems, item);
     }
 
-    const data = await this.request<{ payment_url?: string; page_id?: string }>(
+    const data = await this.request<{ paypage_url?: string; paypage_id?: number; payment_url?: string; page_id?: string }>(
       "paypage/create",
       {
         page_name: request.pageName || "MotyPlus - תשלום",
@@ -287,8 +288,8 @@ export class ICountClient {
     );
 
     return {
-      url: data.payment_url || "",
-      pageId: data.page_id || "",
+      url: data.paypage_url || data.payment_url || "",
+      pageId: String(data.paypage_id || data.page_id || ""),
     };
   }
 }
