@@ -159,9 +159,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // אימות פריטים
+    // אימות פריטים (accept both unitprice and unitPrice)
     for (const item of items) {
-      if (!item.description || !item.quantity || !item.unitprice) {
+      const price = item.unitprice ?? item.unitPrice ?? 0;
+      if (!item.description || !item.quantity || price <= 0) {
         return NextResponse.json(
           { error: "כל פריט חייב לכלול תיאור, כמות ומחיר" },
           { status: 400 }
@@ -193,10 +194,10 @@ export async function POST(request: NextRequest) {
         email: customer.email,
         phone: customer.phone,
       },
-      items: items.map((item: { description: string; quantity: number; unitprice: number }) => ({
+      items: items.map((item: { description: string; quantity: number; unitprice?: number; unitPrice?: number }) => ({
         description: item.description,
         quantity: item.quantity,
-        unitprice: item.unitprice,
+        unitprice: item.unitprice ?? item.unitPrice ?? 0,
       })),
       docType: docType as ICountDocumentType,
       sendEmail: true,
