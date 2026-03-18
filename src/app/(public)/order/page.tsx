@@ -143,7 +143,7 @@ export default function OrderPage() {
         return;
       }
 
-      // Redirect to Stripe
+      // Redirect to iCount payment page
       if (data.url) {
         window.location.href = data.url;
       }
@@ -423,7 +423,7 @@ export default function OrderPage() {
             )}
           </Button>
           <p className="text-xs text-center text-muted-foreground mt-3">
-            התשלום מבוצע באופן מאובטח דרך Stripe
+            התשלום מבוצע באופן מאובטח דרך iCount
           </p>
         </CardContent>
       </Card>
