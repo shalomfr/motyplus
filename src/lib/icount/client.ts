@@ -238,10 +238,28 @@ export class ICountClient {
     return this.normalizeDocResponse(raw);
   }
 
-  async getDocuments(_filters?: { doctype?: number; from_date?: string; to_date?: string }): Promise<ICountRawDocResponse[]> {
-    // iCount API token mode does not support doc listing — return empty
-    // Documents are tracked locally in the Payment model
-    return [];
+  async getDocuments(filters?: { doctype?: string; from_date?: string; to_date?: string }): Promise<ICountRawDocResponse[]> {
+    // iCount uses doc/search (not doc/get_list) with Bearer auth
+    // Must have at least doctype to avoid empty_query error
+    const searchParams: Record<string, unknown> = {};
+    if (filters?.doctype) searchParams.doctype = filters.doctype;
+    if (filters?.from_date) searchParams.from_date = filters.from_date;
+    if (filters?.to_date) searchParams.to_date = filters.to_date;
+
+    // If no filters, search all common doctypes
+    if (!searchParams.doctype) {
+      const allDocs: ICountRawDocResponse[] = [];
+      for (const dt of ["invoice", "receipt", "invrec", "offer"]) {
+        try {
+          const data = await this.request<{ results_list?: ICountRawDocResponse[] }>("doc/search", { doctype: dt });
+          if (data.results_list) allDocs.push(...data.results_list);
+        } catch { /* skip if type not supported */ }
+      }
+      return allDocs;
+    }
+
+    const data = await this.request<{ results_list?: ICountRawDocResponse[] }>("doc/search", searchParams);
+    return data.results_list || [];
   }
 
   // ===== Payment Pages (Clearing) =====

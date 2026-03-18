@@ -39,9 +39,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const fromDate = searchParams.get("fromDate") || undefined;
     const toDate = searchParams.get("toDate") || undefined;
-    const doctype = searchParams.get("doctype")
-      ? parseInt(searchParams.get("doctype")!)
-      : undefined;
+    const doctype = searchParams.get("doctype") || undefined;
 
     const invoices: Array<{
       id: string;
@@ -63,18 +61,25 @@ export async function GET(request: NextRequest) {
           ...(toDate ? { to_date: toDate } : {}),
         });
 
+        const doctypeStringToLabel: Record<string, string> = {
+          invoice: "חשבונית מס",
+          receipt: "קבלה",
+          invrec: "חשבונית מס-קבלה",
+          offer: "הצעת מחיר",
+        };
+
         for (const doc of docs) {
-          const rawDoctype = Number(doc.doctype || doc.doc_type || 0);
+          const rawDoctype = String(doc.doctype || "");
           invoices.push({
             id: String(doc.doc_id || doc.docnum || ""),
             docNumber: String(doc.docnum || doc.doc_id || ""),
-            docType: doctypeNumberToName[rawDoctype] || "invoice",
+            docType: doctypeStringToLabel[rawDoctype] || doctypeNumberToName[Number(rawDoctype)] || rawDoctype,
             amount: Number(doc.total || doc.amount || 0),
             docUrl: String(doc.doc_url || doc.pdf_url || ""),
-            createdAt: String(doc.date || doc.created_at || ""),
+            createdAt: String(doc.dateissued || doc.date || doc.created_at || ""),
             customer: {
-              id: 0,
-              fullName: String(doc.client_name || doc.customer_name || "לקוח"),
+              id: Number(doc.client_id || 0),
+              fullName: String(doc.client_name || doc.customer_name || `לקוח ${doc.client_id || ""}`),
             },
           });
         }
