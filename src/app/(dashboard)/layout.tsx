@@ -54,7 +54,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100" dir="rtl">
+    <div className="flex h-screen relative z-10" dir="rtl">
       <Sidebar
         userName={session?.user?.name || "משתמש"}
         userEmail={session?.user?.email || ""}

@@ -102,14 +102,14 @@ export function CustomerFiltersPanel({
   return (
     <Card>
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-gray-400" />
           <span className="font-medium">סינון וחיפוש</span>
           {hasActiveFilters && (
-            <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+            <span className="gradient-blue-btn text-white text-xs px-2 py-0.5 rounded-full">
               פעיל
             </span>
           )}

@@ -16,7 +16,7 @@ export default function DashboardPage() {
             <ArrowRight className="h-5 w-5" />
           </Button>
         </Link>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">לוח בקרה</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">לוח בקרה</h2>
       </div>
 
       <StatsCards />

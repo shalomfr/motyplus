@@ -88,7 +88,7 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex flex-col bg-gray-900 text-white transition-all duration-300",
+          "fixed inset-y-0 right-0 z-50 flex flex-col glass-sidebar text-white transition-all duration-300",
           "md:static md:z-auto",
           isMobileOpen ? "translate-x-0" : "translate-x-full",
           "md:translate-x-0",
@@ -99,7 +99,7 @@ export function Sidebar({
         {/* Logo / Title area */}
         <div
           className={cn(
-            "flex items-center border-b border-gray-700 p-4 min-h-[72px]",
+            "flex items-center border-b border-white/10 p-4 min-h-[72px]",
             isCollapsed ? "justify-center flex-col gap-2" : "justify-between"
           )}
         >
@@ -109,7 +109,7 @@ export function Sidebar({
             {/* Mobile close button */}
             <button
               onClick={onMobileToggle}
-              className="p-2 rounded-lg hover:bg-gray-800 transition-colors md:hidden"
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors md:hidden"
               aria-label="סגור תפריט"
             >
               <X size={20} />
@@ -118,7 +118,7 @@ export function Sidebar({
             {/* Desktop collapse toggle */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className="hidden md:flex p-2 rounded-lg hover:bg-white/10 transition-colors"
               aria-label={isCollapsed ? "הרחב תפריט" : "כווץ תפריט"}
             >
               {isCollapsed ? (
@@ -146,8 +146,8 @@ export function Sidebar({
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
                   isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                    ? "gradient-blue-btn text-white shadow-lg shadow-blue-500/30"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white",
                   isCollapsed && "justify-center px-2"
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -160,7 +160,7 @@ export function Sidebar({
         </nav>
 
         {/* User info + logout */}
-        <div className="border-t border-gray-700 p-4">
+        <div className="border-t border-white/10 p-4">
           {!isCollapsed && (
             <div className="mb-3 px-1">
               <p className="text-sm font-semibold text-white truncate">
@@ -174,7 +174,7 @@ export function Sidebar({
           <button
             onClick={handleLogout}
             className={cn(
-              "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors",
+              "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors",
               isCollapsed && "justify-center px-2"
             )}
             title={isCollapsed ? "התנתק" : undefined}

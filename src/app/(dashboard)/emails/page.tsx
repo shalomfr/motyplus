@@ -89,7 +89,7 @@ export default function EmailsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מיילים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">מיילים</h2>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/emails/send")}>
             <Send className="h-4 w-4 ml-2" />

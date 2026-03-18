@@ -220,7 +220,7 @@ function OrgansTab() {
                 {organ.supportsUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
                 ) : (
-                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">לא</Badge>
+                  <Badge className="bg-gray-100 text-white border-white/10">לא</Badge>
                 )}
               </TableCell>
               <TableCell>{organ.sortOrder}</TableCell>
@@ -269,7 +269,7 @@ function OrgansTab() {
               <Label>קובץ אינפו לזיהוי האורגן</Label>
               <div className="flex items-center gap-2">
                 {infoFileName ? (
-                  <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+                  <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-white/10 rounded-lg bg-white/5 text-sm">
                     <FileText className="h-4 w-4 text-blue-500 shrink-0" />
                     <span className="truncate">{infoFileName}</span>
                     <button
@@ -464,7 +464,7 @@ function SetsTab() {
                 {set.includesUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
                 ) : (
-                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">לא</Badge>
+                  <Badge className="bg-gray-100 text-white border-white/10">לא</Badge>
                 )}
               </TableCell>
               <TableCell>{set.sortOrder}</TableCell>
@@ -628,7 +628,7 @@ export default function DataPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Database className="h-7 w-7 text-gray-600" />
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">ניהול נתונים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">ניהול נתונים</h2>
       </div>
 
       <Card>

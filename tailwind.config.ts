@@ -52,6 +52,12 @@ const config: Config = {
       fontFamily: {
         heebo: ["var(--font-heebo)", "sans-serif"],
       },
+      boxShadow: {
+        glass: "0 8px 32px rgba(0, 0, 0, 0.2)",
+        "glow-sm": "0 0 10px rgba(59, 130, 246, 0.2)",
+        "glow-md": "0 0 20px rgba(59, 130, 246, 0.3)",
+        "glow-lg": "0 4px 30px rgba(59, 130, 246, 0.4)",
+      },
     },
   },
   plugins: [],

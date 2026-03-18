@@ -73,7 +73,7 @@ export default function NewPromotionPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/promotions")}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מבצע חדש</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">מבצע חדש</h2>
       </div>
 
       {error && (

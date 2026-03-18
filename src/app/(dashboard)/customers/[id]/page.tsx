@@ -303,7 +303,7 @@ export default function EditCustomerPage() {
               <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800">שגיאה</h1>
+          <h1 className="text-2xl font-bold text-white">שגיאה</h1>
         </div>
         <Card>
           <CardContent className="py-12 text-center">
@@ -331,7 +331,7 @@ export default function EditCustomerPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
             {customer.fullName}
           </h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

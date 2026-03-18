@@ -104,7 +104,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white">
         שלום, {session?.user?.name || "admin"}
       </h2>
 
@@ -119,7 +119,7 @@ export default function HomePage() {
           { label: "מבצעים", icon: Tags, href: "/promotions", bg: "bg-red-50 border-red-200", color: "text-red-600" },
           { label: "לוח בקרה", icon: LayoutDashboard, href: "/dashboard", bg: "bg-cyan-50 border-cyan-200", color: "text-cyan-600" },
           { label: "משימות", icon: ClipboardList, href: "/tasks", bg: "bg-indigo-50 border-indigo-200", color: "text-indigo-600" },
-          { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-100 border-gray-200", color: "text-gray-600" },
+          { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-100 border-white/10", color: "text-gray-600" },
         ].map((item) => (
           <Card
             key={item.label}
@@ -128,7 +128,7 @@ export default function HomePage() {
           >
             <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center">
               <item.icon className={`h-8 w-8 ${item.color}`} />
-              <span className="font-medium text-gray-800 text-sm">{item.label}</span>
+              <span className="font-medium text-white text-sm">{item.label}</span>
             </CardContent>
           </Card>
         ))}
@@ -143,7 +143,7 @@ export default function HomePage() {
             ) : (
               <Download className="h-8 w-8 text-teal-600" />
             )}
-            <span className="font-medium text-gray-800 text-sm">
+            <span className="font-medium text-white text-sm">
               {isDownloading ? "מוריד..." : "הורד קבצי אינפו"}
             </span>
           </CardContent>
@@ -160,7 +160,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <ClipboardList className="h-6 w-6 text-indigo-600" />
               <div>
-                <p className="font-bold text-gray-800">התקדמות המערכת</p>
+                <p className="font-bold text-white">התקדמות המערכת</p>
                 <p className="text-sm text-muted-foreground">
                   {taskCounts.DONE} מתוך {taskCounts.total} משימות הושלמו ({Math.round((taskCounts.DONE / taskCounts.total) * 100)}%)
                 </p>
@@ -185,7 +185,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <RefreshCw className="h-6 w-6 text-blue-600" />
             <div>
-              <p className="font-bold text-gray-800">לקוחות צריכים עדכון</p>
+              <p className="font-bold text-white">לקוחות צריכים עדכון</p>
               <p className="text-sm text-muted-foreground">עברה שנה מאז הקנייה - הגיע זמן עדכון</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function HomePage() {
             className="flex items-center justify-between cursor-pointer"
             onClick={() => setMissingInfoExpanded(!missingInfoExpanded)}
           >
-            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+            <h3 className="font-bold text-white flex items-center gap-2">
               {missingInfo.length > 0 ? (
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               ) : (

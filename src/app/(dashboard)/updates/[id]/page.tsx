@@ -53,7 +53,7 @@ interface UpdateVersion {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: "טיוטה", className: "bg-gray-100 text-gray-800 border-gray-200" },
+  DRAFT: { label: "טיוטה", className: "bg-gray-100 text-white border-white/10" },
   PREPARING: { label: "בהכנה", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   READY: { label: "מוכן", className: "bg-blue-100 text-blue-800 border-blue-200" },
   SENDING: { label: "בשליחה", className: "bg-orange-100 text-orange-800 border-orange-200" },
@@ -165,7 +165,7 @@ export default function UpdateDetailsPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">
               עדכון {update.version}
             </h2>
             <Badge className={statusConfig.className}>{statusConfig.label}</Badge>

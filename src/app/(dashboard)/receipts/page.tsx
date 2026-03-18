@@ -72,7 +72,7 @@ export default function ReceiptsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">קבלות</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">קבלות</h2>
       </div>
 
       <Card>

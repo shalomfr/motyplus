@@ -37,7 +37,7 @@ interface UpdateVersion {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: "טיוטה", className: "bg-gray-100 text-gray-800 border-gray-200" },
+  DRAFT: { label: "טיוטה", className: "bg-gray-100 text-white border-white/10" },
   PREPARING: { label: "בהכנה", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   READY: { label: "מוכן", className: "bg-blue-100 text-blue-800 border-blue-200" },
   SENDING: { label: "בשליחה", className: "bg-orange-100 text-orange-800 border-orange-200" },
@@ -93,7 +93,7 @@ export default function UpdatesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכונים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">עדכונים</h2>
         <Button onClick={() => router.push("/updates/new")}>
           <Plus className="h-4 w-4 ml-2" />
           הוסף עדכון

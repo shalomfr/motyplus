@@ -37,7 +37,7 @@ const TOP_ROW: StatCardConfig[] = [
     label: "סה\"כ לקוחות",
     icon: Users,
     borderColor: "border-r-blue-500",
-    iconBg: "bg-blue-100",
+    iconBg: "bg-blue-500/20",
     iconColor: "text-blue-600",
     getValue: (s) => String(s.totalCustomers),
     getSubtext: (s) => `${s.customersByStatus.ACTIVE} פעילים`,
@@ -47,7 +47,7 @@ const TOP_ROW: StatCardConfig[] = [
     label: "לקוחות פעילים",
     icon: UserCheck,
     borderColor: "border-r-green-500",
-    iconBg: "bg-green-100",
+    iconBg: "bg-green-500/20",
     iconColor: "text-green-600",
     getValue: (s) => String(s.customersByStatus.ACTIVE),
   },
@@ -56,7 +56,7 @@ const TOP_ROW: StatCardConfig[] = [
     label: "לקוחות חסומים",
     icon: ShieldOff,
     borderColor: "border-r-red-500",
-    iconBg: "bg-red-100",
+    iconBg: "bg-red-500/20",
     iconColor: "text-red-600",
     getValue: (s) => String(s.customersByStatus.BLOCKED),
   },
@@ -68,7 +68,7 @@ const MIDDLE_ROW: StatCardConfig[] = [
     label: "תפוגת עדכונים",
     icon: Clock,
     borderColor: "border-r-orange-500",
-    iconBg: "bg-orange-100",
+    iconBg: "bg-orange-500/20",
     iconColor: "text-orange-600",
     getValue: (s) => String(s.expiredUpdatesCount),
     getSubtext: () => "לקוחות שפג תוקף העדכון שלהם",
@@ -78,7 +78,7 @@ const MIDDLE_ROW: StatCardConfig[] = [
     label: "לא מעודכנים",
     icon: RefreshCw,
     borderColor: "border-r-red-400",
-    iconBg: "bg-red-100",
+    iconBg: "bg-red-500/20",
     iconColor: "text-red-500",
     getValue: (s) => String(s.notUpdatedCount),
     getSubtext: () => "סט שלם, לא קיבלו עדכון",
@@ -88,7 +88,7 @@ const MIDDLE_ROW: StatCardConfig[] = [
     label: "חריגים",
     icon: AlertCircle,
     borderColor: "border-r-amber-500",
-    iconBg: "bg-amber-100",
+    iconBg: "bg-amber-500/20",
     iconColor: "text-amber-600",
     getValue: (s) => String(s.customersByStatus.EXCEPTION),
     getSubtext: () => "מקבלים עדכונים ללא קשר למצב",
@@ -101,7 +101,7 @@ const BOTTOM_ROW: StatCardConfig[] = [
     label: "סה\"כ הכנסות",
     icon: TrendingUp,
     borderColor: "border-r-blue-400",
-    iconBg: "bg-blue-100",
+    iconBg: "bg-blue-500/20",
     iconColor: "text-blue-600",
     getValue: (s) => formatCurrency(s.totalRevenue),
   },
@@ -110,7 +110,7 @@ const BOTTOM_ROW: StatCardConfig[] = [
     label: "סה\"כ שולם",
     icon: Wallet,
     borderColor: "border-r-yellow-500",
-    iconBg: "bg-yellow-100",
+    iconBg: "bg-yellow-500/20",
     iconColor: "text-yellow-600",
     getValue: (s) => formatCurrency(s.totalRevenue),
   },
@@ -119,7 +119,7 @@ const BOTTOM_ROW: StatCardConfig[] = [
     label: "יתרה לגבייה",
     icon: AlertCircle,
     borderColor: "border-r-purple-500",
-    iconBg: "bg-purple-100",
+    iconBg: "bg-purple-500/20",
     iconColor: "text-purple-600",
     getValue: (s) => formatCurrency(s.totalDebt),
   },
@@ -135,8 +135,8 @@ function StatCard({ config, stats }: { config: StatCardConfig; stats: DashboardS
             <Icon className={`h-5 w-5 ${config.iconColor}`} />
           </div>
           <div>
-            <p className="text-sm text-gray-600">{config.label}</p>
-            <p className="text-2xl font-bold text-gray-800">{config.getValue(stats)}</p>
+            <p className="text-sm text-gray-400">{config.label}</p>
+            <p className="text-2xl font-bold text-white">{config.getValue(stats)}</p>
             {config.getSubtext && (
               <p className="text-xs text-muted-foreground">{config.getSubtext(stats)}</p>
             )}

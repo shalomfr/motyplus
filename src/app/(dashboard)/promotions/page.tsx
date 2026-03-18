@@ -56,7 +56,7 @@ export default function PromotionsPage() {
     const from = new Date(promo.validFrom)
     const until = new Date(promo.validUntil)
 
-    if (!promo.isActive) return { label: "לא פעיל", className: "bg-gray-100 text-gray-800 border-gray-200" }
+    if (!promo.isActive) return { label: "לא פעיל", className: "bg-gray-100 text-white border-white/10" }
     if (now < from) return { label: "עתידי", className: "bg-blue-100 text-blue-800 border-blue-200" }
     if (now > until) return { label: "פג תוקף", className: "bg-red-100 text-red-800 border-red-200" }
     if (promo.maxUses && promo.currentUses >= promo.maxUses) return { label: "מלא", className: "bg-orange-100 text-orange-800 border-orange-200" }
@@ -66,7 +66,7 @@ export default function PromotionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מבצעים</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">מבצעים</h2>
         <Button onClick={() => router.push("/promotions/new")}>
           <Plus className="h-4 w-4 ml-2" />
           מבצע חדש

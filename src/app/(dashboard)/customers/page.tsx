@@ -345,7 +345,7 @@ export default function CustomersListPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
             רשימת לקוחות
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -395,8 +395,8 @@ export default function CustomersListPage() {
 
       {/* Delete imported customers banner — always visible */}
       {!importDialogOpen && (
-        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <span className="text-sm text-blue-800">
+        <div className="flex items-center justify-between glass border border-blue-500/20 rounded-lg p-3">
+          <span className="text-sm text-blue-300">
             מחיקת כל הלקוחות שיובאו מקובץ CSV
           </span>
           <Button
@@ -432,7 +432,7 @@ export default function CustomersListPage() {
               <div className="flex flex-col items-center gap-4">
                 <label
                   htmlFor="csv-upload"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-white/5 transition-colors text-gray-300"
                 >
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <span className="text-sm text-gray-600">

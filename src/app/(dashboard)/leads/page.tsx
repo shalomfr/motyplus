@@ -105,7 +105,7 @@ export default function LeadsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">לידים</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">לידים</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {leads.length} לידים | {activeLostCount} אבדו
           </p>

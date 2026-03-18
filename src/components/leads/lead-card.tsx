@@ -32,7 +32,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export function LeadCard({ lead, onClick, draggable, onDragStart }: LeadCardProps) {
   return (
     <div
-      className="bg-white rounded-lg border shadow-sm p-3 cursor-pointer hover:shadow-md transition-shadow space-y-2"
+      className="glass-card rounded-lg p-3 cursor-pointer hover:shadow-glow-sm transition-shadow space-y-2"
       onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}

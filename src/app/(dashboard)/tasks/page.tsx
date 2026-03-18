@@ -230,7 +230,7 @@ export default function TasksPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
+        <h2 className="text-2xl font-bold text-white">משימות והתקדמות</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -328,7 +328,7 @@ export default function TasksPage() {
             <div
               key={col.key}
               className={`rounded-xl border-2 transition-colors min-h-[300px] ${
-                isDragOver ? "border-blue-400 bg-blue-50/50" : "border-gray-200 bg-gray-50/50"
+                isDragOver ? "border-blue-400 bg-blue-50/50" : "border-white/10 bg-white/5"
               }`}
               onDragOver={(e) => handleDragOver(e, col.key)}
               onDragLeave={() => setDragOverColumn(null)}
@@ -361,7 +361,7 @@ export default function TasksPage() {
                         <GripVertical className="h-4 w-4 text-gray-300 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="flex-1 min-w-0">
                           <p
-                            className="text-sm font-medium text-gray-800 cursor-pointer hover:text-blue-600 leading-snug"
+                            className="text-sm font-medium text-white cursor-pointer hover:text-blue-600 leading-snug"
                             onClick={() => setEditTask(task)}
                           >
                             {task.title}
@@ -389,7 +389,7 @@ export default function TasksPage() {
                             <div className="absolute left-0 top-8 bg-white rounded-lg shadow-lg border py-1 z-10 min-w-[120px]">
                               <button
                                 onClick={() => { setEditTask(task); setMenuTaskId(null) }}
-                                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-gray-50"
+                                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-white/5"
                               >
                                 עריכה
                               </button>
