@@ -39,7 +39,7 @@ function buildCpiMap(sampleFiles: { path: string }[]): Map<number, { main?: stri
 
 async function sendToEligible(
   customers: SendableCustomer[],
-  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; rhythmsFileUrl: string | null },
+  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; rhythmsFileUrl: string | null; releaseDate: Date | null },
   cpiMap: Map<number, { main?: string; additional?: string }>,
   userId: string
 ): Promise<{ sent: number; skippedNoFile: number; failed: number }> {
