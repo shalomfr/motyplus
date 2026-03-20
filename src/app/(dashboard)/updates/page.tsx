@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, RefreshCw, Loader2, Trash2 } from "lucide-react"
+import { Plus, RefreshCw, Loader2, Trash2, Wand2 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -94,10 +94,16 @@ export default function UpdatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכונים</h2>
-        <Button onClick={() => router.push("/updates/new")}>
-          <Plus className="h-4 w-4 ml-2" />
-          הוסף עדכון
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/updates/new")}>
+            <Plus className="h-4 w-4 ml-2" />
+            הוסף עדכון
+          </Button>
+          <Button onClick={() => router.push("/updates/wizard")}>
+            <Wand2 className="h-4 w-4 ml-2" />
+            אשף עדכון חדש
+          </Button>
+        </div>
       </div>
 
       <Card>

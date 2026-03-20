@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks, Trash2, SendHorizonal } from "lucide-react"
+import { ArrowRight, Users, Send, Download, Loader2, Edit, ListChecks, Trash2, SendHorizonal, Wand2 } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils"
 
 interface UpdateVersion {
@@ -178,6 +178,12 @@ export default function UpdateDetailsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button
+            onClick={() => router.push(`/updates/${id}/wizard`)}
+          >
+            <Wand2 className="h-4 w-4 ml-2" />
+            אשף שליחה
+          </Button>
+          <Button
             variant="outline"
             onClick={() => router.push(`/updates/${id}/work`)}
           >
@@ -185,6 +191,7 @@ export default function UpdateDetailsPage() {
             רשימת עבודה
           </Button>
           <Button
+            variant="outline"
             onClick={handleSendAll}
             disabled={sendingAll}
           >
