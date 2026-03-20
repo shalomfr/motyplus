@@ -12,44 +12,13 @@ interface OrganStatus {
   fileCount: number;
 }
 
-async function checkSetTypeFolder(
-  version: string,
-  setAlias: string,
-  organs: Array<{ name: string; folderAlias: string | null }>
-): Promise<OrganStatus[]> {
-  const basePath = `updates/beats/${version}/${setAlias}`;
-
-  let allFiles: { path: string }[] = [];
+async function checkOrganFolder(folderPath: string): Promise<{ hasFiles: boolean; fileCount: number }> {
   try {
-    allFiles = await listFiles(basePath);
+    const files = await listFiles(folderPath);
+    return { hasFiles: files.length > 0, fileCount: files.length };
   } catch {
-    // folder doesn't exist
+    return { hasFiles: false, fileCount: 0 };
   }
-
-  const fileNames = new Set(allFiles.map((f) => {
-    const name = f.path.split("/").pop()?.toLowerCase() || "";
-    return name;
-  }));
-
-  const filePaths = new Set(allFiles.map((f) => f.path.toLowerCase()));
-
-  return organs.map((organ) => {
-    const organAlias = organ.folderAlias || organ.name;
-    const aliasLower = organAlias.toLowerCase();
-
-    const hasZip = fileNames.has(`${aliasLower}.zip`);
-    const subfolderFiles = allFiles.filter((f) =>
-      f.path.toLowerCase().includes(`/${aliasLower}/`)
-    );
-    const hasSubfolderFiles = subfolderFiles.length > 0;
-
-    return {
-      name: organ.name,
-      alias: organAlias,
-      hasFiles: hasZip || hasSubfolderFiles,
-      fileCount: hasZip ? 1 : subfolderFiles.length,
-    };
-  });
 }
 
 // GET /api/updates/[id]/folders
@@ -92,7 +61,16 @@ export async function GET(
     const folderResults = await Promise.all(
       setTypes.map(async (setType) => {
         const setAlias = setType.folderAlias || setType.name;
-        const organStatuses = await checkSetTypeFolder(version, setAlias, organs);
+
+        const organStatuses: OrganStatus[] = await Promise.all(
+          organs.map(async (organ) => {
+            const organAlias = organ.folderAlias || organ.name;
+            const organPath = `updates/beats/${version}/${setAlias}/${organAlias}`;
+            const { hasFiles, fileCount } = await checkOrganFolder(organPath);
+            return { name: organ.name, alias: organAlias, hasFiles, fileCount };
+          })
+        );
+
         return {
           setType: setType.name,
           setTypeAlias: setAlias,
