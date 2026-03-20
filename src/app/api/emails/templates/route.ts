@@ -23,7 +23,11 @@ export async function GET() {
       });
       const body = blocksToHtml(t.blocks);
       if (existing) {
-        if (!existing.blocks) {
+        const needsUpdate = !existing.blocks
+          || existing.body.includes("{{תאריך}}")
+          || existing.body.includes("תוכן העדכון ישתנה")
+          || existing.body.includes("{{downloadLink}}");
+        if (needsUpdate) {
           await prisma.emailTemplate.update({
             where: { id: existing.id },
             data: {
