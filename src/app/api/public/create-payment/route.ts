@@ -4,6 +4,7 @@ import { getBillingClient } from "@/lib/billing";
 
 // POST /api/public/create-payment — יצירת דף תשלום iCount (מחליף Stripe Checkout)
 export async function POST(request: NextRequest) {
+  const steps: string[] = [];
   try {
     const formData = await request.formData();
 
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = billing.client;
+    steps.push("billing_ok");
 
     // Save pending order
     const pendingOrder = await prisma.pendingOrder.create({
@@ -78,25 +80,30 @@ export async function POST(request: NextRequest) {
         notes,
       },
     });
+    steps.push("order_saved:" + pendingOrder.id);
 
     // Create payment page via billing provider
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+    steps.push("baseUrl:" + baseUrl);
 
     // Determine webhook URL based on provider type
     const webhookPath = billing.provider.provider === "YESHINVOICE"
       ? "/api/webhooks/yeshinvoice"
       : "/api/webhooks/icount";
 
-    const paymentPage = await client.createPaymentPage({
+    const req = {
       customer: { name: fullName, email, phone },
       items: [{ description, quantity: 1, unitPrice: amount }],
       successUrl: `${baseUrl}/order/success`,
       cancelUrl: `${baseUrl}/order/cancel`,
       webhookUrl: `${baseUrl}${webhookPath}`,
       autoCreateDoc: true,
-      docType: "invoice_receipt",
+      docType: "invoice_receipt" as const,
       metadata: { pendingOrderId: pendingOrder.id },
-    });
+    };
+    steps.push("req:" + JSON.stringify(req));
+
+    const paymentPage = await client.createPaymentPage(req);
 
     if (!paymentPage.url) {
       return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
@@ -107,7 +114,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating payment:", error);
     const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "שגיאה ביצירת דף תשלום — יתכן שהתוכנה לא זמינה כרגע", debug: msg },
+      { error: "שגיאה ביצירת דף תשלום", debug: msg, steps },
       { status: 500 }
     );
   }
