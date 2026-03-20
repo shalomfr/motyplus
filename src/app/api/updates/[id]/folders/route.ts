@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { listFiles } from "@/lib/file-storage";
+import { ensureFolderPath } from "@/lib/file-storage";
+import { getDrive } from "@/lib/google-drive";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,21 @@ interface OrganStatus {
   fileCount: number;
 }
 
-async function checkOrganFolder(folderPath: string): Promise<{ hasFiles: boolean; fileCount: number }> {
+async function countFolderContents(folderPath: string): Promise<{ hasFiles: boolean; fileCount: number }> {
   try {
-    const files = await listFiles(folderPath);
-    return { hasFiles: files.length > 0, fileCount: files.length };
+    const drive = getDrive();
+    const folderId = await ensureFolderPath(folderPath).catch(() => null);
+    if (!folderId) return { hasFiles: false, fileCount: 0 };
+
+    const res = await drive.files.list({
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: "files(id)",
+      spaces: "drive",
+      pageSize: 5,
+    });
+
+    const count = res.data.files?.length || 0;
+    return { hasFiles: count > 0, fileCount: count };
   } catch {
     return { hasFiles: false, fileCount: 0 };
   }
@@ -66,7 +78,7 @@ export async function GET(
           organs.map(async (organ) => {
             const organAlias = organ.folderAlias || organ.name;
             const organPath = `updates/beats/${version}/${setAlias}/${organAlias}`;
-            const { hasFiles, fileCount } = await checkOrganFolder(organPath);
+            const { hasFiles, fileCount } = await countFolderContents(organPath);
             return { name: organ.name, alias: organAlias, hasFiles, fileCount };
           })
         );
