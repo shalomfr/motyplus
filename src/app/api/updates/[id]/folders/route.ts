@@ -91,7 +91,9 @@ export async function GET(
     const drive = getDrive();
 
     const baseFolderId = await resolveFolderPath(drive, ["updates", "beats", version]);
+    console.log(`[folders] version=${version} baseFolderId=${baseFolderId}`);
     if (!baseFolderId) {
+      console.log(`[folders] base folder not found for path: updates/beats/${version}`);
       return NextResponse.json({
         folders: setTypes.map((st) => ({
           setType: st.name,
@@ -111,6 +113,7 @@ export async function GET(
       setTypes.map(async (setType) => {
         const setAlias = setType.folderAlias || setType.name;
         const setFolderId = await findFolderId(drive, baseFolderId, setAlias);
+        console.log(`[folders] setType="${setAlias}" folderId=${setFolderId}`);
 
         const organStatuses: OrganStatus[] = await Promise.all(
           organs.map(async (organ) => {
@@ -137,7 +140,7 @@ export async function GET(
       })
     );
 
-    return NextResponse.json({ folders: folderResults, version });
+    return NextResponse.json({ folders: folderResults, version, debug: { baseFolderId } });
   } catch (error) {
     console.error("Error fetching folder status:", error);
     return NextResponse.json({ error: "שגיאה בבדיקת תיקיות" }, { status: 500 });
