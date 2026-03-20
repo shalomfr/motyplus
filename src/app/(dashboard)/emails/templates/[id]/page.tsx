@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EmailEditor } from "@/components/emails/email-editor"
-import { EmailPreview } from "@/components/emails/email-preview"
-import { ArrowRight, Save, Loader2, Eye, EyeOff } from "lucide-react"
+import type { EmailBlock } from "@/components/emails/block-editor/types"
+import { ArrowRight, Save, Loader2 } from "lucide-react"
 
 interface TemplateData {
   name: string
@@ -23,6 +23,7 @@ interface TemplateData {
   body: string
   category: string
   variables: string[]
+  blocks: EmailBlock[]
 }
 
 const CATEGORIES = [
@@ -41,7 +42,6 @@ export default function EditTemplatePage() {
 
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
   const [error, setError] = useState("")
 
   const [form, setForm] = useState<TemplateData>({
@@ -50,6 +50,7 @@ export default function EditTemplatePage() {
     body: "",
     category: "general",
     variables: [],
+    blocks: [],
   })
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function EditTemplatePage() {
             body: data.body || "",
             category: data.category || "general",
             variables: data.variables || [],
+            blocks: (data.blocks as EmailBlock[]) || [],
           })
         }
       } catch (err) {
@@ -77,12 +79,15 @@ export default function EditTemplatePage() {
     fetchTemplate()
   }, [id, isNew])
 
-  // Auto-detect variables from body
   useEffect(() => {
     const matches = form.body.match(/\{\{(\w+)\}\}/g) || []
     const vars = [...new Set(matches.map((m) => m.replace(/\{\{|\}\}/g, "")))]
     setForm((prev) => ({ ...prev, variables: vars }))
   }, [form.body])
+
+  const handleBlocksChange = useCallback((blocks: EmailBlock[]) => {
+    setForm((prev) => ({ ...prev, blocks }))
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -95,7 +100,10 @@ export default function EditTemplatePage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          blocks: form.blocks.length > 0 ? form.blocks : undefined,
+        }),
       })
 
       if (!res.ok) {
@@ -134,27 +142,14 @@ export default function EditTemplatePage() {
             {isNew ? "תבנית חדשה" : "עריכת תבנית"}
           </h2>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowPreview(!showPreview)}
-          >
-            {showPreview ? (
-              <EyeOff className="h-4 w-4 ml-1" />
-            ) : (
-              <Eye className="h-4 w-4 ml-1" />
-            )}
-            {showPreview ? "הסתר תצוגה" : "תצוגה מקדימה"}
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin ml-2" />
-            ) : (
-              <Save className="h-4 w-4 ml-2" />
-            )}
-            שמור
-          </Button>
-        </div>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin ml-2" />
+          ) : (
+            <Save className="h-4 w-4 ml-2" />
+          )}
+          שמור
+        </Button>
       </div>
 
       {error && (
@@ -163,83 +158,77 @@ export default function EditTemplatePage() {
         </div>
       )}
 
-      <div className={`grid gap-6 ${showPreview ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">פרטי תבנית</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">שם התבנית</Label>
-                  <Input
-                    id="name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="שם התבנית"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>קטגוריה</Label>
-                  <Select
-                    value={form.category}
-                    onValueChange={(v) => setForm({ ...form, category: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subject">נושא</Label>
-                <Input
-                  id="subject"
-                  value={form.subject}
-                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  placeholder="נושא המייל"
-                  required
-                />
-              </div>
-
-              <EmailEditor
-                value={form.body}
-                onChange={(body) => setForm({ ...form, body })}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">פרטי תבנית</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">שם התבנית</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="שם התבנית"
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label>קטגוריה</Label>
+              <Select
+                value={form.category}
+                onValueChange={(v) => setForm({ ...form, category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-              {form.variables.length > 0 && (
-                <div className="bg-muted/50 p-3 rounded-md">
-                  <p className="text-sm font-medium mb-2">משתנים בשימוש בתבנית:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {form.variables.map((v) => (
-                      <code
-                        key={v}
-                        className="text-xs bg-background px-2 py-1 rounded border"
-                      >
-                        {`{{${v}}}`}
-                      </code>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="subject">נושא</Label>
+            <Input
+              id="subject"
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              placeholder="נושא המייל"
+              required
+            />
+          </div>
 
-        {showPreview && (
-          <EmailPreview subject={form.subject} body={form.body} />
-        )}
-      </div>
+          <EmailEditor
+            value={form.body}
+            onChange={(body) => setForm((prev) => ({ ...prev, body }))}
+            initialBlocks={form.blocks}
+            onBlocksChange={handleBlocksChange}
+          />
+
+          {form.variables.length > 0 && (
+            <div className="bg-muted/50 p-3 rounded-md">
+              <p className="text-sm font-medium mb-2">משתנים בשימוש בתבנית:</p>
+              <div className="flex flex-wrap gap-1">
+                {form.variables.map((v) => (
+                  <code
+                    key={v}
+                    className="text-xs bg-background px-2 py-1 rounded border"
+                  >
+                    {`{{${v}}}`}
+                  </code>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

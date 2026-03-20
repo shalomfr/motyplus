@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { VariableTextarea } from "./variable-textarea"
 import {
   Select,
   SelectContent,
@@ -151,24 +151,22 @@ function renderBlockFields(
   switch (block.type) {
     case "heading":
       return (
-        <Input
+        <VariableTextarea
           value={block.text}
-          onChange={(e) => onChange({ ...block, text: e.target.value })}
-          className="h-8 text-sm"
+          onChange={(text) => onChange({ ...block, text })}
           placeholder="טקסט כותרת"
-          dir="rtl"
+          singleLine
         />
       )
 
     case "banner":
       return (
         <div className="space-y-1.5">
-          <Input
+          <VariableTextarea
             value={block.text}
-            onChange={(e) => onChange({ ...block, text: e.target.value })}
-            className="h-8 text-sm"
+            onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט באנר"
-            dir="rtl"
+            singleLine
           />
           <Select
             value={block.color}
@@ -190,12 +188,10 @@ function renderBlockFields(
 
     case "paragraph":
       return (
-        <Textarea
+        <VariableTextarea
           value={block.text}
-          onChange={(e) => onChange({ ...block, text: e.target.value })}
-          className="text-sm min-h-[60px]"
+          onChange={(text) => onChange({ ...block, text })}
           placeholder="טקסט פסקה..."
-          dir="rtl"
           rows={2}
         />
       )
@@ -256,12 +252,10 @@ function renderBlockFields(
     case "promo":
       return (
         <div className="space-y-1.5">
-          <Textarea
+          <VariableTextarea
             value={block.text}
-            onChange={(e) => onChange({ ...block, text: e.target.value })}
-            className="text-sm min-h-[50px]"
+            onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט המבצע"
-            dir="rtl"
             rows={2}
           />
           <div className="grid grid-cols-2 gap-1.5">
@@ -292,12 +286,10 @@ function renderBlockFields(
 
     case "warning":
       return (
-        <Textarea
+        <VariableTextarea
           value={block.text}
-          onChange={(e) => onChange({ ...block, text: e.target.value })}
-          className="text-sm min-h-[50px]"
+          onChange={(text) => onChange({ ...block, text })}
           placeholder="טקסט אזהרה..."
-          dir="rtl"
           rows={2}
         />
       )
@@ -336,12 +328,10 @@ function renderBlockFields(
 
     case "instructions":
       return (
-        <Textarea
+        <VariableTextarea
           value={block.text}
-          onChange={(e) => onChange({ ...block, text: e.target.value })}
-          className="text-sm min-h-[80px]"
+          onChange={(text) => onChange({ ...block, text })}
           placeholder="הוראות הורדה והתקנה..."
-          dir="rtl"
           rows={3}
         />
       )

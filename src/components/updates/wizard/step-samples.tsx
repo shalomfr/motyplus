@@ -40,7 +40,7 @@ export function StepSamples({ updateId, cpiReady, cpiTotal }: StepSamplesProps) 
       </Card>
 
       {/* Existing SamplesUploader */}
-      <SamplesUploader updateId={updateId} />
+      <SamplesUploader updateId={updateId} hideSendButton />
     </div>
   )
 }

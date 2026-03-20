@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { emailTemplateSchema } from "@/lib/validators";
 import { DEFAULT_EMAIL_TEMPLATES } from "./seed/route";
+import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html";
+import type { EmailBlock } from "@/components/emails/block-editor/types";
 
 // GET /api/emails/templates - רשימת תבניות מייל (auto-seed אם ריק)
 export async function GET() {
@@ -15,27 +17,27 @@ export async function GET() {
       );
     }
 
-    // Auto-seed + auto-update: יצירה/עדכון תבניות ברירת מחדל
     for (const t of DEFAULT_EMAIL_TEMPLATES) {
       const existing = await prisma.emailTemplate.findFirst({
         where: { name: t.name },
       });
+      const body = blocksToHtml(t.blocks);
       if (existing) {
-        // עדכון אם חסר עיצוב חדש או markers
-        if (!existing.body.includes("BODY_START")) {
+        if (!existing.blocks) {
           await prisma.emailTemplate.update({
             where: { id: existing.id },
-            data: { body: t.body, subject: t.subject, variables: t.variables },
+            data: {
+              body, subject: t.subject, variables: t.variables,
+              blocks: t.blocks as unknown as Record<string, unknown>[],
+            },
           });
         }
       } else {
         await prisma.emailTemplate.create({
           data: {
-            name: t.name,
-            subject: t.subject,
-            body: t.body,
-            category: t.category,
-            variables: t.variables,
+            name: t.name, subject: t.subject, body,
+            category: t.category, variables: t.variables,
+            blocks: t.blocks as unknown as Record<string, unknown>[],
           },
         });
       }
@@ -83,13 +85,17 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
+    const blocks = body.blocks as EmailBlock[] | undefined;
+    const finalBody = blocks && blocks.length > 0 ? blocksToHtml(blocks) : data.body;
+
     const template = await prisma.emailTemplate.create({
       data: {
         name: data.name,
         subject: data.subject,
-        body: data.body,
+        body: finalBody,
         category: data.category,
         variables: data.variables || [],
+        blocks: blocks ? (blocks as unknown as Record<string, unknown>[]) : undefined,
       },
     });
 

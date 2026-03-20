@@ -66,7 +66,6 @@ const ICON_MAP: Record<string, typeof CheckCircle2> = {
   missing_cpi: AlertTriangle,
   not_updated: Clock,
   half_set: Users,
-  expired: XCircle,
   excluded: Ban,
 }
 

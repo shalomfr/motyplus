@@ -1,186 +1,277 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html";
+import type { EmailBlock } from "@/components/emails/block-editor/types";
+import { generateBlockId } from "@/components/emails/block-editor/types";
 
-// תבנית בסיס — wrapper חיצוני לכל המיילים
-function wrapEmail(bodyContent: string): string {
-  return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-@media only screen and (max-width: 600px) {
-  .container { width: 100% !important; border-radius: 0 !important; }
-  .content-padding { padding: 12px !important; }
-  .title-cell { font-size: 18px !important; }
-}
-</style>
-</head>
-<body style="margin:0; padding:0; background:#EEF3FB; font-family:Arial, Helvetica, sans-serif; color:#124F90;">
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#EEF3FB" dir="rtl">
-<tr><td align="center" style="padding:10px;">
-<table class="container" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background:#FFFFFF; border-radius:14px; overflow:hidden;">
-<tr><td class="content-padding" style="padding:20px; font-size:14px; line-height:1.75; color:#124F90; text-align:right;">
-
-<div style="font-size:12px; margin-bottom:10px; font-weight:bold; color:#8fa3b9;">בס"ד</div>
-
-<!-- BODY_START -->
-${bodyContent}
-<!-- BODY_END -->
-
-<div style="margin-top:25px; padding-top:15px; border-top:1px solid #E3EAF6; text-align:center; font-size:12px; color:#8fa3b9;">
-  מוטי פלוס | מקצבים ודגימות לאורגנים
-</div>
-
-</td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
+function b(type: EmailBlock["type"], props: Omit<EmailBlock, "type" | "id">): EmailBlock {
+  return { type, id: generateBlockId(), ...props } as EmailBlock;
 }
 
-const TEMPLATES = [
+interface TemplateDefinition {
+  name: string;
+  subject: string;
+  category: string;
+  variables: string[];
+  blocks: EmailBlock[];
+}
+
+const TEMPLATES: TemplateDefinition[] = [
+  // ===== מעודכנים Tyros 5 - 1G =====
   {
-    name: "עדכון חדש — ללקוח מעודכן",
+    name: "עדכון — Tyros 5 (1G)",
     subject: "עדכון {{updateVersion}} מוכן עבורך!",
     category: "update",
-    variables: ["fullName", "firstName", "updateVersion", "organ", "downloadLink", "downloadLink2", "additionalOrganName", "additionalOrganLine"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      עדכון {{updateVersion}}
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Update
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:18px;">
-  <tr>
-    <td style="padding:14px; text-align:right; color:#124F90; border-bottom:1px solid #E3EAF6;">
-      <p style="margin:0;">
-        לקוח יקר, תודה רבה על רכישת <b>עדכון {{updateVersion}}</b>.<br>
-        אני בטוח שתהנה מהעדכון החדש ותפיק ממנו את המירב.
-      </p>
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="background:#EBF1F9; border:1px solid #C5D5EA; border-radius:12px;">
-  <tr>
-    <td style="padding:16px; text-align:right; color:#124F90;">
-      <strong style="font-size:18px;">הוראות הורדה והתקנה:</strong><br><br>
-      והפעם, במקביל למייל זה, יישלחו אליכם שני קישורים נפרדים עם הרשאות:<br><br>
-      <strong>📍 <span style="text-decoration:underline;">קישור להורדת מקצבים</span></strong><br>
-      <strong>📍 <span style="text-decoration:underline;">קישור להורדת דגימות</span></strong><br><br>
-      יש להיכנס למיילים שהתקבלו, להוריד את הקבצים, ולאחר מכן לחלץ אותם לדיסק־און־קי (USB).<br><br>
-      <strong>הקבצים היחידים שצריכים להיות על ה־USB לפני ההתקנה הם:</strong>
-      <ul style="margin:8px 0 0 0; padding:0; list-style-type:none;">
-        <li style="position:relative; padding-right:18px; margin-bottom:6px;">
-          <span style="position:absolute; right:0; color:#124F90; font-weight:bold;">•</span>
-          קובץ מקצבים של שם האורגן וסיומת: <strong>.bup</strong>
-        </li>
-        <li style="position:relative; padding-right:18px; margin-bottom:6px;">
-          <span style="position:absolute; right:0; color:#124F90; font-weight:bold;">•</span>
-          קובץ התקנת דגימות: <strong>.cpi</strong>
-        </li>
-      </ul>
-      <br>
-      <strong>הכנת הקבצים ל־USB:</strong><br>
-      לאחר הורדת קובץ המקצבים, יש להעתיק לדיסק־און־קי בחוץ ולא בתוך תיקייה.<br><br>
-      <strong>התקנה:</strong><br>
-      התקן את קובץ המקצבים (<strong>BUP</strong>) ואת קובץ הדגימות.<br><br>
-      מצורף סרטון הסבר מלא לכל שלבי ההתקנה.
-    </td>
-  </tr>
-</table>
-`),
+    variables: ["fullName", "updateVersion", "downloadLink", "downloadLink2", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}" }),
+      b("paragraph", { text: "אני שמח לבשר על עדכון חדש ומטורף - עדכון שמשנה את כללי המשחק!\nעדכון {{updateVersion}} כולל המון שיפורים ותוספות בכל סוגי הז'אנרים, ומביא את הנגינה שלך לרמה הגבוהה ביותר." }),
+      b("paragraph", { text: "זה הזמן לקחת את הנגינה שלך צעד קדימה - כולם יאהבו לשמוע אותך!" }),
+      b("banner", { text: "מה חדש בעדכון?", color: "orange" }),
+      b("paragraph", { text: "(תוכן העדכון ישתנה לפי כל גרסה — ערוך כאן)" }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים הבאים מהקישורים למטה והעתק ל-USB (בחוץ, לא בתוך תיקייה):\nתיקייה: HD1\nקובץ: {{שם קובץ מקצבים}}" }),
+      b("paragraph", { text: "לאחר הורדת תיקיית HD1 מהדרייב יש לחלץ את התיקייה." }),
+      b("paragraph", { text: "מחק תיקיות ישנות מהעדכונים הקודמים ב-HD1:\nכניסה למסך מקצבים → לחיצה על כפתור TAG מעבר ל-HD1 → כפתור 8 מתחת למסך (Menu 2) → כפתור 5 למטה → סימון התיקיות למחיקה → כפתור 7 → אישור ב-OK (F) ואז YES במסך." }),
+      b("paragraph", { text: "העתק את התיקיות שנמצאות בתוך HD1 שב-USB (ולא את כל תיקיית HD1 עצמה) ל-HD1 שבאורגן." }),
+      b("paragraph", { text: "התקן מקצבים (BUP).\nהתקן דגימות.\nמצורף סרטון הסבר מלא לכל שלבי ההתקנה." }),
+      b("warning", { text: "הושקעו מאות שעות עבודה בכדי שכמה שיותר מהחומרים יעבדו בצורה מיטבית גם על גיגה אחת.\nיחד עם זאת, לא הייתה ברירה וחלק מהחומרים הורדו בגלל מגבלת הנפח." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
   },
 
+  // ===== מעודכנים Tyros 5 - 2G =====
   {
-    name: "ברכה לאחר רכישה",
-    subject: "ברוך הבא למשפחת מוטי פלוס! 🎹",
-    category: "welcome",
-    variables: ["fullName", "firstName", "organ", "setType"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      ברוכים הבאים!
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Welcome
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:16px; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        תודה רבה על הרכישה! 🙏<br><br>
-        הסט שלך: <strong>{{setType}}</strong><br>
-        אורגן: <strong>{{organ}}</strong><br><br>
-        אני בטוח שתהנה מהמקצבים והדגימות ותפיק מהם את המירב.<br>
-        בקרוב יישלחו אליך כל הקבצים והקישורים הנדרשים.<br><br>
-        לכל שאלה ניתן לפנות אלי ישירות.
-      </p>
-    </td>
-  </tr>
-</table>
-
-<div align="center" style="padding:10px 0;">
-  <span style="display:inline-block; background:#124F90; color:#FFFFFF; font-size:16px; font-weight:bold; padding:10px 25px; border-radius:16px;">
-    בהצלחה ובהנאה! 🎵
-  </span>
-</div>
-`),
+    name: "עדכון — Tyros 5 (2G)",
+    subject: "עדכון {{updateVersion}} מוכן עבורך!",
+    category: "update",
+    variables: ["fullName", "updateVersion", "downloadLink", "downloadLink2", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}" }),
+      b("paragraph", { text: "אני שמח לבשר על עדכון חדש ומטורף - עדכון שמשנה את כללי המשחק!\nעדכון {{updateVersion}} כולל המון שיפורים ותוספות בכל סוגי הז'אנרים, ומביא את הנגינה שלך לרמה הגבוהה ביותר." }),
+      b("paragraph", { text: "זה הזמן לקחת את הנגינה שלך צעד קדימה - כולם יאהבו לשמוע אותך!" }),
+      b("banner", { text: "מה חדש בעדכון?", color: "orange" }),
+      b("paragraph", { text: "(תוכן העדכון ישתנה לפי כל גרסה — ערוך כאן)" }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים הבאים מהקישורים למטה והעתק ל-USB (בחוץ, לא בתוך תיקייה):\nתיקייה: HD1\nקובץ: {{שם קובץ מקצבים}}" }),
+      b("paragraph", { text: "לאחר הורדת תיקיית HD1 מהדרייב יש לחלץ את התיקייה." }),
+      b("paragraph", { text: "מחק תיקיות ישנות מהעדכונים הקודמים ב-HD1." }),
+      b("paragraph", { text: "העתק את התיקיות שנמצאות בתוך HD1 שב-USB ל-HD1 שבאורגן." }),
+      b("paragraph", { text: "התקן מקצבים (BUP).\nהתקן דגימות.\nמצורף סרטון הסבר מלא לכל שלבי ההתקנה." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
   },
 
+  // ===== מעודכנים Genos / PSR-SX920 =====
+  {
+    name: "עדכון — Genos / PSR-SX920",
+    subject: "עדכון {{updateVersion}} מוכן עבורך!",
+    category: "update",
+    variables: ["fullName", "updateVersion", "downloadLink", "downloadLink2", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}" }),
+      b("paragraph", { text: "אני שמח לבשר על עדכון חדש ומטורף - עדכון שמשנה את כללי המשחק!\nעדכון {{updateVersion}} כולל המון שיפורים ותוספות בכל סוגי הז'אנרים, ומביא את הנגינה שלך לרמה הגבוהה ביותר." }),
+      b("paragraph", { text: "זה הזמן לקחת את הנגינה שלך צעד קדימה - כולם יאהבו לשמוע אותך!" }),
+      b("banner", { text: "מה חדש בעדכון?", color: "orange" }),
+      b("paragraph", { text: "(תוכן העדכון ישתנה לפי כל גרסה — ערוך כאן)" }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקובץ התקנה מהקישורים למטה, והעתק ל-USB (בחוץ, לא בתוך תיקייה):\nקובץ: {{שם קובץ מקצבים}}" }),
+      b("paragraph", { text: "לפני שאתה ניגש להתקנת המקצבים - נא למחוק את כל התיקיות שיש ב-USER.\nהתקן מקצבים (BUP).\nהתקן דגימות. נא לשים לב להשתמש להתקנת הדגימות רק עם דיסק און קי איכותי מברזל USB.3" }),
+      b("paragraph", { text: "מצורף סרטון הסבר מלא לכל שלב ההתקנה." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== לא מעודכנים — סט שלם =====
   {
     name: "הצעת מחיר — למי שלא מעודכן",
     subject: "עדכון חדש ממתין לך — הצעה מיוחדת",
     category: "promotion",
     variables: ["fullName", "firstName", "organ", "currentVersion", "remainingAmount", "remainingForFullSet"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      יש עדכון חדש!
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      New Update
-    </td>
-  </tr>
-</table>
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}" }),
+      b("paragraph", { text: "אני שמח לבשר על עדכון חדש ומטורף - עדכון שמשנה את כללי המשחק!\nעדכון {{updateVersion}} כולל המון שיפורים ותוספות בכל סוגי הז'אנרים, ומביא את הנגינה שלך לרמה הגבוהה ביותר.\nזה הזמן לקחת את הנגינה שלך צעד קדימה - כולם יאהבו לשמוע אותך!" }),
+      b("banner", { text: "מה חדש בעדכון?", color: "orange" }),
+      b("paragraph", { text: "(תוכן העדכון ישתנה לפי כל גרסה — ערוך כאן)" }),
+      b("buttons", { buttons: [{ label: "דרייב", url: "{{LINK_DRIVE}}", color: "green" }, { label: "יוטיוב", url: "{{LINK_YOUTUBE}}", color: "red" }] }),
+      b("banner", { text: "מחיר העדכון ופרטי תשלום", color: "blue" }),
+      b("paragraph", { text: "מחיר העדכון הנוכחי: {{remainingAmount}} ₪\nיתרה לתשלום להשלמת העדכונים: {{remainingForFullSet}}" }),
+      b("promo", { text: "לרגל ההשקה של העדכון החדש\nאני יוצא במבצע מיוחד:\n10% הנחה\nעל כל העדכונים.", price: "{{מחיר מבצע}} ₪", expiry: "30/09/25 בשעה 00:00" }),
+      b("bankTable", {}),
+      b("paragraph", { text: "זה הזמן לשדרג את האורגן שלך לעדכון {{updateVersion}} - ולהצטרף למאות מוזיקאים שכבר נהנים מהסאונד החדש!" }),
+      b("signature", {}),
+    ],
+  },
 
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:15px; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        שמתי לב שאתה מעודכן לגרסה <strong>{{currentVersion}}</strong> ויש עדכון חדש שמחכה לך!<br><br>
-        העדכון החדש כולל מגוון מקצבים חדשים, שדרוגי סאונד עמוקים, תוספות ושיפורים בכל סוגי הז'אנרים.
-      </p>
-    </td>
-  </tr>
-</table>
+  // ===== לא מעודכנים — חצי סט =====
+  {
+    name: "הצעה לחצאי סטים",
+    subject: "שדרג את הסט שלך — הצעה מיוחדת",
+    category: "promotion",
+    variables: ["fullName", "firstName", "organ", "setType", "remainingForFullSet"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}" }),
+      b("paragraph", { text: "אני שמח לבשר על עדכון חדש ומטורף - עדכון שמשנה את כללי המשחק!\nעדכון {{updateVersion}} כולל המון שיפורים ותוספות בכל סוגי הז'אנרים, ומביא את הנגינה שלך לרמה הגבוהה ביותר.\nזה הזמן לקחת את הנגינה שלך צעד קדימה - כולם יאהבו לשמוע אותך!" }),
+      b("banner", { text: "מה חדש בעדכון?", color: "orange" }),
+      b("paragraph", { text: "(תוכן העדכון ישתנה לפי כל גרסה — ערוך כאן)" }),
+      b("buttons", { buttons: [{ label: "דרייב", url: "{{LINK_DRIVE}}", color: "green" }, { label: "יוטיוב", url: "{{LINK_YOUTUBE}}", color: "red" }] }),
+      b("banner", { text: "מחיר העדכון ופרטי תשלום", color: "blue" }),
+      b("paragraph", { text: "יתרה לתשלום להשלמת הסט: {{remainingForFullSet}}" }),
+      b("promo", { text: "לרגל ההשקה של העדכון החדש\nאני יוצא במבצע מיוחד:\n10% הנחה\nעל כל העדכונים - זו ההזדמנות שלך לשדרג לסט מלא עם כל התוספות והעדכונים!", price: "{{מחיר מבצע}} ₪", expiry: "30/09/25 בשעה 00:00" }),
+      b("bankTable", {}),
+      b("paragraph", { text: "זה הזמן לשדרג את האורגן שלך לעדכון {{updateVersion}} - ולהצטרף למאות מוזיקאים שכבר נהנים מהסאונד החדש!" }),
+      b("signature", {}),
+    ],
+  },
 
-<div style="margin-top:20px; padding:20px; border:2px solid #124F90; border-radius:15px; background:#f9fbfd; text-align:center;">
-  <strong style="font-size:19px;">עלות העדכון: {{remainingForFullSet}}</strong><br><br>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px; border-collapse:collapse; background:#ffffff;">
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold; width:35%;">בנק</td><td style="border:1px solid #D6E3F5; padding:10px;">הפועלים (446)</td></tr>
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5; padding:10px;">113689</td></tr>
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5; padding:10px;">חוה גפנר</td></tr>
-  </table>
-  <div style="margin-top:15px; font-weight:bold; color:#d32f2f;">נא לשלוח אסמכתא לאחר ביצוע התשלום.</div>
-</div>
-`),
+  // ===== אחרי קניית עדכון — Tyros 5 =====
+  {
+    name: "אחרי קניית עדכון — Tyros 5",
+    subject: "עדכון {{updateVersion}} - מוטי פלוס",
+    category: "update",
+    variables: ["fullName", "updateVersion", "downloadLink", "downloadLink2", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה על רכישת עדכון {{updateVersion}}.\nאני בטוח שתהנה מהעדכון החדש ותפיק ממנו את המירב." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים הבאים מהקישורים למטה והעתק ל-USB (בחוץ, לא בתוך תיקייה):\nתיקייה: HD1\nקובץ: {{שם קובץ מקצבים}}" }),
+      b("paragraph", { text: "לאחר הורדת תיקיית HD1 מהדרייב יש לחלץ את התיקייה." }),
+      b("paragraph", { text: "מחק תיקיות ישנות מהעדכונים הקודמים ב-HD1." }),
+      b("warning", { text: "נא לא למחוק את התיקייה 00songs reka (נעימות סעודה)." }),
+      b("paragraph", { text: "העתק את התיקיות שנמצאות בתוך HD1 שב-USB ל-HD1 שבאורגן." }),
+      b("paragraph", { text: "התקן מקצבים (BUP).\nהתקן דגימות.\nמצורף סרטון הסבר מלא לכל שלבי ההתקנה." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== אחרי קניית עדכון — Genos / PSR-SX920 =====
+  {
+    name: "אחרי קניית עדכון — Genos / PSR-SX920",
+    subject: "עדכון {{updateVersion}} - מוטי פלוס",
+    category: "update",
+    variables: ["fullName", "updateVersion", "downloadLink", "downloadLink2", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "עדכון {{updateVersion}} - {{תאריך}}" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה על רכישת עדכון {{updateVersion}}.\nאני בטוח שתהנה מהעדכון החדש ותפיק ממנו את המירב." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקובץ התקנה מהקישורים למטה, והעתק ל-USB (בחוץ, לא בתוך תיקייה):\nקובץ: {{שם קובץ מקצבים}}" }),
+      b("paragraph", { text: "לפני שאתה ניגש להתקנת המקצבים - נא למחוק את כל התיקיות שיש ב-USER.\nהתקן מקצבים (BUP).\nהתקן דגימות. נא לשים לב להשתמש להתקנת הדגימות רק עם דיסק און קי איכותי מברזל USB.3" }),
+      b("paragraph", { text: "מצורף סרטון הסבר מלא לכל שלב ההתקנה." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== מבצעים =====
+  {
+    name: "מבצע מיוחד",
+    subject: "מבצע מיוחד — מוטי פלוס",
+    category: "promotion",
+    variables: ["fullName", "firstName"],
+    blocks: [
+      b("heading", { text: "מבצע מיוחד!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "(תוכן המבצע — ערוך כאן)" }),
+      b("promo", { text: "הנחה מיוחדת לזמן מוגבל!", price: "", expiry: "" }),
+      b("bankTable", {}),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== לקוח חדש — סט שלם Tyros =====
+  {
+    name: "לקוח חדש — סט שלם Tyros",
+    subject: "ברוך הבא למוטי פלוס!",
+    category: "welcome",
+    variables: ["fullName", "organ", "setType", "downloadLink", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "ברוכים הבאים!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה על הרכישה של {{setType}} לאורגן {{organ}}!\nאני בטוח שתהנה מהמקצבים והדגימות ותפיק מהם את המירב." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים מהקישורים למטה והעתק ל-USB.\nתיקייה: HD1\nהתקן מקצבים (BUP).\nהתקן דגימות." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== לקוח חדש — חצי סט Tyros =====
+  {
+    name: "לקוח חדש — חצי סט Tyros",
+    subject: "ברוך הבא למוטי פלוס!",
+    category: "welcome",
+    variables: ["fullName", "organ", "setType", "downloadLink", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "ברוכים הבאים!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה שרכשת את החצי סט מקצבים.\nאני בטוח שתהנה ממנו ותפיק את המירב מכל המקצבים." }),
+      b("paragraph", { text: "לידיעתך – בכל שלב תוכל לעדכן לסט המלא וליהנות ממאגר מקצבים מלא ואיכותי במיוחד, הכולל את כל הסגנונות." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים מהקישורים למטה.\nהתקן מקצבים (BUP).\nהתקן דגימות.\nמצורף סרטון הסבר." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== לקוח חדש — סט שלם Genos/920 =====
+  {
+    name: "לקוח חדש — סט שלם Genos/920",
+    subject: "ברוך הבא למוטי פלוס!",
+    category: "welcome",
+    variables: ["fullName", "organ", "setType", "downloadLink", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "ברוכים הבאים!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה על הרכישה של {{setType}} לאורגן {{organ}}!\nאני בטוח שתהנה מהמקצבים והדגימות ותפיק מהם את המירב." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקובץ התקנה מהקישורים למטה, והעתק ל-USB.\nלפני ההתקנה - נא למחוק את כל התיקיות שיש ב-USER.\nהתקן מקצבים (BUP).\nהתקן דגימות." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== לקוח חדש — חצי סט Genos/920 =====
+  {
+    name: "לקוח חדש — חצי סט Genos/920",
+    subject: "ברוך הבא למוטי פלוס!",
+    category: "welcome",
+    variables: ["fullName", "organ", "setType", "downloadLink", "rhythmsLink"],
+    blocks: [
+      b("heading", { text: "ברוכים הבאים!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "תודה רבה שרכשת את החצי סט מקצבים.\nאני בטוח שתהנה ממנו ותפיק את המירב מכל המקצבים." }),
+      b("paragraph", { text: "לידיעתך – בכל שלב תוכל לעדכן לסט המלא וליהנות ממאגר מקצבים מלא ואיכותי במיוחד, הכולל את כל הסגנונות." }),
+      b("banner", { text: "הוראות הורדה והתקנה", color: "blue" }),
+      b("paragraph", { text: "הורד את הקבצים מהקישורים למטה.\nלפני ההתקנה - נא למחוק את כל התיקיות שיש ב-USER.\nהתקן מקצבים (BUP).\nהתקן דגימות." }),
+      b("buttons", { buttons: [{ label: "דגימות", url: "{{downloadLink}}", color: "gold" }, { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" }] }),
+      b("signature", {}),
+    ],
+  },
+
+  // ===== תבניות כלליות =====
+  {
+    name: "ברכת שנה חדשה",
+    subject: "שנה טובה מצוות מוטי פלוס!",
+    category: "general",
+    variables: ["fullName", "firstName"],
+    blocks: [
+      b("heading", { text: "שנה טובה ומתוקה!" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "מאחל לך שנה מלאה במוזיקה, בשמחה ובהשראה!\nשתהיה שנה של מקצבים חדשים, סאונד מושלם והמון הנאה מהאורגן!" }),
+      b("signature", {}),
+    ],
   },
 
   {
@@ -188,329 +279,19 @@ const TEMPLATES = [
     subject: "תזכורת: העדכון שלך ממתין להורדה",
     category: "reminder",
     variables: ["fullName", "firstName", "updateVersion", "downloadLink"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      תזכורת
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Reminder
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:15px; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        שמנו לב שעדיין לא הורדת את עדכון <strong>{{updateVersion}}</strong>.<br><br>
-        הקישורים להורדה עדיין פעילים — לחץ כדי להוריד:
-      </p>
-    </td>
-  </tr>
-</table>
-
-<div align="center" style="padding:8px 0 18px;">
-  <a href="{{downloadLink}}" style="display:inline-block; background:#124F90; color:#FFFFFF; font-size:16px; font-weight:bold; padding:10px 22px; border-radius:16px; text-decoration:none;">
-    להורדת העדכון
-  </a>
-</div>
-`),
-  },
-
-  {
-    name: "טופס עדכון פרטים",
-    subject: "עדכון פרטים — מוטי פלוס",
-    category: "general",
-    variables: ["fullName", "firstName"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="center" style="font-size:22px; font-weight:bold; color:#124F90;">
-      עדכון פרטים
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:15px; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        נשמח אם תעדכן את הפרטים שלך כדי שנוכל לתת לך את השירות הטוב ביותר.<br><br>
-        אנא מלא את הפרטים הבאים ושלח אותם בחזרה:<br><br>
-        <strong>שם מלא:</strong> _______________<br>
-        <strong>טלפון:</strong> _______________<br>
-        <strong>מייל:</strong> _______________<br>
-        <strong>כתובת:</strong> _______________<br>
-        <strong>סוג אורגן:</strong> _______________<br><br>
-        תודה רבה! 🙏
-      </p>
-    </td>
-  </tr>
-</table>
-`),
-  },
-  {
-    name: "ברכת שנה חדשה",
-    subject: "שנה טובה מצוות מוטי פלוס! 🎶",
-    category: "general",
-    variables: ["fullName", "firstName"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="center" style="font-size:24px; font-weight:bold; color:#124F90;">
-      שנה טובה ומתוקה!
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:20px; text-align:center;">
-      <p style="margin:0; font-size:16px; line-height:2;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        מאחל לך שנה מלאה במוזיקה, בשמחה ובהשראה!<br><br>
-        שתהיה שנה של מקצבים חדשים, סאונד מושלם<br>
-        והמון הנאה מהאורגן!<br><br>
-        בברכה חמה,<br>
-        <strong>מוטי פלוס</strong>
-      </p>
-    </td>
-  </tr>
-</table>
-
-<div align="center" style="padding:8px 0;">
-  <span style="display:inline-block; background:#124F90; color:#FFFFFF; font-size:18px; font-weight:bold; padding:10px 22px; border-radius:16px;">
-    שנה טובה ומבורכת!
-  </span>
-</div>
-`),
-  },
-
-  {
-    name: "ברכת חג",
-    subject: "חג שמח ממוטי פלוס!",
-    category: "general",
-    variables: ["fullName", "firstName"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="center" style="font-size:24px; font-weight:bold; color:#124F90;">
-      חג שמח!
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:20px; text-align:center;">
-      <p style="margin:0; font-size:16px; line-height:2;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        מאחלים לך ולמשפחתך חג שמח!<br>
-        שיהיה מלא בשמחה, מוזיקה ורגעים טובים!<br><br>
-        <strong>חג שמח!</strong><br>
-        מוטי פלוס
-      </p>
-    </td>
-  </tr>
-</table>
-`),
-  },
-
-  {
-    name: "שליחת דגימות",
-    subject: "קובץ דגימות חדש מוכן עבורך",
-    category: "update",
-    variables: ["fullName", "firstName", "organ", "downloadLink"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      דגימות חדשות
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Samples
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
-  <tr>
-    <td style="padding:14px; text-align:right;">
-      <p style="margin:0; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        קובץ הדגימות החדש שלך מוכן!<br><br>
-        בהמשך למייל זה יישלח לך קישור להורדה עם הרשאות גישה.<br>
-        יש להוריד ולהעתיק את קובץ ה-CPI לדיסק־און־קי ולהתקין באורגן.
-      </p>
-    </td>
-  </tr>
-</table>
-`),
-  },
-
-  {
-    name: "שליחת מקצבים ודגימות",
-    subject: "עדכון מקצבים ודגימות חדש עבורך!",
-    category: "update",
-    variables: ["fullName", "firstName", "organ", "updateVersion", "downloadLink"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      עדכון {{updateVersion}}
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Update
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px;">
-  <tr>
-    <td style="padding:14px; text-align:right;">
-      <p style="margin:0; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        העדכון <strong>{{updateVersion}}</strong> כולל מקצבים ודגימות חדשים!<br><br>
-        בהמשך למייל זה יישלחו אליך קישורים להורדה:<br><br>
-        <strong>📍 <span style="text-decoration:underline;">קישור להורדת מקצבים</span></strong> (.bup)<br>
-        <strong>📍 <span style="text-decoration:underline;">קישור להורדת דגימות</span></strong> (.cpi)<br><br>
-        יש להוריד, לחלץ ולהעתיק את שני הקבצים לדיסק־און־קי ולהתקין באורגן.
-      </p>
-    </td>
-  </tr>
-</table>
-`),
-  },
-
-  {
-    name: "הצעה לחצאי סטים",
-    subject: "שדרג את הסט שלך — הצעה מיוחדת",
-    category: "promotion",
-    variables: ["fullName", "firstName", "organ", "setType", "remainingForFullSet"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      הצעה מיוחדת
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Special Offer
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:15px; line-height:1.75;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        שמנו לב שיש לך <strong>{{setType}}</strong> לאורגן <strong>{{organ}}</strong>.<br><br>
-        עם שדרוג לסט שלם תקבל:
-      </p>
-      <ul style="margin:8px 0 0 0; padding:0; list-style-type:none;">
-        <li style="position:relative; padding-right:18px; margin-bottom:6px;">
-          <span style="position:absolute; right:0; color:#124F90; font-weight:bold;">•</span>
-          עדכונים חינם למשך שנה
-        </li>
-        <li style="position:relative; padding-right:18px; margin-bottom:6px;">
-          <span style="position:absolute; right:0; color:#124F90; font-weight:bold;">•</span>
-          מגוון מקצבים רחב יותר
-        </li>
-        <li style="position:relative; padding-right:18px; margin-bottom:6px;">
-          <span style="position:absolute; right:0; color:#124F90; font-weight:bold;">•</span>
-          דגימות מותאמות אישית
-        </li>
-      </ul>
-    </td>
-  </tr>
-</table>
-
-<div style="margin-top:20px; padding:20px; border:2px solid #124F90; border-radius:15px; background:#f9fbfd; text-align:center;">
-  <strong style="font-size:19px;">עלות השדרוג: {{remainingForFullSet}}</strong><br><br>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px; border-collapse:collapse; background:#ffffff;">
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold; width:35%;">בנק</td><td style="border:1px solid #D6E3F5; padding:10px;">הפועלים (446)</td></tr>
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5; padding:10px;">113689</td></tr>
-    <tr><td style="border:1px solid #D6E3F5; padding:10px; font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5; padding:10px;">חוה גפנר</td></tr>
-  </table>
-  <div style="margin-top:15px; font-weight:bold; color:#d32f2f;">נא לשלוח אסמכתא לאחר ביצוע התשלום.</div>
-</div>
-`),
-  },
-
-  {
-    name: "שליחת עדכון",
-    subject: "עדכון {{updateVersion}} — מוטי פלוס",
-    category: "update",
-    variables: ["fullName", "firstName", "updateVersion", "organ", "downloadLink", "rhythmsLink"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      עדכון {{updateVersion}}
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Update
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:18px;">
-  <tr>
-    <td style="padding:14px; text-align:right; color:#124F90; border-bottom:1px solid #E3EAF6;">
-      <p style="margin:0;">
-        שלום <strong>{{fullName}}</strong>,<br><br>
-        העדכון החדש <strong>{{updateVersion}}</strong> מוכן עבורך!<br>
-        בהמשך למייל זה יישלחו אליך קישורים להורדת הקבצים עם הרשאות גישה.
-      </p>
-    </td>
-  </tr>
-</table>
-`),
-  },
-
-  {
-    name: "ברכת קנייה",
-    subject: "ברוך הבא למוטי פלוס!",
-    category: "welcome",
-    variables: ["customerName", "setType", "organName", "customerId"],
-    body: wrapEmail(`
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:12px;">
-  <tr>
-    <td align="right" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%;">
-      ברוכים הבאים!
-    </td>
-    <td align="left" class="title-cell" style="font-size:24px; font-weight:bold; color:#124F90; width:50%; font-family:'Segoe UI', Arial, sans-serif;">
-      Welcome
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="border:1px solid #E3EAF6; border-radius:12px; margin-bottom:18px; background:#fdfdfe;">
-  <tr>
-    <td style="padding:18px; text-align:right;">
-      <p style="margin:0; font-size:16px; line-height:1.75;">
-        שלום <strong>{{customerName}}</strong>,<br><br>
-        תודה על הרכישה של <strong>{{setType}}</strong> לאורגן <strong>{{organName}}</strong>!<br>
-        מספר הלקוח שלך: <strong>{{customerId}}</strong><br><br>
-        בקרוב יישלחו אליך כל הקבצים הנדרשים.<br>
-        לכל שאלה — כאן בשבילך!<br><br>
-        בברכה,<br>
-        <strong>מוטי פלוס</strong>
-      </p>
-    </td>
-  </tr>
-</table>
-`),
+    blocks: [
+      b("heading", { text: "תזכורת" }),
+      b("paragraph", { text: "שלום {{fullName}}," }),
+      b("paragraph", { text: "שמנו לב שעדיין לא הורדת את עדכון {{updateVersion}}.\nהקישורים להורדה עדיין פעילים — לחץ כדי להוריד:" }),
+      b("buttons", { buttons: [{ label: "להורדת העדכון", url: "{{downloadLink}}", color: "blue" }] }),
+      b("signature", {}),
+    ],
   },
 ];
 
 export { TEMPLATES as DEFAULT_EMAIL_TEMPLATES };
 
-// POST /api/emails/templates/seed — טעינת תבניות מעוצבות
+// POST /api/emails/templates/seed
 export async function POST() {
   try {
     const session = await auth();
@@ -519,38 +300,46 @@ export async function POST() {
     }
 
     let created = 0;
-    let skipped = 0;
+    let updated = 0;
 
     for (const t of TEMPLATES) {
+      const body = blocksToHtml(t.blocks);
+
       const existing = await prisma.emailTemplate.findFirst({
         where: { name: t.name },
       });
+
       if (existing) {
-        // עדכון תוכן בלבד
         await prisma.emailTemplate.update({
           where: { id: existing.id },
-          data: { body: t.body, subject: t.subject, variables: t.variables },
+          data: {
+            body,
+            subject: t.subject,
+            variables: t.variables,
+            category: t.category,
+            blocks: t.blocks as unknown as Record<string, unknown>[],
+          },
         });
-        skipped++;
-        continue;
+        updated++;
+      } else {
+        await prisma.emailTemplate.create({
+          data: {
+            name: t.name,
+            subject: t.subject,
+            body,
+            category: t.category,
+            variables: t.variables,
+            blocks: t.blocks as unknown as Record<string, unknown>[],
+          },
+        });
+        created++;
       }
-
-      await prisma.emailTemplate.create({
-        data: {
-          name: t.name,
-          subject: t.subject,
-          body: t.body,
-          category: t.category,
-          variables: t.variables,
-        },
-      });
-      created++;
     }
 
     return NextResponse.json({
       success: true,
       created,
-      updated: skipped,
+      updated,
       total: TEMPLATES.length,
     });
   } catch (error) {

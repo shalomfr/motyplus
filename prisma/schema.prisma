@@ -309,8 +309,9 @@ model EmailTemplate {
   name      String
   subject   String
   body      String   @db.Text
+  blocks    Json?
   category  String?
-  variables String[] // Dynamic variable names used
+  variables String[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

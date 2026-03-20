@@ -37,9 +37,10 @@ interface StepSendProps {
   version: string
   segments: Segment[]
   alreadySent: number
+  foldersReady: boolean
 }
 
-export function StepSend({ updateId, version, segments, alreadySent }: StepSendProps) {
+export function StepSend({ updateId, version, segments, alreadySent, foldersReady }: StepSendProps) {
   const sendableSegments = segments.filter((s) => s.canSend && s.count > 0)
   const [selected, setSelected] = useState<Set<string>>(
     new Set(sendableSegments.length > 0 ? ["eligible"] : [])
@@ -111,6 +112,19 @@ export function StepSend({ updateId, version, segments, alreadySent }: StepSendP
         </CardContent>
       </Card>
 
+      {/* Folders not ready warning */}
+      {!foldersReady && (
+        <Card className="border-red-200 bg-red-50/30">
+          <CardContent className="p-4 flex items-center gap-2 text-red-700 text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>
+              לא ניתן לשלוח — יש תיקיות ריקות ב-Google Drive.
+              חזור לשלב המקצבים וודא שכל התיקיות מכילות קבצים.
+            </span>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Segment Selection */}
       <Card>
         <CardHeader>
@@ -154,7 +168,7 @@ export function StepSend({ updateId, version, segments, alreadySent }: StepSendP
 
               <Button
                 onClick={handleSend}
-                disabled={sending || selected.size === 0}
+                disabled={sending || selected.size === 0 || !foldersReady}
                 className="w-full bg-green-600 hover:bg-green-700"
                 size="lg"
               >

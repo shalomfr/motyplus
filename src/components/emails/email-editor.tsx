@@ -29,9 +29,7 @@ export function EmailEditor({
   initialBlocks,
   onBlocksChange,
 }: EmailEditorProps) {
-  const [editorType, setEditorType] = useState<EditorType>(
-    initialBlocks && initialBlocks.length > 0 ? "blocks" : "code"
-  )
+  const [editorType, setEditorType] = useState<EditorType>("blocks")
   const [blocks, setBlocks] = useState<EmailBlock[]>(initialBlocks || [])
 
   const handleBlocksChange = (newBlocks: EmailBlock[]) => {

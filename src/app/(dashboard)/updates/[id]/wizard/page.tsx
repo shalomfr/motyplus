@@ -59,6 +59,22 @@ export default function UpdateWizardPage({
     description: "",
     releaseDate: "",
   })
+  const [foldersReady, setFoldersReady] = useState(false)
+
+  const fetchFolderStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/updates/${id}/folders`)
+      if (!res.ok) return
+      const data = await res.json()
+      const folders: Array<{ organs: Array<{ hasFiles: boolean }> }> = data.folders || []
+      const allReady = folders.length > 0 && folders.every((f) =>
+        f.organs.every((o) => o.hasFiles)
+      )
+      setFoldersReady(allReady)
+    } catch {
+      setFoldersReady(false)
+    }
+  }, [id])
 
   const fetchWizardData = useCallback(async () => {
     try {
@@ -81,11 +97,13 @@ export default function UpdateWizardPage({
 
   useEffect(() => {
     fetchWizardData()
-  }, [fetchWizardData])
+    fetchFolderStatus()
+  }, [fetchWizardData, fetchFolderStatus])
 
   const handleStepChange = (step: number) => {
     if (step === 3 || step === 4) {
       fetchWizardData()
+      fetchFolderStatus()
     }
     setCurrentStep(step)
     setCompletedSteps((prev) => {
@@ -171,6 +189,7 @@ export default function UpdateWizardPage({
             version={wizardData.updateVersion.version}
             segments={wizardData.segments}
             alreadySent={wizardData.alreadySent}
+            foldersReady={foldersReady}
           />
         )}
       </WizardShell>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { emailTemplateSchema } from "@/lib/validators";
+import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html";
+import type { EmailBlock } from "@/components/emails/block-editor/types";
 
 // GET /api/emails/templates/[id]
 export async function GET(
@@ -50,14 +52,18 @@ export async function PATCH(
       );
     }
 
+    const blocks = body.blocks as EmailBlock[] | undefined;
+    const finalBody = blocks && blocks.length > 0 ? blocksToHtml(blocks) : validation.data.body;
+
     const template = await prisma.emailTemplate.update({
       where: { id },
       data: {
         name: validation.data.name,
         subject: validation.data.subject,
-        body: validation.data.body,
+        body: finalBody,
         category: validation.data.category,
         variables: validation.data.variables || [],
+        blocks: blocks ? (blocks as unknown as Record<string, unknown>[]) : undefined,
       },
     });
 

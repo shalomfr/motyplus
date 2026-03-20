@@ -270,25 +270,6 @@ export async function POST(
       );
     }
 
-    if (segments.includes("expired")) {
-      const customers = await prisma.customer.findMany({
-        where: {
-          status: "ACTIVE",
-          isCasual: false,
-          organ: { supportsUpdates: true },
-          setType: { includesUpdates: true },
-          updateExpiryDate: { lt: now },
-        },
-        include: customerInclude,
-      });
-
-      results.expired = await sendBulkTemplate(
-        customers as unknown as SendableCustomer[],
-        "הצעת מחיר — למי שלא מעודכן",
-        session.user.id
-      );
-    }
-
     if (segments.includes("eligible") && results.eligible) {
       const totalEligible = (results.eligible.sent || 0) + (results.eligible.skippedNoFile || 0) + (results.eligible.failed || 0);
       const allSent = results.eligible.sent === totalEligible - (results.eligible.skippedNoFile || 0);

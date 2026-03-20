@@ -168,7 +168,6 @@ export async function GET(
     const missingCpi: typeof allActive = [];
     const notUpdated: typeof allActive = [];
     const halfSet: typeof allActive = [];
-    const expired: typeof allActive = [];
 
     for (const c of allActive) {
       if (alreadyReceivedIds.has(c.id)) continue;
@@ -184,8 +183,6 @@ export async function GET(
         } else {
           missingCpi.push(c);
         }
-      } else if (hasFullSet && !inDate) {
-        expired.push(c);
       } else if (!hasFullSet) {
         halfSet.push(c);
       }
@@ -201,12 +198,11 @@ export async function GET(
         })
       : notUpdated;
 
-    const [eligiblePreview, notUpdatedPreview, halfSetPreview, expiredPreview] =
+    const [eligiblePreview, notUpdatedPreview, halfSetPreview] =
       await Promise.all([
-        buildPreview("עדכון חדש — ללקוח מעודכן", version),
+        buildPreview("עדכון — Genos / PSR-SX920", version),
         buildPreview("הצעת מחיר — למי שלא מעודכן", version),
         buildPreview("הצעה לחצאי סטים", version),
-        buildPreview("הצעת מחיר — למי שלא מעודכן", version),
       ]);
 
     const segments: WizardSegment[] = [
@@ -253,17 +249,6 @@ export async function GET(
         sampleCustomers: halfSet.slice(0, SAMPLE_LIMIT).map(formatCustomer),
         canSend: true,
         color: "blue",
-      },
-      {
-        key: "expired",
-        label: "תפוגה עברה",
-        count: expired.length,
-        templateName: "הצעת מחיר — למי שלא מעודכן",
-        previewSubject: expiredPreview.subject,
-        previewBody: expiredPreview.body,
-        sampleCustomers: expired.slice(0, SAMPLE_LIMIT).map(formatCustomer),
-        canSend: true,
-        color: "red",
       },
       {
         key: "excluded",

@@ -37,7 +37,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
-export function SamplesUploader({ updateId }: { updateId: string }) {
+export function SamplesUploader({ updateId, hideSendButton = false }: { updateId: string; hideSendButton?: boolean }) {
   const [files, setFiles] = useState<SampleFile[]>([])
   const [totalCustomers, setTotalCustomers] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -378,8 +378,8 @@ export function SamplesUploader({ updateId }: { updateId: string }) {
           </div>
         )}
 
-        {/* Send Update Button — only when files exist and not uploading */}
-        {files.length > 0 && !isUploading && (
+        {/* Send Update Button — only when files exist, not uploading, and not hidden */}
+        {files.length > 0 && !isUploading && !hideSendButton && (
           <div className="border-t pt-4 space-y-3">
             <Button
               onClick={handleSendUpdate}
