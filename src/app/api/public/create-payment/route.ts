@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getBillingClient } from "@/lib/billing";
 
-// POST /api/public/create-payment — יצירת דף תשלום iCount (מחליף Stripe Checkout)
+// POST /api/public/create-payment — יצירת דף תשלום
 export async function POST(request: NextRequest) {
   const steps: string[] = [];
   try {
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       infoFileData = Buffer.from(bytes);
       infoFileName = infoFile.name;
     }
+    steps.push("file_read");
 
     // Get billing provider
     const billing = await getBillingClient();
@@ -59,14 +60,34 @@ export async function POST(request: NextRequest) {
     if (!billing) {
       return NextResponse.json({ error: "לא הוגדר ספק חיוב — פנה למנהל" }, { status: 503 });
     }
-
-    const client = billing.client;
     steps.push("billing_ok");
 
-    // Save pending order
-    const pendingOrder = await prisma.pendingOrder.create({
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+    const webhookPath = billing.provider.provider === "YESHINVOICE"
+      ? "/api/webhooks/yeshinvoice"
+      : "/api/webhooks/icount";
+
+    // Create payment page FIRST (before saving order)
+    const paymentPage = await billing.client.createPaymentPage({
+      customer: { name: fullName, email, phone },
+      items: [{ description, quantity: 1, unitPrice: amount }],
+      successUrl: `${baseUrl}/order/success`,
+      cancelUrl: `${baseUrl}/order/cancel`,
+      webhookUrl: `${baseUrl}${webhookPath}`,
+      autoCreateDoc: true,
+      docType: "invoice_receipt",
+      metadata: {},
+    });
+    steps.push("payment_page_ok:" + paymentPage.url);
+
+    if (!paymentPage.url) {
+      return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
+    }
+
+    // Save pending order AFTER payment page created
+    await prisma.pendingOrder.create({
       data: {
-        stripeSessionId: `billing_${Date.now()}`, // unique ID (field is @unique)
+        stripeSessionId: `billing_${Date.now()}`,
         fullName,
         phone,
         email,
@@ -80,34 +101,7 @@ export async function POST(request: NextRequest) {
         notes,
       },
     });
-    steps.push("order_saved:" + pendingOrder.id);
-
-    // Create payment page via billing provider
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-    steps.push("baseUrl:" + baseUrl);
-
-    // Determine webhook URL based on provider type
-    const webhookPath = billing.provider.provider === "YESHINVOICE"
-      ? "/api/webhooks/yeshinvoice"
-      : "/api/webhooks/icount";
-
-    const req = {
-      customer: { name: fullName, email, phone },
-      items: [{ description, quantity: 1, unitPrice: amount }],
-      successUrl: `${baseUrl}/order/success`,
-      cancelUrl: `${baseUrl}/order/cancel`,
-      webhookUrl: `${baseUrl}${webhookPath}`,
-      autoCreateDoc: true,
-      docType: "invoice_receipt" as const,
-      metadata: { pendingOrderId: pendingOrder.id },
-    };
-    steps.push("req:" + JSON.stringify(req));
-
-    const paymentPage = await client.createPaymentPage(req);
-
-    if (!paymentPage.url) {
-      return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
-    }
+    steps.push("order_saved");
 
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
