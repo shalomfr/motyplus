@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { ensureFolderPath } from "@/lib/file-storage";
-import { getDrive } from "@/lib/google-drive";
+import { getDrive, getRootFolderId } from "@/lib/google-drive";
 
 export const dynamic = "force-dynamic";
 
@@ -13,24 +12,44 @@ interface OrganStatus {
   fileCount: number;
 }
 
-async function countFolderContents(folderPath: string): Promise<{ hasFiles: boolean; fileCount: number }> {
-  try {
-    const drive = getDrive();
-    const folderId = await ensureFolderPath(folderPath).catch(() => null);
-    if (!folderId) return { hasFiles: false, fileCount: 0 };
+async function findFolderId(
+  drive: ReturnType<typeof getDrive>,
+  parentId: string,
+  name: string
+): Promise<string | null> {
+  const res = await drive.files.list({
+    q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: "files(id)",
+    spaces: "drive",
+    pageSize: 1,
+  });
+  return res.data.files?.[0]?.id || null;
+}
 
-    const res = await drive.files.list({
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: "files(id)",
-      spaces: "drive",
-      pageSize: 5,
-    });
-
-    const count = res.data.files?.length || 0;
-    return { hasFiles: count > 0, fileCount: count };
-  } catch {
-    return { hasFiles: false, fileCount: 0 };
+async function resolveFolderPath(
+  drive: ReturnType<typeof getDrive>,
+  pathParts: string[]
+): Promise<string | null> {
+  let currentId = getRootFolderId();
+  for (const part of pathParts) {
+    const nextId = await findFolderId(drive, currentId, part);
+    if (!nextId) return null;
+    currentId = nextId;
   }
+  return currentId;
+}
+
+async function countFolderContents(
+  drive: ReturnType<typeof getDrive>,
+  folderId: string
+): Promise<number> {
+  const res = await drive.files.list({
+    q: `'${folderId}' in parents and trashed=false`,
+    fields: "files(id)",
+    spaces: "drive",
+    pageSize: 10,
+  });
+  return res.data.files?.length || 0;
 }
 
 // GET /api/updates/[id]/folders
@@ -69,17 +88,44 @@ export async function GET(
     ]);
 
     const version = updateVersion.version;
+    const drive = getDrive();
+
+    const baseFolderId = await resolveFolderPath(drive, ["updates", "beats", version]);
+    if (!baseFolderId) {
+      return NextResponse.json({
+        folders: setTypes.map((st) => ({
+          setType: st.name,
+          setTypeAlias: st.folderAlias || st.name,
+          organs: organs.map((o) => ({
+            name: o.name,
+            alias: o.folderAlias || o.name,
+            hasFiles: false,
+            fileCount: 0,
+          })),
+        })),
+        version,
+      });
+    }
 
     const folderResults = await Promise.all(
       setTypes.map(async (setType) => {
         const setAlias = setType.folderAlias || setType.name;
+        const setFolderId = await findFolderId(drive, baseFolderId, setAlias);
 
         const organStatuses: OrganStatus[] = await Promise.all(
           organs.map(async (organ) => {
             const organAlias = organ.folderAlias || organ.name;
-            const organPath = `updates/beats/${version}/${setAlias}/${organAlias}`;
-            const { hasFiles, fileCount } = await countFolderContents(organPath);
-            return { name: organ.name, alias: organAlias, hasFiles, fileCount };
+            if (!setFolderId) {
+              return { name: organ.name, alias: organAlias, hasFiles: false, fileCount: 0 };
+            }
+
+            const organFolderId = await findFolderId(drive, setFolderId, organAlias);
+            if (!organFolderId) {
+              return { name: organ.name, alias: organAlias, hasFiles: false, fileCount: 0 };
+            }
+
+            const fileCount = await countFolderContents(drive, organFolderId);
+            return { name: organ.name, alias: organAlias, hasFiles: fileCount > 0, fileCount };
           })
         );
 
