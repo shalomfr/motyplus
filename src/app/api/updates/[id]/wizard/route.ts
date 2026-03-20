@@ -26,32 +26,35 @@ interface WizardSegment {
   color: string;
 }
 
-const SAMPLE_VARIABLES: Record<string, string> = {
-  fullName: "ישראל ישראלי",
-  firstName: "ישראל",
-  customerName: "ישראל ישראלי",
-  email: "israel@example.com",
-  phone: "050-1234567",
-  organ: "Genos 2",
-  organName: "Genos 2",
-  setType: "סט שלם",
-  currentVersion: "V5.0",
-  updateVersion: "V6.0",
-  version: "V6.0",
-  releaseDate: "16/03/2026",
-  samplesLink: "https://drive.google.com/samples-example",
-  rhythmsLink: "https://drive.google.com/rhythms-example",
-  driveLink: "https://drive.google.com/preview",
-  youtubeLink: "https://youtube.com/preview",
-  customLink: "",
-  remainingAmount: "350",
-  remainingForFullSet: "₪350",
-  purchaseDate: "01/01/2025",
-  updateExpiryDate: "01/01/2026",
-  additionalOrganName: "",
-  additionalOrganLine: "",
-  customerId: "12345",
-};
+function getSampleVariables(version: string): Record<string, string> {
+  const today = new Date().toLocaleDateString("he-IL");
+  return {
+    fullName: "ישראל ישראלי",
+    firstName: "ישראל",
+    customerName: "ישראל ישראלי",
+    email: "israel@example.com",
+    phone: "050-1234567",
+    organ: "Genos 2",
+    organName: "Genos 2",
+    setType: "סט שלם",
+    currentVersion: "V3.0",
+    updateVersion: version,
+    version,
+    releaseDate: today,
+    samplesLink: "https://drive.google.com/samples-example",
+    rhythmsLink: "https://drive.google.com/rhythms-example",
+    driveLink: "https://drive.google.com/preview",
+    youtubeLink: "https://youtube.com/preview",
+    customLink: "",
+    remainingAmount: "350",
+    remainingForFullSet: "₪350",
+    purchaseDate: "01/01/2025",
+    updateExpiryDate: "01/01/2026",
+    additionalOrganName: "",
+    additionalOrganLine: "",
+    customerId: "12345",
+  };
+}
 
 function formatCustomer(c: {
   id: number;
@@ -81,7 +84,7 @@ async function buildPreview(
     return { subject: `(תבנית "${templateName}" לא נמצאה)`, body: "" };
   }
 
-  const vars = { ...SAMPLE_VARIABLES, version: versionName, updateVersion: versionName };
+  const vars = getSampleVariables(versionName);
   return {
     subject: replaceTemplateVariables(template.subject, vars),
     body: replaceTemplateVariables(template.body, vars),

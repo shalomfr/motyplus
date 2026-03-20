@@ -4,13 +4,50 @@ import type { EmailBlock } from "./types"
 import { blocksToHtml } from "./blocks-to-html"
 import { useRef, useEffect } from "react"
 
+const SAMPLE_VARS: Record<string, string> = {
+  fullName: "ישראל ישראלי",
+  firstName: "ישראל",
+  customerName: "ישראל ישראלי",
+  email: "israel@example.com",
+  phone: "050-1234567",
+  organ: "Genos 2",
+  organName: "Genos 2",
+  setType: "סט שלם",
+  currentVersion: "V3.0",
+  updateVersion: "V4.0",
+  version: "V4.0",
+  releaseDate: "16/03/2026",
+  purchaseDate: "01/01/2025",
+  updateExpiryDate: "01/01/2026",
+  amountPaid: "1,200",
+  remainingAmount: "350",
+  remainingForFullSet: "₪350",
+  samplesLink: "https://drive.google.com/samples",
+  rhythmsLink: "https://drive.google.com/rhythms",
+  driveLink: "https://drive.google.com/preview",
+  youtubeLink: "https://youtube.com/preview",
+  customLink: "#",
+  customerId: "12345",
+  additionalOrganName: "",
+  additionalOrganLine: "",
+}
+
+function replaceVariables(html: string): string {
+  let result = html
+  for (const [key, value] of Object.entries(SAMPLE_VARS)) {
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value)
+  }
+  return result
+}
+
 interface BlockRendererProps {
   blocks: EmailBlock[]
 }
 
 export function BlockRenderer({ blocks }: BlockRendererProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const html = blocksToHtml(blocks)
+  const rawHtml = blocksToHtml(blocks)
+  const html = replaceVariables(rawHtml)
 
   useEffect(() => {
     if (!iframeRef.current) return
