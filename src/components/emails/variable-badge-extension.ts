@@ -12,11 +12,15 @@ export const EMAIL_VARIABLES = [
   { name: "purchaseDate", label: "תאריך רכישה" },
   { name: "updateExpiryDate", label: "תפוגת עדכון" },
   { name: "currentVersion", label: "גרסה נוכחית" },
+  { name: "updateVersion", label: "גרסת עדכון" },
   { name: "amountPaid", label: "סכום ששולם" },
   { name: "remainingAmount", label: "יתרה לתשלום" },
   { name: "remainingForFullSet", label: "יתרה להשלמת סט" },
-  { name: "downloadLink", label: "קישור הורדה" },
-  { name: "downloadLink2", label: "קישור הורדה נוסף" },
+  { name: "samplesLink", label: "קישור דגימות" },
+  { name: "rhythmsLink", label: "קישור מקצבים" },
+  { name: "driveLink", label: "קישור דרייב" },
+  { name: "youtubeLink", label: "קישור יוטיוב" },
+  { name: "customLink", label: "קישור חריג" },
 ]
 
 export const VariableBadge = Node.create({

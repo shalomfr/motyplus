@@ -111,22 +111,39 @@ export async function POST(request: NextRequest) {
 // === Helper: יצירת מבנה תיקיות Google Drive לגרסת עדכון ===
 
 async function createUpdateFolders(version: string): Promise<void> {
-  // שליפת סוגי סטים פעילים
+  const { getDrive } = await import("@/lib/google-drive");
+  const drive = getDrive();
+
   const setTypes = await prisma.setType.findMany({
     where: { isActive: true },
     select: { name: true, folderAlias: true },
   });
 
-  // מבנה: updates/beats/{version}/{setType}
-  const versionFolder = `updates/beats/${version}`;
-  await ensureFolderPath(versionFolder);
+  const versionFolderPath = `updates/beats/${version}`;
+  const versionFolderId = await ensureFolderPath(versionFolderPath);
 
   for (const setType of setTypes) {
     const setTypeName = setType.folderAlias || setType.name;
-    await ensureFolderPath(`${versionFolder}/${setTypeName}`);
+    const fullPath = `${versionFolderPath}/${setTypeName}`;
+
+    const existing = await drive.files.list({
+      q: `name='${setTypeName}' and '${versionFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: "files(id)",
+      spaces: "drive",
+    });
+
+    if (!existing.data.files || existing.data.files.length === 0) {
+      await drive.files.create({
+        requestBody: {
+          name: setTypeName,
+          mimeType: "application/vnd.google-apps.folder",
+          parents: [versionFolderId],
+        },
+        fields: "id",
+      });
+    }
   }
 
-  // וידוא שתיקיית הדגימות קיימת (שטוחה, בלי גרסה)
   await ensureFolderPath("updates/samples");
 
   console.log(
