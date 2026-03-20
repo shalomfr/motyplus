@@ -63,7 +63,7 @@ export async function PATCH(
         body: finalBody,
         category: validation.data.category,
         variables: validation.data.variables || [],
-        blocks: blocks ? (blocks as unknown as Record<string, unknown>[]) : undefined,
+        blocks: blocks ? JSON.parse(JSON.stringify(blocks)) : undefined,
       },
     });
 

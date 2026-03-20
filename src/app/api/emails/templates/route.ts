@@ -28,7 +28,7 @@ export async function GET() {
             where: { id: existing.id },
             data: {
               body, subject: t.subject, variables: t.variables,
-              blocks: t.blocks as unknown as Record<string, unknown>[],
+              blocks: JSON.parse(JSON.stringify(t.blocks)),
             },
           });
         }
@@ -37,7 +37,7 @@ export async function GET() {
           data: {
             name: t.name, subject: t.subject, body,
             category: t.category, variables: t.variables,
-            blocks: t.blocks as unknown as Record<string, unknown>[],
+            blocks: JSON.parse(JSON.stringify(t.blocks)),
           },
         });
       }
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         body: finalBody,
         category: data.category,
         variables: data.variables || [],
-        blocks: blocks ? (blocks as unknown as Record<string, unknown>[]) : undefined,
+        blocks: blocks ? JSON.parse(JSON.stringify(blocks)) : undefined,
       },
     });
 

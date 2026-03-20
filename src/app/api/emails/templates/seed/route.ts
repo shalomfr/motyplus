@@ -317,7 +317,7 @@ export async function POST() {
             subject: t.subject,
             variables: t.variables,
             category: t.category,
-            blocks: t.blocks as unknown as Record<string, unknown>[],
+            blocks: JSON.parse(JSON.stringify(t.blocks)),
           },
         });
         updated++;
@@ -329,7 +329,7 @@ export async function POST() {
             body,
             category: t.category,
             variables: t.variables,
-            blocks: t.blocks as unknown as Record<string, unknown>[],
+            blocks: JSON.parse(JSON.stringify(t.blocks)),
           },
         });
         created++;
