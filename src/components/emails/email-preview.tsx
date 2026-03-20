@@ -10,22 +10,37 @@ interface EmailPreviewProps {
 }
 
 export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
-  const processedBody = body
-    .replace(/\{\{customerName\}\}/g, "ישראל ישראלי")
-    .replace(/\{\{customerEmail\}\}/g, "israel@example.com")
-    .replace(/\{\{customerPhone\}\}/g, "050-1234567")
-    .replace(/\{\{organName\}\}/g, "אורגן לדוגמה")
-    .replace(/\{\{version\}\}/g, "V4.0")
-    .replace(/\{\{downloadLink\}\}/g, "https://example.com/download")
-    .replace(/\{\{purchaseDate\}\}/g, "01/01/2025")
-    .replace(/\{\{expiryDate\}\}/g, "01/01/2026")
-    .replace(/\{\{couponCode\}\}/g, "DEMO10")
-    .replace(/\{\{discountPercent\}\}/g, "10")
+  const sampleVars: Record<string, string> = {
+    customerName: "ישראל ישראלי",
+    fullName: "ישראל ישראלי",
+    firstName: "ישראל",
+    email: "israel@example.com",
+    phone: "050-1234567",
+    organ: "Genos 2",
+    organName: "Genos 2",
+    setType: "סט שלם",
+    version: "V4.0",
+    updateVersion: "V4.0",
+    currentVersion: "V3.0",
+    purchaseDate: "01/01/2025",
+    updateExpiryDate: "01/01/2026",
+    expiryDate: "01/01/2026",
+    samplesLink: "https://drive.google.com/samples",
+    rhythmsLink: "https://drive.google.com/rhythms",
+    driveLink: "https://drive.google.com/preview",
+    youtubeLink: "https://youtube.com/preview",
+    customLink: "",
+    remainingAmount: "350",
+    remainingForFullSet: "₪350",
+  }
 
-  const processedSubject = subject
-    .replace(/\{\{customerName\}\}/g, "ישראל ישראלי")
-    .replace(/\{\{version\}\}/g, "V4.0")
-    .replace(/\{\{organName\}\}/g, "אורגן לדוגמה")
+  let processedBody = body
+  let processedSubject = subject
+  for (const [key, val] of Object.entries(sampleVars)) {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g")
+    processedBody = processedBody.replace(regex, val)
+    processedSubject = processedSubject.replace(regex, val)
+  }
 
   return (
     <Card>

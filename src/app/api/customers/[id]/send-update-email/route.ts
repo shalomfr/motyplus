@@ -72,13 +72,19 @@ export async function POST(
 
     const variables = {
       customerName: customer.fullName,
+      fullName: customer.fullName,
+      firstName: customer.fullName.split(" ")[0],
       version: latestVersion.version,
+      updateVersion: latestVersion.version,
+      samplesLink: downloadLink,
+      rhythmsLink,
       downloadLink,
       downloadLink2: "",
-      rhythmsLink,
       organName: customer.organ.name,
+      organ: customer.organ.name,
       setType: customer.setType.name,
       customerId: String(customer.id),
+      customLink: "",
     };
 
     const html = template

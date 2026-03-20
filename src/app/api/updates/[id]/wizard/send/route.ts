@@ -78,11 +78,16 @@ async function sendToEligible(
           ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>` : "";
 
         const vars = {
-          customerName: customer.fullName, version: updateVersion.version,
+          customerName: customer.fullName, fullName: customer.fullName,
+          firstName: customer.fullName.split(" ")[0],
+          version: updateVersion.version,
           updateVersion: updateVersion.version, organName: customer.organ.name,
+          organ: customer.organ.name,
           additionalOrganName, additionalOrganLine,
-          setType: customer.setType.name, downloadLink, downloadLink2,
-          rhythmsLink: updateVersion.rhythmsFileUrl || "",
+          setType: customer.setType.name,
+          samplesLink: downloadLink, rhythmsLink: updateVersion.rhythmsFileUrl || "",
+          downloadLink, downloadLink2,
+          customLink: "",
         };
         const html = replaceTemplateVariables(updateVersion.emailBody, vars);
         const subject = replaceTemplateVariables(updateVersion.emailSubject, vars);

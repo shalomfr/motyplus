@@ -93,8 +93,12 @@ export async function POST(request: NextRequest) {
         organ: customer.organ.name,
         setType: customer.setType.name,
         currentVersion: customer.currentUpdateVersion || "—",
+        updateVersion: customer.currentUpdateVersion || "—",
         remainingAmount: String(remainingForFullSet),
         remainingForFullSet: `₪${remainingForFullSet}`,
+        driveLink: "",
+        youtubeLink: "",
+        customLink: "",
       };
 
       const html = replaceTemplateVariables(template.body, variables);

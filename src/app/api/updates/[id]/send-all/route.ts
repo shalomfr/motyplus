@@ -167,15 +167,20 @@ export async function POST(
               : ""
             const templateVars = {
               customerName: customer.fullName,
+              fullName: customer.fullName,
+              firstName: customer.fullName.split(" ")[0],
               version: updateVersion.version,
               updateVersion: updateVersion.version,
               organName: customer.organ?.name || "",
+              organ: customer.organ?.name || "",
               additionalOrganName,
               additionalOrganLine,
               setType: customer.setType?.name || "",
+              samplesLink: downloadLink,
+              rhythmsLink: updateVersion.rhythmsFileUrl || "",
               downloadLink,
               downloadLink2,
-              rhythmsLink: updateVersion.rhythmsFileUrl || "",
+              customLink: "",
             }
             const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
             await sendEmail({
