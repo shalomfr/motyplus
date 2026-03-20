@@ -114,26 +114,34 @@ async function createUpdateFolders(version: string): Promise<void> {
   const { getDrive } = await import("@/lib/google-drive");
   const drive = getDrive();
 
-  const setTypes = await prisma.setType.findMany({
-    where: { isActive: true },
-    select: { name: true, folderAlias: true },
-  });
+  const [setTypes, organs] = await Promise.all([
+    prisma.setType.findMany({
+      where: { isActive: true },
+      select: { name: true, folderAlias: true },
+    }),
+    prisma.organ.findMany({
+      where: { supportsUpdates: true },
+      select: { name: true, folderAlias: true },
+    }),
+  ]);
 
   const versionFolderPath = `updates/beats/${version}`;
   const versionFolderId = await ensureFolderPath(versionFolderPath);
 
   for (const setType of setTypes) {
     const setTypeName = setType.folderAlias || setType.name;
-    const fullPath = `${versionFolderPath}/${setTypeName}`;
 
-    const existing = await drive.files.list({
+    let setTypeFolderId: string;
+    const existingSet = await drive.files.list({
       q: `name='${setTypeName}' and '${versionFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
       fields: "files(id)",
       spaces: "drive",
     });
 
-    if (!existing.data.files || existing.data.files.length === 0) {
-      await drive.files.create({
+    if (existingSet.data.files && existingSet.data.files.length > 0) {
+      setTypeFolderId = existingSet.data.files[0].id!;
+    } else {
+      const created = await drive.files.create({
         requestBody: {
           name: setTypeName,
           mimeType: "application/vnd.google-apps.folder",
@@ -141,12 +149,34 @@ async function createUpdateFolders(version: string): Promise<void> {
         },
         fields: "id",
       });
+      setTypeFolderId = created.data.id!;
+    }
+
+    for (const organ of organs) {
+      const organName = organ.folderAlias || organ.name;
+
+      const existingOrgan = await drive.files.list({
+        q: `name='${organName}' and '${setTypeFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+        fields: "files(id)",
+        spaces: "drive",
+      });
+
+      if (!existingOrgan.data.files || existingOrgan.data.files.length === 0) {
+        await drive.files.create({
+          requestBody: {
+            name: organName,
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [setTypeFolderId],
+          },
+          fields: "id",
+        });
+      }
     }
   }
 
   await ensureFolderPath("updates/samples");
 
   console.log(
-    `Drive folders created for version ${version}: ${setTypes.length} setTypes + samples`
+    `Drive folders created for version ${version}: ${setTypes.length} setTypes x ${organs.length} organs + samples`
   );
 }

@@ -86,6 +86,7 @@ async function sendToEligible(
           additionalOrganName, additionalOrganLine,
           setType: customer.setType.name,
           samplesLink: downloadLink, rhythmsLink: updateVersion.rhythmsFileUrl || "",
+          releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
           downloadLink, downloadLink2,
           customLink: "",
         };

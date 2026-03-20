@@ -13,6 +13,7 @@ export const EMAIL_VARIABLES = [
   { name: "updateExpiryDate", label: "תפוגת עדכון" },
   { name: "currentVersion", label: "גרסה נוכחית" },
   { name: "updateVersion", label: "גרסת עדכון" },
+  { name: "releaseDate", label: "תאריך שחרור" },
   { name: "amountPaid", label: "סכום ששולם" },
   { name: "remainingAmount", label: "יתרה לתשלום" },
   { name: "remainingForFullSet", label: "יתרה להשלמת סט" },

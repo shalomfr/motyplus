@@ -21,6 +21,7 @@ export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
     setType: "סט שלם",
     version: "V4.0",
     updateVersion: "V4.0",
+    releaseDate: "16/03/2026",
     currentVersion: "V3.0",
     purchaseDate: "01/01/2025",
     updateExpiryDate: "01/01/2026",

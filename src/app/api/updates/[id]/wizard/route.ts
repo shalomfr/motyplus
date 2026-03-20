@@ -38,6 +38,7 @@ const SAMPLE_VARIABLES: Record<string, string> = {
   currentVersion: "V5.0",
   updateVersion: "V6.0",
   version: "V6.0",
+  releaseDate: "16/03/2026",
   samplesLink: "https://drive.google.com/samples-example",
   rhythmsLink: "https://drive.google.com/rhythms-example",
   driveLink: "https://drive.google.com/preview",
