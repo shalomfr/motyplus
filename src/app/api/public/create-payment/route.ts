@@ -4,7 +4,6 @@ import { getBillingClient } from "@/lib/billing";
 
 // POST /api/public/create-payment — יצירת דף תשלום
 export async function POST(request: NextRequest) {
-  const steps: string[] = [];
   try {
     const formData = await request.formData();
 
@@ -52,7 +51,6 @@ export async function POST(request: NextRequest) {
       infoFileData = Buffer.from(bytes);
       infoFileName = infoFile.name;
     }
-    steps.push("file_read");
 
     // Get billing provider
     const billing = await getBillingClient();
@@ -60,14 +58,13 @@ export async function POST(request: NextRequest) {
     if (!billing) {
       return NextResponse.json({ error: "לא הוגדר ספק חיוב — פנה למנהל" }, { status: 503 });
     }
-    steps.push("billing_ok");
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
     const webhookPath = billing.provider.provider === "YESHINVOICE"
       ? "/api/webhooks/yeshinvoice"
       : "/api/webhooks/icount";
 
-    // Create payment page FIRST (before saving order)
+    // Create payment page first
     const paymentPage = await billing.client.createPaymentPage({
       customer: { name: fullName, email, phone },
       items: [{ description, quantity: 1, unitPrice: amount }],
@@ -78,13 +75,12 @@ export async function POST(request: NextRequest) {
       docType: "invoice_receipt",
       metadata: {},
     });
-    steps.push("payment_page_ok:" + paymentPage.url);
 
     if (!paymentPage.url) {
       return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
     }
 
-    // Save pending order AFTER payment page created
+    // Save pending order after payment page created
     await prisma.pendingOrder.create({
       data: {
         stripeSessionId: `billing_${Date.now()}`,
@@ -101,14 +97,12 @@ export async function POST(request: NextRequest) {
         notes,
       },
     });
-    steps.push("order_saved");
 
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
     console.error("Error creating payment:", error);
-    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "שגיאה ביצירת דף תשלום", debug: msg, steps },
+      { error: "שגיאה ביצירת דף תשלום — יתכן שהתוכנה לא זמינה כרגע" },
       { status: 500 }
     );
   }
