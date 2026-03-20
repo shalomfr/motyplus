@@ -337,8 +337,11 @@ export class YeshInvoiceClient implements BillingClient {
       0
     );
 
+    const invoiceTitle =
+      request.items.map((i) => i.description).join(", ") || "Motty Beats";
+
     const body: Record<string, unknown> = {
-      Title: request.pageName || "Motty Beats - תשלום",
+      Title: request.pageName || "Motty Beats",
       Body: "",
       SuccessUrl: request.successUrl,
       ErrorUrl: request.cancelUrl,
@@ -347,6 +350,7 @@ export class YeshInvoiceClient implements BillingClient {
       NumPayments: 1,
       PaymentType: 1,
       InvoiceName: request.customer.name,
+      InvoiceTitle: invoiceTitle,
       InvoiceEmailAddress: request.customer.email || "",
       InvoicePhone: request.customer.phone || "",
       CurrencyID: YeshInvoiceClient.mapCurrency(request.currency),
