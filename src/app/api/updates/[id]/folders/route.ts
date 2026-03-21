@@ -114,25 +114,20 @@ export async function GET(
         ? setTypes.filter((st) => st.demoAlias === "Full set")
         : setTypes;
 
-    // בדוק אם תיקיית הגרסה קיימת
+    // מבנה: updates/beats/{organ}/{packageType}/{version - organ}/...
     const rootId = getRootFolderId();
     const updatesId = await findFolderId(drive, rootId, "updates");
     const beatsId = updatesId ? await findFolderId(drive, updatesId, "beats") : null;
-    const versionFolderId = beatsId ? await findFolderId(drive, beatsId, version) : null;
 
     const debug: Record<string, unknown> = {
-      baseFolderFound: !!versionFolderId,
-      basePath: `updates/beats/${version}`,
+      baseFolderFound: !!beatsId,
+      basePath: `updates/beats`,
       updateType,
       organCount: organs.length,
       packageTypeCount: targetSetTypes.length,
     };
 
-    if (!versionFolderId) {
-      if (beatsId) {
-        debug.beatsChildren = await listSubfolders(drive, beatsId);
-      }
-
+    if (!beatsId) {
       return NextResponse.json({
         folders: organs.map((organ) => ({
           organ: organ.name,
@@ -150,11 +145,10 @@ export async function GET(
       });
     }
 
-    // מבנה: {version}/{organ}/{packageType}/{version - organ}/...
     const folderResults = await Promise.all(
       organs.map(async (organ) => {
         const organName = organ.demoAlias!;
-        const organFolderId = await findFolderId(drive, versionFolderId, organName);
+        const organFolderId = await findFolderId(drive, beatsId, organName);
 
         const packageStatuses = await Promise.all(
           targetSetTypes.map(async (setType) => {
@@ -247,7 +241,7 @@ export async function POST(
         const packageName = setType.demoAlias!;
         const versionFolderName = `${version} - ${organName}`;
 
-        const folderPath = `updates/beats/${version}/${organName}/${packageName}/${versionFolderName}`;
+        const folderPath = `updates/beats/${organName}/${packageName}/${versionFolderName}`;
         const parentId = await ensureFolderPath(folderPath);
 
         await ensureSubfolder(drive, parentId, "Folders");

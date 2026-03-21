@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 }
 
 // === Helper: יצירת מבנה תיקיות Google Drive לגרסת עדכון ===
-// מבנה: updates/beats/{version}/{organ}/{packageType}/{version} - {organ}/Folders [+HD1]
+// מבנה: updates/beats/{organ}/{packageType}/{version} - {organ}/Folders [+HD1]
 
 async function createUpdateFolders(
   version: string,
@@ -144,8 +144,8 @@ async function createUpdateFolders(
       const packageName = setType.demoAlias!;
       const versionFolderName = `${version} - ${organName}`;
 
-      // נתיב: updates/beats/{version}/{organ}/{packageType}/{version - organ}
-      const folderPath = `updates/beats/${version}/${organName}/${packageName}/${versionFolderName}`;
+      // נתיב: updates/beats/{organ}/{packageType}/{version - organ}
+      const folderPath = `updates/beats/${organName}/${packageName}/${versionFolderName}`;
       const parentId = await ensureFolderPath(folderPath);
 
       // יצירת Folders/
