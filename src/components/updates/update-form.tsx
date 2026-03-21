@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Save, Loader2, Upload, FileText, X as XIcon, Disc, Music } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SamplesUploader } from "@/components/updates/samples-uploader"
@@ -35,13 +28,13 @@ interface UpdateFormProps {
   mode: "create" | "edit"
 }
 
-// רשימת גרסאות קבועות להצעה
-const VERSION_SUGGESTIONS = [
-  "V3.0", "V3.1", "V3.2",
-  "V4.0", "V4.1", "V4.2",
-  "V5.0", "V5.1", "V5.2",
-  "V6.0", "V6.1",
-]
+// זיהוי אוטומטי: מספר עגול (V5, 5, V7.0) = FULL, עם נקודה (V5.1, 5.2) = PARTIAL
+function detectUpdateType(version: string): "FULL" | "PARTIAL" {
+  const cleaned = version.replace(/^V/i, "").trim()
+  if (/^\d+$/.test(cleaned) || /^\d+\.0$/.test(cleaned)) return "FULL"
+  if (/^\d+\.\d+$/.test(cleaned)) return "PARTIAL"
+  return "FULL"
+}
 
 function extractFilename(url: string): string {
   const parts = url.split("/")
@@ -90,6 +83,11 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
 
   const handleChange = (field: keyof UpdateFormData, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleVersionChange = (version: string) => {
+    const updateType = detectUpdateType(version)
+    setForm((prev) => ({ ...prev, version, updateType }))
   }
 
   const handleFileUpload = async (
@@ -168,19 +166,13 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="version">שם גרסה</Label>
-              <Select
+              <Input
+                id="version"
                 value={form.version}
-                onValueChange={(value) => handleChange("version", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר גרסה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {VERSION_SUGGESTIONS.map((v) => (
-                    <SelectItem key={v} value={v}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => handleVersionChange(e.target.value)}
+                placeholder="לדוגמה: V5, V5.1, V7"
+                dir="ltr"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="price">מחיר</Label>

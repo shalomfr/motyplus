@@ -1,27 +1,21 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Loader2, Plus, Music, Disc } from "lucide-react"
 
-const VERSION_SUGGESTIONS = [
-  "V3.0", "V3.1", "V3.2",
-  "V4.0", "V4.1", "V4.2",
-  "V5.0", "V5.1", "V5.2",
-  "V6.0", "V6.1", "V6.2",
-  "V7.0", "V7.1",
-]
+// זיהוי אוטומטי: מספר עגול (V5, 5, V7.0) = FULL, עם נקודה (V5.1, 5.2) = PARTIAL
+function detectUpdateType(version: string): "FULL" | "PARTIAL" {
+  const cleaned = version.replace(/^V/i, "").trim()
+  // מספר שלם (5, 7) או עם .0 (5.0, 7.0) = FULL
+  if (/^\d+$/.test(cleaned) || /^\d+\.0$/.test(cleaned)) return "FULL"
+  // מספר עם נקודה שאינה .0 (5.1, 5.2, 7.1) = PARTIAL
+  if (/^\d+\.\d+$/.test(cleaned)) return "PARTIAL"
+  return "FULL"
+}
 
 export interface UpdateDetailsData {
   version: string
@@ -45,6 +39,11 @@ export function StepDetails({ data, onChange, onSubmit, isExisting, loading, err
     onChange({ ...data, [field]: value })
   }
 
+  const handleVersionChange = (version: string) => {
+    const updateType = detectUpdateType(version)
+    onChange({ ...data, version, updateType })
+  }
+
   const isValid = data.version.trim().length > 0 && data.price > 0
 
   return (
@@ -64,20 +63,14 @@ export function StepDetails({ data, onChange, onSubmit, isExisting, loading, err
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="wizard-version">שם גרסה</Label>
-            <Select
+            <Input
+              id="wizard-version"
               value={data.version}
-              onValueChange={(v) => handleChange("version", v)}
+              onChange={(e) => handleVersionChange(e.target.value)}
+              placeholder="לדוגמה: V5, V5.1, V7"
               disabled={isExisting}
-            >
-              <SelectTrigger id="wizard-version">
-                <SelectValue placeholder="בחר גרסה" />
-              </SelectTrigger>
-              <SelectContent>
-                {VERSION_SUGGESTIONS.map((v) => (
-                  <SelectItem key={v} value={v}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              dir="ltr"
+            />
           </div>
 
           <div className="space-y-2">
