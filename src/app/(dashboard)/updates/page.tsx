@@ -2,38 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { List, Plus, Send, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, RefreshCw, Loader2, Trash2, Wand2 } from "lucide-react"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 interface UpdateVersion {
   id: string
   version: string
-  price: number
   status: string
-  releaseDate: string | null
-  createdAt: string
-  _count?: {
-    customerUpdates: number
-  }
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -46,13 +27,12 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 export default function UpdatesPage() {
   const router = useRouter()
+  const [showSendDialog, setShowSendDialog] = useState(false)
   const [updates, setUpdates] = useState<UpdateVersion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deleteTarget, setDeleteTarget] = useState<UpdateVersion | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [loadingUpdates, setLoadingUpdates] = useState(false)
 
   const fetchUpdates = async () => {
-    setLoading(true)
+    setLoadingUpdates(true)
     try {
       const res = await fetch("/api/updates")
       if (res.ok) {
@@ -62,145 +42,101 @@ export default function UpdatesPage() {
     } catch (err) {
       console.error("Error fetching updates:", err)
     } finally {
-      setLoading(false)
+      setLoadingUpdates(false)
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    setDeleting(true)
-    try {
-      const res = await fetch(`/api/updates/${deleteTarget.id}`, { method: "DELETE" })
-      if (res.ok) {
-        setDeleteTarget(null)
-        fetchUpdates()
-      } else {
-        const data = await res.json()
-        alert(data.error || "שגיאה במחיקת העדכון")
-      }
-    } catch (err) {
-      console.error("Error deleting update:", err)
-      alert("שגיאה במחיקת העדכון")
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  useEffect(() => {
+  const handleSendClick = () => {
+    setShowSendDialog(true)
     fetchUpdates()
-  }, [])
+  }
+
+  const handleSelectUpdate = (id: string) => {
+    setShowSendDialog(false)
+    router.push(`/updates/${id}/work`)
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכונים</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/updates/new")}>
-            <Plus className="h-4 w-4 ml-2" />
-            הוסף עדכון
-          </Button>
-          <Button onClick={() => router.push("/updates/wizard")}>
-            <Wand2 className="h-4 w-4 ml-2" />
-            אשף עדכון חדש
-          </Button>
-        </div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">עדכונים</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* רשימת עדכונים */}
+        <button
+          onClick={() => router.push("/updates/list")}
+          className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-400 hover:shadow-lg transition-all text-center"
+        >
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+            <List className="h-8 w-8 text-gray-600" />
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-gray-800">רשימת עדכונים</div>
+            <div className="text-sm text-muted-foreground mt-1">צפה בכל העדכונים שנוצרו</div>
+          </div>
+        </button>
+
+        {/* צור עדכון חדש */}
+        <button
+          onClick={() => router.push("/updates/wizard")}
+          className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg transition-all text-center"
+        >
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+            <Plus className="h-8 w-8 text-blue-600" />
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-blue-800">צור עדכון חדש</div>
+            <div className="text-sm text-muted-foreground mt-1">אשף יצירת עדכון חדש</div>
+          </div>
+        </button>
+
+        {/* שלח עדכון ללקוח */}
+        <button
+          onClick={handleSendClick}
+          className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-green-200 bg-white hover:border-green-400 hover:shadow-lg transition-all text-center"
+        >
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+            <Send className="h-8 w-8 text-green-600" />
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-green-800">שלח עדכון ללקוח</div>
+            <div className="text-sm text-muted-foreground mt-1">בחר עדכון ושלח ללקוח ספציפי</div>
+          </div>
+        </button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <RefreshCw className="h-5 w-5" />
-            רשימת גרסאות עדכון
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
+      {/* Dialog לבחירת עדכון לשליחה */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>בחר עדכון לשליחה</DialogTitle>
+          </DialogHeader>
+          {loadingUpdates ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : updates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              אין עדכונים עדיין. צור עדכון חדש כדי להתחיל.
+            <div className="text-center py-6 text-muted-foreground">
+              אין עדכונים. צור עדכון חדש קודם.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>גרסה</TableHead>
-                  <TableHead>מחיר</TableHead>
-                  <TableHead>סטטוס</TableHead>
-                  <TableHead>תאריך שחרור</TableHead>
-                  <TableHead>לקוחות</TableHead>
-                  <TableHead>פעולות</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {updates.map((update) => {
-                  const statusConfig = STATUS_CONFIG[update.status] || STATUS_CONFIG.DRAFT
-                  return (
-                    <TableRow
-                      key={update.id}
-                      className="cursor-pointer"
-                      onClick={() => router.push(`/updates/${update.id}`)}
-                    >
-                      <TableCell className="font-medium">{update.version}</TableCell>
-                      <TableCell>{formatCurrency(Number(update.price))}</TableCell>
-                      <TableCell>
-                        <Badge className={statusConfig.className}>
-                          {statusConfig.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {update.releaseDate ? formatDate(update.releaseDate) : "לא נקבע"}
-                      </TableCell>
-                      <TableCell>{update._count?.customerUpdates ?? 0}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteTarget(update)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {updates.map((update) => {
+                const statusConfig = STATUS_CONFIG[update.status] || STATUS_CONFIG.DRAFT
+                return (
+                  <button
+                    key={update.id}
+                    onClick={() => handleSelectUpdate(update.id)}
+                    className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 hover:border-gray-300 transition-colors text-right"
+                  >
+                    <span className="font-medium">{update.version}</span>
+                    <Badge className={statusConfig.className}>
+                      {statusConfig.label}
+                    </Badge>
+                  </button>
+                )
+              })}
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle>מחיקת עדכון</DialogTitle>
-            <DialogDescription>
-              האם למחוק את עדכון {deleteTarget?.version}? פעולה זו תמחק את כל הקבצים ורשומות הלקוחות המשויכים ולא ניתנת לביטול.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:justify-start">
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
-              מחק
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteTarget(null)}
-              disabled={deleting}
-            >
-              ביטול
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
