@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { RefreshCw, Loader2, FolderOpen, CheckCircle2, XCircle, FolderPlus, AlertTriangle } from "lucide-react"
 
 interface FolderStatus {
-  setType: string
-  setTypeAlias: string
-  organs: {
+  organ: string
+  organAlias: string
+  packageTypes: {
     name: string
     alias: string
     hasFiles: boolean
@@ -20,15 +20,10 @@ interface FolderStatus {
 interface DebugInfo {
   baseFolderFound: boolean
   basePath: string
-  failedAt: string | null
-  resolvedParts: string[]
-  rootFolderChildren?: string[]
-  updatesChildren?: string[]
-  beatsChildren?: string[]
-  versionFolderChildren?: string[]
-  setTypes?: Array<{ name: string; alias: string; found: boolean }>
+  updateType?: string
   organCount?: number
-  setTypeCount?: number
+  packageTypeCount?: number
+  beatsChildren?: string[]
 }
 
 interface StepRhythmsProps {
@@ -93,9 +88,9 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
     }
   }
 
-  const totalCells = folders.reduce((sum, f) => sum + f.organs.length, 0)
+  const totalCells = folders.reduce((sum, f) => sum + f.packageTypes.length, 0)
   const filledCells = folders.reduce(
-    (sum, f) => sum + f.organs.filter((o) => o.hasFiles).length,
+    (sum, f) => sum + f.packageTypes.filter((p) => p.hasFiles).length,
     0
   )
 
@@ -166,18 +161,6 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
             </div>
             <div className="text-sm text-amber-700 space-y-1">
               <p>נתיב מבוקש: <code className="bg-amber-100 px-1 rounded">{debug.basePath}</code></p>
-              {debug.failedAt && (
-                <p>נכשל בחיפוש: <code className="bg-amber-100 px-1 rounded">{debug.failedAt}</code></p>
-              )}
-              {debug.resolvedParts.length > 0 && (
-                <p>נמצאו: {debug.resolvedParts.join(" → ")}</p>
-              )}
-              {debug.rootFolderChildren && (
-                <p>תיקיות בשורש: {debug.rootFolderChildren.join(", ") || "(ריק)"}</p>
-              )}
-              {debug.updatesChildren && (
-                <p>תיקיות ב-updates: {debug.updatesChildren.join(", ") || "(ריק)"}</p>
-              )}
               {debug.beatsChildren && (
                 <p>תיקיות ב-beats: {debug.beatsChildren.join(", ") || "(ריק)"}</p>
               )}
@@ -189,11 +172,9 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
           </div>
         )}
 
-        {debug && debug.baseFolderFound && debug.setTypes && (
+        {debug && debug.baseFolderFound && (
           <div className="mb-4 text-xs text-muted-foreground">
-            {debug.versionFolderChildren && (
-              <span>תיקיות ב-{version}: {debug.versionFolderChildren.join(", ")}</span>
-            )}
+            <span>סוג עדכון: {debug.updateType === "PARTIAL" ? "חלקי (מקצבים בלבד)" : "מלא (מקצבים + דגימות)"}</span>
           </div>
         )}
 
@@ -204,33 +185,33 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {folders.map((setType) => (
-              <div key={setType.setType} className="border rounded-lg overflow-hidden">
+            {folders.map((organEntry) => (
+              <div key={organEntry.organAlias} className="border rounded-lg overflow-hidden">
                 <div className="bg-muted/50 px-4 py-2.5 font-medium text-sm border-b flex items-center justify-between">
-                  <span>{setType.setType}</span>
+                  <span>{organEntry.organ} ({organEntry.organAlias})</span>
                   <Badge variant="secondary" className="text-xs">
-                    {setType.organs.filter((o) => o.hasFiles).length}/{setType.organs.length}
+                    {organEntry.packageTypes.filter((p) => p.hasFiles).length}/{organEntry.packageTypes.length}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-3">
-                  {setType.organs.map((organ) => (
+                  {organEntry.packageTypes.map((pkg) => (
                     <div
-                      key={organ.alias}
+                      key={pkg.alias}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
-                        organ.hasFiles
+                        pkg.hasFiles
                           ? "bg-green-50 border-green-200 text-green-800"
                           : "bg-red-50 border-red-200 text-red-700"
                       }`}
                     >
-                      {organ.hasFiles ? (
+                      {pkg.hasFiles ? (
                         <CheckCircle2 className="h-4 w-4 shrink-0" />
                       ) : (
                         <XCircle className="h-4 w-4 shrink-0" />
                       )}
-                      <span className="truncate">{organ.name}</span>
-                      {organ.hasFiles && organ.fileCount > 0 && (
+                      <span className="truncate">{pkg.alias}</span>
+                      {pkg.hasFiles && pkg.fileCount > 0 && (
                         <span className="text-xs text-green-600 mr-auto">
-                          ({organ.fileCount})
+                          ({pkg.fileCount})
                         </span>
                       )}
                     </div>

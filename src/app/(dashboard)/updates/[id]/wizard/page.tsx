@@ -68,9 +68,9 @@ export default function UpdateWizardPage({
       const res = await fetch(`/api/updates/${id}/folders`)
       if (!res.ok) return
       const data = await res.json()
-      const folders: Array<{ organs: Array<{ hasFiles: boolean }> }> = data.folders || []
+      const folders: Array<{ packageTypes: Array<{ hasFiles: boolean }> }> = data.folders || []
       const allReady = folders.length > 0 && folders.every((f) =>
-        f.organs.every((o) => o.hasFiles)
+        f.packageTypes.every((p) => p.hasFiles)
       )
       setFoldersReady(allReady)
     } catch {
