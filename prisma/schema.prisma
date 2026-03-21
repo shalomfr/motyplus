@@ -141,6 +141,7 @@ model Organ {
   id               String  @id @default(cuid())
   name             String  @unique
   folderAlias      String?
+  demoAlias        String? // שם תיקייה במבנה ה-demo בגוגל דרייב (Genos1, sx920, ...)
   organInfoFileUrl String? // קובץ אינפו ייחודי שרק האורגן הזה יכול לפתוח
   organInfoNumber  String? // מספר זיהוי שייזרק לתוך קבצי העדכון
   supportsUpdates  Boolean @default(false)
@@ -158,6 +159,7 @@ model SetType {
   id              String  @id @default(cuid())
   name            String  @unique
   folderAlias     String?
+  demoAlias       String? // שם חבילה במבנה ה-demo בגוגל דרייב (Basic, Full set, ...)
   price           Decimal @db.Decimal(10, 2)
   includesUpdates Boolean @default(false)
   sortOrder       Int     @default(0)
@@ -169,6 +171,11 @@ model SetType {
 }
 
 // ===== עדכונים =====
+
+enum UpdateType {
+  FULL    // עדכון מלא עם דגימות — תיקיות בכל סוגי החבילות
+  PARTIAL // עדכון חלקי, מקצבים בלבד — תיקיות רק ב-Full set
+}
 
 enum UpdateVersionStatus {
   DRAFT
@@ -185,6 +192,7 @@ model UpdateVersion {
   releaseDate        DateTime?
   description        String?             @db.Text
   status             UpdateVersionStatus @default(DRAFT)
+  updateType         UpdateType          @default(FULL)
   rhythmsFileUrl     String?
   samplesFileUrl     String?
   personalizedSamplesZipUrl String? // ZIP עם קבצי דגימות מותאמים אישית (123.cpi, 456.cpi וכו')

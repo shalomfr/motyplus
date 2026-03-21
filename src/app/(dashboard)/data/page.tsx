@@ -32,6 +32,7 @@ interface Organ {
   id: string
   name: string
   folderAlias: string | null
+  demoAlias: string | null
   organInfoFileUrl: string | null
   supportsUpdates: boolean
   sortOrder: number
@@ -42,6 +43,7 @@ interface SetType {
   id: string
   name: string
   folderAlias: string | null
+  demoAlias: string | null
   price: number
   includesUpdates: boolean
   sortOrder: number
@@ -66,6 +68,7 @@ function OrgansTab() {
 
   const [formName, setFormName] = useState("")
   const [formFolderAlias, setFormFolderAlias] = useState("")
+  const [formDemoAlias, setFormDemoAlias] = useState("")
   const [formOrganInfoFileUrl, setFormOrganInfoFileUrl] = useState("")
   const [formSupportsUpdates, setFormSupportsUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
@@ -94,6 +97,7 @@ function OrgansTab() {
     setEditingOrgan(null)
     setFormName("")
     setFormFolderAlias("")
+    setFormDemoAlias("")
     setFormOrganInfoFileUrl("")
     setFormSupportsUpdates(false)
     setFormSortOrder(0)
@@ -105,6 +109,7 @@ function OrgansTab() {
     setEditingOrgan(organ)
     setFormName(organ.name)
     setFormFolderAlias(organ.folderAlias || "")
+    setFormDemoAlias(organ.demoAlias || "")
     setFormOrganInfoFileUrl(organ.organInfoFileUrl || "")
     setFormSupportsUpdates(organ.supportsUpdates)
     setFormSortOrder(organ.sortOrder)
@@ -158,6 +163,7 @@ function OrgansTab() {
         body: JSON.stringify({
           name: formName,
           folderAlias: formFolderAlias || null,
+          demoAlias: formDemoAlias || null,
           organInfoFileUrl: formOrganInfoFileUrl || null,
           supportsUpdates: formSupportsUpdates,
           sortOrder: formSortOrder,
@@ -205,6 +211,7 @@ function OrgansTab() {
           <TableRow>
             <TableHead>שם</TableHead>
             <TableHead>כינוי תיקייה</TableHead>
+            <TableHead>כינוי Demo</TableHead>
             <TableHead>תומך בעדכונים</TableHead>
             <TableHead>סדר מיון</TableHead>
             <TableHead>סטטוס</TableHead>
@@ -216,6 +223,7 @@ function OrgansTab() {
             <TableRow key={organ.id}>
               <TableCell className="font-medium">{organ.name}</TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground">{organ.folderAlias || "-"}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{organ.demoAlias || "-"}</TableCell>
               <TableCell>
                 {organ.supportsUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
@@ -264,6 +272,11 @@ function OrgansTab() {
               <Label>כינוי תיקייה (folderAlias)</Label>
               <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
               <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: Genos2, Tyros5-1G</p>
+            </div>
+            <div className="space-y-2">
+              <Label>כינוי Demo (demoAlias)</Label>
+              <Input value={formDemoAlias} onChange={(e) => setFormDemoAlias(e.target.value)} placeholder="שם התיקייה ב-Drive Demo" dir="ltr" />
+              <p className="text-xs text-muted-foreground">שם התיקייה במבנה ה-demo בגוגל דרייב. למשל: Genos1, sx920</p>
             </div>
             <div className="space-y-2">
               <Label>קובץ אינפו לזיהוי האורגן</Label>
@@ -346,6 +359,7 @@ function SetsTab() {
 
   const [formName, setFormName] = useState("")
   const [formFolderAlias, setFormFolderAlias] = useState("")
+  const [formDemoAlias, setFormDemoAlias] = useState("")
   const [formPrice, setFormPrice] = useState(0)
   const [formIncludesUpdates, setFormIncludesUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
@@ -372,6 +386,7 @@ function SetsTab() {
     setEditingSet(null)
     setFormName("")
     setFormFolderAlias("")
+    setFormDemoAlias("")
     setFormPrice(0)
     setFormIncludesUpdates(false)
     setFormSortOrder(0)
@@ -382,6 +397,7 @@ function SetsTab() {
     setEditingSet(set)
     setFormName(set.name)
     setFormFolderAlias(set.folderAlias || "")
+    setFormDemoAlias(set.demoAlias || "")
     setFormPrice(Number(set.price))
     setFormIncludesUpdates(set.includesUpdates)
     setFormSortOrder(set.sortOrder)
@@ -400,6 +416,7 @@ function SetsTab() {
         body: JSON.stringify({
           name: formName,
           folderAlias: formFolderAlias || null,
+          demoAlias: formDemoAlias || null,
           price: formPrice,
           includesUpdates: formIncludesUpdates,
           sortOrder: formSortOrder,
@@ -447,6 +464,7 @@ function SetsTab() {
           <TableRow>
             <TableHead>שם</TableHead>
             <TableHead>כינוי תיקייה</TableHead>
+            <TableHead>כינוי Demo</TableHead>
             <TableHead>מחיר</TableHead>
             <TableHead>כולל עדכונים</TableHead>
             <TableHead>סדר מיון</TableHead>
@@ -459,6 +477,7 @@ function SetsTab() {
             <TableRow key={set.id}>
               <TableCell className="font-medium">{set.name}</TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground">{set.folderAlias || "-"}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{set.demoAlias || "-"}</TableCell>
               <TableCell>{formatCurrency(Number(set.price))}</TableCell>
               <TableCell>
                 {set.includesUpdates ? (
@@ -508,6 +527,11 @@ function SetsTab() {
               <Label>כינוי תיקייה (folderAlias)</Label>
               <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
               <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: full, half, basis</p>
+            </div>
+            <div className="space-y-2">
+              <Label>כינוי Demo (demoAlias)</Label>
+              <Input value={formDemoAlias} onChange={(e) => setFormDemoAlias(e.target.value)} placeholder="שם התיקייה ב-Drive Demo" dir="ltr" />
+              <p className="text-xs text-muted-foreground">שם החבילה במבנה ה-demo בגוגל דרייב. למשל: Full set, Basic</p>
             </div>
             <div className="space-y-2">
               <Label>מחיר</Label>

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Loader2, Plus } from "lucide-react"
+import { Loader2, Plus, Music, Disc } from "lucide-react"
 
 const VERSION_SUGGESTIONS = [
   "V3.0", "V3.1", "V3.2",
@@ -28,6 +28,7 @@ export interface UpdateDetailsData {
   price: number
   description: string
   releaseDate: string
+  updateType: "FULL" | "PARTIAL"
 }
 
 interface StepDetailsProps {
@@ -89,6 +90,49 @@ export function StepDetails({ data, onChange, onSubmit, isExisting, loading, err
               onChange={(e) => handleChange("price", parseFloat(e.target.value) || 0)}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>סוג עדכון</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleChange("updateType", "FULL")}
+              className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
+                data.updateType === "FULL"
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+              disabled={isExisting}
+            >
+              <Disc className="h-5 w-5 shrink-0" />
+              <div>
+                <div className="font-medium text-sm">עדכון מלא</div>
+                <div className="text-xs text-muted-foreground">מקצבים + דגימות</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChange("updateType", "PARTIAL")}
+              className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
+                data.updateType === "PARTIAL"
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+              disabled={isExisting}
+            >
+              <Music className="h-5 w-5 shrink-0" />
+              <div>
+                <div className="font-medium text-sm">עדכון חלקי</div>
+                <div className="text-xs text-muted-foreground">מקצבים בלבד</div>
+              </div>
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {data.updateType === "FULL"
+              ? "תיקיות ייווצרו ב-5 חבילות: Basic, Full set, Half set, ketron&motif, Live"
+              : "תיקיות ייווצרו רק ב-Full set"}
+          </p>
         </div>
 
         <div className="space-y-2">

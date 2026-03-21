@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       data: {
         version: data.version,
         price: data.price,
+        updateType: data.updateType,
         releaseDate: data.releaseDate ? new Date(data.releaseDate) : null,
         description: data.description,
         rhythmsFileUrl: data.rhythmsFileUrl,
@@ -92,9 +93,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // #26/#27: יצירת תיקיות אוטומטית ב-Google Drive
+    // יצירת תיקיות אוטומטית ב-Google Drive (מבנה אורגן-קודם)
     // async/best-effort — לא מכשיל את הבקשה
-    createUpdateFolders(data.version).catch((err) =>
+    createUpdateFolders(data.version, data.updateType).catch((err) =>
       console.error("Error creating update folders in Drive:", err)
     );
 
@@ -109,74 +110,81 @@ export async function POST(request: NextRequest) {
 }
 
 // === Helper: יצירת מבנה תיקיות Google Drive לגרסת עדכון ===
+// מבנה: updates/beats/{version}/{organ}/{packageType}/{version} - {organ}/Folders [+HD1]
 
-async function createUpdateFolders(version: string): Promise<void> {
+async function createUpdateFolders(
+  version: string,
+  updateType: "FULL" | "PARTIAL" = "FULL"
+): Promise<void> {
   const { getDrive } = await import("@/lib/google-drive");
   const drive = getDrive();
 
-  const [setTypes, organs] = await Promise.all([
-    prisma.setType.findMany({
-      where: { isActive: true },
-      select: { name: true, folderAlias: true },
-    }),
+  const [organs, setTypes] = await Promise.all([
     prisma.organ.findMany({
-      where: { supportsUpdates: true },
-      select: { name: true, folderAlias: true },
+      where: { supportsUpdates: true, demoAlias: { not: null } },
+      select: { name: true, demoAlias: true },
+    }),
+    prisma.setType.findMany({
+      where: { isActive: true, demoAlias: { not: null } },
+      select: { name: true, demoAlias: true },
     }),
   ]);
 
-  const versionFolderPath = `updates/beats/${version}`;
-  const versionFolderId = await ensureFolderPath(versionFolderPath);
+  // PARTIAL → רק Full set
+  const targetSetTypes =
+    updateType === "PARTIAL"
+      ? setTypes.filter((st) => st.demoAlias === "Full set")
+      : setTypes;
 
-  for (const setType of setTypes) {
-    const setTypeName = setType.folderAlias || setType.name;
+  for (const organ of organs) {
+    const organName = organ.demoAlias!;
+    const isTyros5 = organName.toLowerCase().includes("tyros5");
 
-    let setTypeFolderId: string;
-    const existingSet = await drive.files.list({
-      q: `name='${setTypeName}' and '${versionFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-      fields: "files(id)",
-      spaces: "drive",
-    });
+    for (const setType of targetSetTypes) {
+      const packageName = setType.demoAlias!;
+      const versionFolderName = `${version} - ${organName}`;
 
-    if (existingSet.data.files && existingSet.data.files.length > 0) {
-      setTypeFolderId = existingSet.data.files[0].id!;
-    } else {
-      const created = await drive.files.create({
-        requestBody: {
-          name: setTypeName,
-          mimeType: "application/vnd.google-apps.folder",
-          parents: [versionFolderId],
-        },
-        fields: "id",
-      });
-      setTypeFolderId = created.data.id!;
-    }
+      // נתיב: updates/beats/{version}/{organ}/{packageType}/{version - organ}
+      const folderPath = `updates/beats/${version}/${organName}/${packageName}/${versionFolderName}`;
+      const parentId = await ensureFolderPath(folderPath);
 
-    for (const organ of organs) {
-      const organName = organ.folderAlias || organ.name;
+      // יצירת Folders/
+      await ensureSubfolder(drive, parentId, "Folders");
 
-      const existingOrgan = await drive.files.list({
-        q: `name='${organName}' and '${setTypeFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-        fields: "files(id)",
-        spaces: "drive",
-      });
-
-      if (!existingOrgan.data.files || existingOrgan.data.files.length === 0) {
-        await drive.files.create({
-          requestBody: {
-            name: organName,
-            mimeType: "application/vnd.google-apps.folder",
-            parents: [setTypeFolderId],
-          },
-          fields: "id",
-        });
+      // Tyros5 → גם HD1/
+      if (isTyros5) {
+        await ensureSubfolder(drive, parentId, "HD1");
       }
     }
   }
 
+  // גם תיקיית samples
   await ensureFolderPath("updates/samples");
 
   console.log(
-    `Drive folders created for version ${version}: ${setTypes.length} setTypes x ${organs.length} organs + samples`
+    `Drive folders created for ${version} (${updateType}): ${organs.length} organs × ${targetSetTypes.length} packageTypes`
   );
+}
+
+async function ensureSubfolder(
+  drive: ReturnType<typeof import("@/lib/google-drive").getDrive>,
+  parentId: string,
+  name: string
+): Promise<string> {
+  const existing = await drive.files.list({
+    q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: "files(id)",
+    spaces: "drive",
+  });
+  if (existing.data.files?.length) return existing.data.files[0].id!;
+
+  const created = await drive.files.create({
+    requestBody: {
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+    fields: "id",
+  });
+  return created.data.id!;
 }

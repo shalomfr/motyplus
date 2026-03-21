@@ -26,6 +26,7 @@ interface WizardData {
     status: string
     price: number
     description: string | null
+    updateType: "FULL" | "PARTIAL"
   }
   segments: Array<{
     key: string
@@ -58,6 +59,7 @@ export default function UpdateWizardPage({
     price: 0,
     description: "",
     releaseDate: "",
+    updateType: "FULL",
   })
   const [foldersReady, setFoldersReady] = useState(false)
 
@@ -87,6 +89,7 @@ export default function UpdateWizardPage({
         price: Number(data.updateVersion.price),
         description: data.updateVersion.description || "",
         releaseDate: "",
+        updateType: data.updateVersion.updateType || "FULL",
       })
     } catch (err) {
       console.error("Error loading wizard:", err)

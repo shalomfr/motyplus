@@ -6,13 +6,6 @@ import { ensureFolderPath } from "@/lib/file-storage";
 
 export const dynamic = "force-dynamic";
 
-interface OrganStatus {
-  name: string;
-  alias: string;
-  hasFiles: boolean;
-  fileCount: number;
-}
-
 async function findFolderId(
   drive: ReturnType<typeof getDrive>,
   parentId: string,
@@ -25,21 +18,6 @@ async function findFolderId(
     pageSize: 1,
   });
   return res.data.files?.[0]?.id || null;
-}
-
-async function resolveFolderPathDebug(
-  drive: ReturnType<typeof getDrive>,
-  pathParts: string[]
-): Promise<{ folderId: string | null; failedAt: string | null; resolvedParts: string[] }> {
-  let currentId = getRootFolderId();
-  const resolvedParts: string[] = [];
-  for (const part of pathParts) {
-    const nextId = await findFolderId(drive, currentId, part);
-    if (!nextId) return { folderId: null, failedAt: part, resolvedParts };
-    resolvedParts.push(part);
-    currentId = nextId;
-  }
-  return { folderId: currentId, failedAt: null, resolvedParts };
 }
 
 async function listSubfolders(
@@ -68,7 +46,30 @@ async function countFolderContents(
   return res.data.files?.length || 0;
 }
 
-// GET /api/updates/[id]/folders
+async function ensureSubfolder(
+  drive: ReturnType<typeof getDrive>,
+  parentId: string,
+  name: string
+): Promise<string> {
+  const existing = await drive.files.list({
+    q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: "files(id)",
+    spaces: "drive",
+  });
+  if (existing.data.files?.length) return existing.data.files[0].id!;
+
+  const created = await drive.files.create({
+    requestBody: {
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+    fields: "id",
+  });
+  return created.data.id!;
+}
+
+// GET /api/updates/[id]/folders — בדיקת מצב תיקיות (מבנה אורגן-קודם)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -83,129 +84,118 @@ export async function GET(
 
     const updateVersion = await prisma.updateVersion.findUnique({
       where: { id },
-      select: { version: true },
+      select: { version: true, updateType: true },
     });
 
     if (!updateVersion) {
       return NextResponse.json({ error: "העדכון לא נמצא" }, { status: 404 });
     }
 
-    const [setTypes, organs] = await Promise.all([
-      prisma.setType.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true, folderAlias: true },
+    const [organs, setTypes] = await Promise.all([
+      prisma.organ.findMany({
+        where: { supportsUpdates: true, demoAlias: { not: null } },
+        select: { id: true, name: true, demoAlias: true },
         orderBy: { sortOrder: "asc" },
       }),
-      prisma.organ.findMany({
-        where: { supportsUpdates: true },
-        select: { id: true, name: true, folderAlias: true },
+      prisma.setType.findMany({
+        where: { isActive: true, demoAlias: { not: null } },
+        select: { id: true, name: true, demoAlias: true },
         orderBy: { sortOrder: "asc" },
       }),
     ]);
 
     const version = updateVersion.version;
+    const updateType = updateVersion.updateType;
     const drive = getDrive();
 
-    const baseResult = await resolveFolderPathDebug(drive, ["updates", "beats", version]);
-    const baseFolderId = baseResult.folderId;
+    // PARTIAL → רק Full set
+    const targetSetTypes =
+      updateType === "PARTIAL"
+        ? setTypes.filter((st) => st.demoAlias === "Full set")
+        : setTypes;
 
-    // Build debug info
+    // בדוק אם תיקיית הגרסה קיימת
+    const rootId = getRootFolderId();
+    const updatesId = await findFolderId(drive, rootId, "updates");
+    const beatsId = updatesId ? await findFolderId(drive, updatesId, "beats") : null;
+    const versionFolderId = beatsId ? await findFolderId(drive, beatsId, version) : null;
+
     const debug: Record<string, unknown> = {
-      baseFolderFound: !!baseFolderId,
+      baseFolderFound: !!versionFolderId,
       basePath: `updates/beats/${version}`,
-      failedAt: baseResult.failedAt,
-      resolvedParts: baseResult.resolvedParts,
+      updateType,
       organCount: organs.length,
-      setTypeCount: setTypes.length,
+      packageTypeCount: targetSetTypes.length,
     };
 
-    // If base folder not found, list what's actually there to help debug
-    if (!baseFolderId) {
-      const rootId = getRootFolderId();
-      const rootChildren = await listSubfolders(drive, rootId);
-      debug.rootFolderChildren = rootChildren;
-
-      const updatesId = await findFolderId(drive, rootId, "updates");
-      if (updatesId) {
-        const updatesChildren = await listSubfolders(drive, updatesId);
-        debug.updatesChildren = updatesChildren;
-
-        const beatsId = await findFolderId(drive, updatesId, "beats");
-        if (beatsId) {
-          const beatsChildren = await listSubfolders(drive, beatsId);
-          debug.beatsChildren = beatsChildren;
-        }
+    if (!versionFolderId) {
+      if (beatsId) {
+        debug.beatsChildren = await listSubfolders(drive, beatsId);
       }
 
       return NextResponse.json({
-        folders: setTypes.map((st) => ({
-          setType: st.name,
-          setTypeAlias: st.folderAlias || st.name,
-          organs: organs.map((o) => ({
-            name: o.name,
-            alias: o.folderAlias || o.name,
+        folders: organs.map((organ) => ({
+          organ: organ.name,
+          organAlias: organ.demoAlias,
+          packageTypes: targetSetTypes.map((st) => ({
+            name: st.name,
+            alias: st.demoAlias,
             hasFiles: false,
             fileCount: 0,
           })),
         })),
         version,
+        updateType,
         debug,
       });
     }
 
-    // List actual subfolders in base for debug
-    const baseChildren = await listSubfolders(drive, baseFolderId);
-    debug.versionFolderChildren = baseChildren;
-
-    const setDebug: Array<{ name: string; alias: string; found: boolean }> = [];
-
+    // מבנה: {version}/{organ}/{packageType}/{version - organ}/...
     const folderResults = await Promise.all(
-      setTypes.map(async (setType) => {
-        const setAlias = setType.folderAlias || setType.name;
-        const setFolderId = await findFolderId(drive, baseFolderId, setAlias);
-        let setChildren: string[] = [];
-        if (setFolderId) {
-          setChildren = await listSubfolders(drive, setFolderId);
-        }
-        setDebug.push({ name: setType.name, alias: setAlias, found: !!setFolderId, children: setChildren } as unknown as { name: string; alias: string; found: boolean });
+      organs.map(async (organ) => {
+        const organName = organ.demoAlias!;
+        const organFolderId = await findFolderId(drive, versionFolderId, organName);
 
-        const organStatuses: OrganStatus[] = await Promise.all(
-          organs.map(async (organ) => {
-            const organAlias = organ.folderAlias || organ.name;
-            if (!setFolderId) {
-              return { name: organ.name, alias: organAlias, hasFiles: false, fileCount: 0 };
-            }
-
-            const organFolderId = await findFolderId(drive, setFolderId, organAlias);
+        const packageStatuses = await Promise.all(
+          targetSetTypes.map(async (setType) => {
+            const packageName = setType.demoAlias!;
             if (!organFolderId) {
-              console.log(`[folders] organ "${organAlias}" NOT FOUND under setType "${setAlias}" (${setFolderId})`);
-              return { name: organ.name, alias: organAlias, hasFiles: false, fileCount: 0 };
+              return { name: setType.name, alias: packageName, hasFiles: false, fileCount: 0 };
             }
 
-            const fileCount = await countFolderContents(drive, organFolderId);
-            console.log(`[folders] organ "${organAlias}" found (${organFolderId}), contents: ${fileCount}`);
-            return { name: organ.name, alias: organAlias, hasFiles: fileCount > 0, fileCount };
+            const packageFolderId = await findFolderId(drive, organFolderId, packageName);
+            if (!packageFolderId) {
+              return { name: setType.name, alias: packageName, hasFiles: false, fileCount: 0 };
+            }
+
+            // בדוק תיקיית version - organ
+            const versionOrganName = `${version} - ${organName}`;
+            const versionOrganId = await findFolderId(drive, packageFolderId, versionOrganName);
+            if (!versionOrganId) {
+              return { name: setType.name, alias: packageName, hasFiles: false, fileCount: 0 };
+            }
+
+            const fileCount = await countFolderContents(drive, versionOrganId);
+            return { name: setType.name, alias: packageName, hasFiles: fileCount > 0, fileCount };
           })
         );
 
         return {
-          setType: setType.name,
-          setTypeAlias: setAlias,
-          organs: organStatuses,
+          organ: organ.name,
+          organAlias: organName,
+          packageTypes: packageStatuses,
         };
       })
     );
 
-    debug.setTypes = setDebug;
-
-    return NextResponse.json({ folders: folderResults, version, debug });
+    return NextResponse.json({ folders: folderResults, version, updateType, debug });
   } catch (error) {
     console.error("Error fetching folder status:", error);
     return NextResponse.json({ error: "שגיאה בבדיקת תיקיות", details: String(error) }, { status: 500 });
   }
 }
 
-// POST /api/updates/[id]/folders — create folder structure in Drive
+// POST /api/updates/[id]/folders — יצירת מבנה תיקיות (אורגן-קודם)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -220,7 +210,7 @@ export async function POST(
 
     const updateVersion = await prisma.updateVersion.findUnique({
       where: { id },
-      select: { version: true },
+      select: { version: true, updateType: true },
     });
 
     if (!updateVersion) {
@@ -228,67 +218,43 @@ export async function POST(
     }
 
     const version = updateVersion.version;
+    const updateType = updateVersion.updateType;
     const drive = getDrive();
 
-    const [setTypes, organs] = await Promise.all([
-      prisma.setType.findMany({
-        where: { isActive: true },
-        select: { name: true, folderAlias: true },
-      }),
+    const [organs, setTypes] = await Promise.all([
       prisma.organ.findMany({
-        where: { supportsUpdates: true },
-        select: { name: true, folderAlias: true },
+        where: { supportsUpdates: true, demoAlias: { not: null } },
+        select: { name: true, demoAlias: true },
+      }),
+      prisma.setType.findMany({
+        where: { isActive: true, demoAlias: { not: null } },
+        select: { name: true, demoAlias: true },
       }),
     ]);
 
-    // Create base folder path
-    const versionFolderId = await ensureFolderPath(`updates/beats/${version}`);
+    // PARTIAL → רק Full set
+    const targetSetTypes =
+      updateType === "PARTIAL"
+        ? setTypes.filter((st) => st.demoAlias === "Full set")
+        : setTypes;
 
     let created = 0;
-    for (const setType of setTypes) {
-      const setAlias = setType.folderAlias || setType.name;
+    for (const organ of organs) {
+      const organName = organ.demoAlias!;
+      const isTyros5 = organName.toLowerCase().includes("tyros5");
 
-      // Find or create set type folder
-      let setFolderId: string;
-      const existing = await drive.files.list({
-        q: `name='${setAlias}' and '${versionFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-        fields: "files(id)",
-        spaces: "drive",
-      });
+      for (const setType of targetSetTypes) {
+        const packageName = setType.demoAlias!;
+        const versionFolderName = `${version} - ${organName}`;
 
-      if (existing.data.files && existing.data.files.length > 0) {
-        setFolderId = existing.data.files[0].id!;
-      } else {
-        const res = await drive.files.create({
-          requestBody: {
-            name: setAlias,
-            mimeType: "application/vnd.google-apps.folder",
-            parents: [versionFolderId],
-          },
-          fields: "id",
-        });
-        setFolderId = res.data.id!;
+        const folderPath = `updates/beats/${version}/${organName}/${packageName}/${versionFolderName}`;
+        const parentId = await ensureFolderPath(folderPath);
+
+        await ensureSubfolder(drive, parentId, "Folders");
         created++;
-      }
 
-      // Create organ folders
-      for (const organ of organs) {
-        const organAlias = organ.folderAlias || organ.name;
-        const existingOrgan = await drive.files.list({
-          q: `name='${organAlias}' and '${setFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-          fields: "files(id)",
-          spaces: "drive",
-        });
-
-        if (!existingOrgan.data.files || existingOrgan.data.files.length === 0) {
-          await drive.files.create({
-            requestBody: {
-              name: organAlias,
-              mimeType: "application/vnd.google-apps.folder",
-              parents: [setFolderId],
-            },
-            fields: "id",
-          });
+        if (isTyros5) {
+          await ensureSubfolder(drive, parentId, "HD1");
           created++;
         }
       }
@@ -297,7 +263,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: `נוצרו ${created} תיקיות חדשות`,
-      structure: `updates/beats/${version}/${setTypes.length} sets × ${organs.length} organs`,
+      structure: `updates/beats/${version}/${organs.length} organs × ${targetSetTypes.length} packageTypes (${updateType})`,
     });
   } catch (error) {
     console.error("Error creating folder structure:", error);

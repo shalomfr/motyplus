@@ -24,6 +24,7 @@ export default function NewUpdateWizardPage() {
     price: 0,
     description: "",
     releaseDate: "",
+    updateType: "FULL",
   })
 
   const handleCreateUpdate = async () => {
@@ -51,6 +52,7 @@ export default function NewUpdateWizardPage() {
         body: JSON.stringify({
           version: updateDetails.version,
           price: updateDetails.price,
+          updateType: updateDetails.updateType,
           description: updateDetails.description,
           releaseDate: updateDetails.releaseDate || null,
           emailSubject,

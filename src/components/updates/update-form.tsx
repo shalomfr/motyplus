@@ -14,13 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Save, Loader2, Upload, FileText, X as XIcon } from "lucide-react"
+import { Save, Loader2, Upload, FileText, X as XIcon, Disc, Music } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SamplesUploader } from "@/components/updates/samples-uploader"
 
 interface UpdateFormData {
   version: string
   price: number
+  updateType: "FULL" | "PARTIAL"
   description: string
   rhythmsFileUrl: string
   emailSubject: string
@@ -56,6 +57,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
   const [form, setForm] = useState<UpdateFormData>({
     version: initialData?.version || "",
     price: initialData?.price || 0,
+    updateType: (initialData as { updateType?: "FULL" | "PARTIAL" })?.updateType || "FULL",
     description: initialData?.description || "",
     rhythmsFileUrl: initialData?.rhythmsFileUrl || "",
     emailSubject: initialData?.emailSubject || "",
@@ -191,6 +193,47 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>סוג עדכון</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleChange("updateType", "FULL")}
+                className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
+                  form.updateType === "FULL"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Disc className="h-5 w-5 shrink-0" />
+                <div>
+                  <div className="font-medium text-sm">עדכון מלא</div>
+                  <div className="text-xs text-muted-foreground">מקצבים + דגימות</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChange("updateType", "PARTIAL")}
+                className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
+                  form.updateType === "PARTIAL"
+                    ? "border-orange-500 bg-orange-50 text-orange-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Music className="h-5 w-5 shrink-0" />
+                <div>
+                  <div className="font-medium text-sm">עדכון חלקי</div>
+                  <div className="text-xs text-muted-foreground">מקצבים בלבד</div>
+                </div>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {form.updateType === "FULL"
+                ? "תיקיות ייווצרו ב-5 חבילות: Basic, Full set, Half set, ketron&motif, Live"
+                : "תיקיות ייווצרו רק ב-Full set"}
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -48,6 +48,7 @@ export const leadSchema = z.object({
 export const updateVersionSchema = z.object({
   version: z.string().min(1, "יש להזין גרסה"),
   price: z.number().min(0, "מחיר לא תקין"),
+  updateType: z.enum(["FULL", "PARTIAL"]).optional().default("FULL"),
   releaseDate: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   rhythmsFileUrl: z.string().optional().nullable(),
@@ -85,6 +86,7 @@ export const promotionSchema = z.object({
 export const organSchema = z.object({
   name: z.string().min(1, "יש להזין שם אורגן"),
   folderAlias: z.string().optional().nullable(),
+  demoAlias: z.string().optional().nullable(),
   organInfoFileUrl: z.string().optional().nullable(),
   supportsUpdates: z.boolean(),
   sortOrder: z.number().optional(),
@@ -93,6 +95,7 @@ export const organSchema = z.object({
 export const setTypeSchema = z.object({
   name: z.string().min(1, "יש להזין שם סוג סט"),
   folderAlias: z.string().optional().nullable(),
+  demoAlias: z.string().optional().nullable(),
   price: z.number().min(0, "מחיר לא תקין"),
   includesUpdates: z.boolean(),
   sortOrder: z.number().optional(),
