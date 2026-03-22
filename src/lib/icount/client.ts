@@ -342,33 +342,43 @@ export class ICountClient {
   // ===== Payment Pages (Clearing) =====
 
   async createPaymentPage(request: CreatePaymentPageRequest): Promise<CreatePaymentPageResponse> {
-    const items = request.items.map((item, i) => ({
-      [`description_${i + 1}`]: item.description,
-      [`quantity_${i + 1}`]: item.quantity,
-      [`unitprice_${i + 1}`]: item.unitprice,
+    // iCount paypage uses items array with desc/quantity/unitprice keys
+    const items = request.items.map((item) => ({
+      desc: item.description,
+      quantity: item.quantity,
+      unitprice: item.unitprice,
     }));
 
-    const flatItems: Record<string, unknown> = {};
-    for (const item of items) {
-      Object.assign(flatItems, item);
-    }
+    // Calculate total for cs (custom sum) fallback
+    const totalSum = request.items.reduce((sum, item) => sum + item.quantity * item.unitprice, 0);
+    const firstDesc = request.items[0]?.description || "תשלום";
 
-    const data = await this.request<{ paypage_url?: string; paypage_id?: number; payment_url?: string; page_id?: string }>(
+    const data = await this.request<{ paypage_url?: string; paypage_id?: number; payment_url?: string; page_id?: string; sale_url?: string }>(
       "paypage/create",
       {
         page_name: request.pageName || "Motty Beats - תשלום",
+        // Customer info — iCount uses full_name/contact_email/contact_phone
         client_name: request.customer.client_name,
+        full_name: request.customer.client_name,
         email: request.customer.email,
+        contact_email: request.customer.email,
         phone: request.customer.phone,
-        ...flatItems,
-        items_count: request.items.length,
+        contact_phone: request.customer.phone,
+        // Items — both formats for compatibility
+        items,
+        // Also send cs/cd (custom sum/description) as fallback
+        cs: totalSum,
+        cd: firstDesc,
         currency_code: request.currency || "ILS",
         lang: request.lang || "he",
         success_url: request.successUrl,
+        failure_url: request.cancelUrl,
         cancel_url: request.cancelUrl,
+        ipn_url: request.webhookUrl,
         webhook_url: request.webhookUrl,
-        auto_create_doc: request.autoCreateDoc ?? true,
+        auto_create_doc: 1,
         doctype: request.docType ? this.mapDocType(request.docType) : "invrec",
+        // No max_payments — leave unlimited
         ...(request.metadata
           ? { custom_fields: JSON.stringify(request.metadata) }
           : {}),
@@ -376,7 +386,7 @@ export class ICountClient {
     );
 
     return {
-      url: data.paypage_url || data.payment_url || "",
+      url: data.paypage_url || data.payment_url || data.sale_url || "",
       pageId: String(data.paypage_id || data.page_id || ""),
     };
   }
