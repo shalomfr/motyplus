@@ -279,17 +279,21 @@ export default function SendEmailPage() {
                   singleLine
                 />
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="text-xs text-muted-foreground self-center">הוסף משתנה:</span>
-                  {EMAIL_VARIABLES.filter(v => ["updateVersion", "organ", "fullName", "releaseDate", "currentVersion"].includes(v.name)).map((v) => (
-                    <Badge
-                      key={v.name}
-                      variant="outline"
-                      className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
-                      onClick={() => setSubject(prev => prev + `{{${v.name}}}`)}
-                    >
-                      {v.label}
-                    </Badge>
-                  ))}
+                  <span className="text-xs text-muted-foreground self-center">הוסף:</span>
+                  <Badge
+                    variant="outline"
+                    className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                    onClick={() => setSubject(subject + "{{updateVersion}}")}
+                  >
+                    גרסת עדכון
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                    onClick={() => setSubject(subject + "{{releaseDate}}")}
+                  >
+                    תאריך שחרור
+                  </Badge>
                 </div>
               </div>
 
