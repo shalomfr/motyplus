@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "EmailTemplate" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;

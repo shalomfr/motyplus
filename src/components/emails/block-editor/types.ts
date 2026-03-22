@@ -27,6 +27,7 @@ export interface FolderBlock {
   id: string
   name: string
   items: string[]
+  align?: "right" | "center" | "left"
 }
 
 export interface ListBlock {

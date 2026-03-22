@@ -117,7 +117,7 @@ export default function HomePage() {
               </div>
 
               {/* כפתורים על הרקע — פאנל זכוכית בצד (ב־RTL: עמודה שמאלית) */}
-              <div className="flex flex-col justify-center border-t border-white/25 bg-white/35 px-4 py-6 backdrop-blur-xl lg:border-t-0 lg:border-s lg:border-white/40 lg:px-5 lg:py-10">
+              <div className={`flex flex-col justify-center border-t border-white/25 bg-white/35 px-4 py-6 backdrop-blur-xl lg:border-t-0 lg:border-s lg:border-white/40 lg:px-5 lg:py-10 transition-all duration-[2000ms] ease-in-out ${heroRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
                 <p className="mb-4 hidden text-center text-xs font-semibold uppercase tracking-wide text-white/70 lg:block">
                   פעולות מהירות
                 </p>

@@ -331,16 +331,38 @@ function RenderBlockFields({
       )
     }
 
-    case "folder":
+    case "folder": {
+      const folderAlignOptions: { value: "right" | "center" | "left"; icon: typeof AlignRight; label: string }[] = [
+        { value: "right", icon: AlignRight, label: "ימין" },
+        { value: "center", icon: AlignCenter, label: "מרכז" },
+        { value: "left", icon: AlignLeft, label: "שמאל" },
+      ]
+      const folderAlign = block.align || "right"
       return (
         <div className="space-y-2">
-          <Input
-            value={block.name}
-            onChange={(e) => onChange({ ...block, name: e.target.value })}
-            className="h-8 text-sm"
-            placeholder="שם תיקייה"
-            dir="rtl"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              value={block.name}
+              onChange={(e) => onChange({ ...block, name: e.target.value })}
+              className="h-8 text-sm flex-1"
+              placeholder="שם תיקייה"
+              dir="rtl"
+            />
+            <div className="flex gap-0.5">
+              {folderAlignOptions.map(({ value, icon: Icon, label }) => (
+                <Button
+                  key={value}
+                  variant={folderAlign === value ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  title={`יישור ${label}`}
+                  onClick={() => onChange({ ...block, align: value })}
+                >
+                  <Icon className="h-3 w-3" />
+                </Button>
+              ))}
+            </div>
+          </div>
           <Label className="text-xs text-muted-foreground">פריטים:</Label>
           <ListEditor
             items={block.items}
@@ -348,6 +370,7 @@ function RenderBlockFields({
           />
         </div>
       )
+    }
 
     case "list":
       return (

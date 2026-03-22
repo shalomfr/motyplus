@@ -25,6 +25,7 @@ import {
   Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
   ChevronDown, ChevronUp, FolderOpen, FolderPlus, Trash2, Pencil,
+  Copy, GripVertical,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
@@ -34,9 +35,12 @@ interface EmailTemplate {
   id: string
   name: string
   subject: string
+  body: string
   category: string | null
   folderId: string | null
   variables: string[]
+  blocks: unknown[]
+  order?: number
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -168,6 +172,85 @@ export default function EmailsPage() {
     }
   }
 
+  const handleDuplicateTemplate = async (template: EmailTemplate) => {
+    try {
+      const res = await fetch("/api/emails/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${template.name} (עותק)`,
+          subject: template.subject,
+          body: template.body,
+          category: template.category,
+          folderId: template.folderId,
+          blocks: template.blocks,
+        }),
+      })
+      if (res.ok) {
+        const newTemplate = await res.json()
+        setTemplates((prev) => [...prev, newTemplate])
+        toast({ title: "התבנית שוכפלה בהצלחה" })
+      } else {
+        toast({ title: "שגיאה בשכפול", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה בשכפול התבנית", variant: "destructive" })
+    }
+  }
+
+  // Drag & drop for templates within a folder
+  const [dragTemplateId, setDragTemplateId] = useState<string | null>(null)
+
+  const handleTemplateDrop = async (targetId: string, folderId: string) => {
+    if (!dragTemplateId || dragTemplateId === targetId) {
+      setDragTemplateId(null)
+      return
+    }
+    const folderTemplates = templates
+      .filter((t) => t.folderId === folderId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const fromIdx = folderTemplates.findIndex((t) => t.id === dragTemplateId)
+    const toIdx = folderTemplates.findIndex((t) => t.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDragTemplateId(null); return }
+    const reordered = [...folderTemplates]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    // Update local state immediately
+    const orderMap = new Map(reordered.map((t, i) => [t.id, i]))
+    setTemplates((prev) => prev.map((t) => orderMap.has(t.id) ? { ...t, order: orderMap.get(t.id)! } : t))
+    // Persist to server
+    await fetch("/api/emails/templates/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((t) => t.id) }),
+    })
+    setDragTemplateId(null)
+  }
+
+  // Drag & drop for folders
+  const [dragFolderId, setDragFolderId] = useState<string | null>(null)
+
+  const handleFolderDrop = async (targetId: string) => {
+    if (!dragFolderId || dragFolderId === targetId) {
+      setDragFolderId(null)
+      return
+    }
+    const sorted = [...folders].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    const fromIdx = sorted.findIndex((f) => f.id === dragFolderId)
+    const toIdx = sorted.findIndex((f) => f.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDragFolderId(null); return }
+    const reordered = [...sorted]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    setFolders(reordered.map((f, i) => ({ ...f, order: i })))
+    await fetch("/api/emails/folders/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((f) => f.id) }),
+    })
+    setDragFolderId(null)
+  }
+
   const toggleSection = (key: string) => {
     setExpandedSections(prev => {
       const next = new Set(prev)
@@ -278,21 +361,32 @@ export default function EmailsPage() {
     }
   }
 
-  const renderTemplateTable = (templatesList: EmailTemplate[]) => (
+  const renderTemplateTable = (templatesList: EmailTemplate[], folderId?: string) => (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-8"></TableHead>
           <TableHead>שם</TableHead>
           <TableHead>נושא</TableHead>
           <TableHead>משתנים</TableHead>
           <TableHead>שימושים</TableHead>
           <TableHead>עדכון אחרון</TableHead>
-          <TableHead className="w-20">פעולות</TableHead>
+          <TableHead className="w-28">פעולות</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {templatesList.map((template) => (
-          <TableRow key={template.id}>
+        {templatesList.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((template) => (
+          <TableRow
+            key={template.id}
+            draggable={!!folderId}
+            onDragStart={() => setDragTemplateId(template.id)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => folderId && handleTemplateDrop(template.id, folderId)}
+            className={dragTemplateId === template.id ? "opacity-50" : ""}
+          >
+            <TableCell className="w-8 px-1">
+              {folderId && <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />}
+            </TableCell>
             <TableCell className="font-medium">{template.name}</TableCell>
             <TableCell className="max-w-[200px] truncate">{template.subject}</TableCell>
             <TableCell>
@@ -310,14 +404,24 @@ export default function EmailsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => router.push(`/emails/templates/${template.id}`)}
+                  title="ערוך"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => handleDuplicateTemplate(template)}
+                  title="שכפל"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => handleDeleteTemplate(template.id, template.name)}
+                  title="מחק"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -457,12 +561,21 @@ export default function EmailsPage() {
             const isExpanded = expandedSections.has(folder.id)
 
             return (
-              <Card key={folder.id} className={`border-r-4 ${colors.border}`}>
+              <Card
+                key={folder.id}
+                className={`border-r-4 ${colors.border} ${dragFolderId === folder.id ? "opacity-50" : ""}`}
+                draggable
+                onDragStart={() => setDragFolderId(folder.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); handleFolderDrop(folder.id) }}
+                onDragEnd={() => setDragFolderId(null)}
+              >
                 <div
                   className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleSection(folder.id)}
                 >
                   <div className="flex items-center gap-3">
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                     <div className={`p-2 rounded-lg ${colors.bg}`}>
                       <Icon className={`h-4 w-4 ${colors.text}`} />
                     </div>
@@ -509,7 +622,7 @@ export default function EmailsPage() {
                         </button>
                       </p>
                     ) : (
-                      renderTemplateTable(folderTemplates)
+                      renderTemplateTable(folderTemplates, folder.id)
                     )}
                   </CardContent>
                 )}

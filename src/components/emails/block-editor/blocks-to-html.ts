@@ -69,10 +69,14 @@ function renderBlockToHtml(block: EmailBlock): string {
     }
 
     case "folder": {
-      const header = `<div style="margin:16px 0 12px auto;padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:right;max-width:200px;">${escapeHtml(block.name)}</div>`
-      if (block.items.length === 0) return header
+      const align = block.align || "right"
+      const marginMap = { right: "0 0 12px auto", center: "0 auto 12px auto", left: "0 auto 12px 0" }
+      const textAlignMap = { right: "right", center: "center", left: "left" }
+      const header = `<div style="margin:16px ${marginMap[align]};padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:${textAlignMap[align]};display:inline-block;">${escapeHtml(block.name)}</div>`
+      const wrapper = `<div style="text-align:${textAlignMap[align]};">${header}</div>`
+      if (block.items.length === 0) return wrapper
       const items = block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")
-      return `${header}\n<ul>\n${items}\n</ul>`
+      return `${wrapper}\n<ul>\n${items}\n</ul>`
     }
 
     case "list": {
