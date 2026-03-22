@@ -342,17 +342,16 @@ export class ICountClient {
   // ===== Payment Pages (Clearing) =====
 
   async createPaymentPage(request: CreatePaymentPageRequest): Promise<CreatePaymentPageResponse> {
-    // iCount paypage uses items array with desc/quantity/unitprice keys
-    // Mark items as VAT exempt (vat_type: 0) so no VAT is added
+    // iCount always adds 18% VAT — send price / 1.18 so total matches intended price
+    const VAT_RATE = 1.18;
     const items = request.items.map((item) => ({
       desc: item.description,
       quantity: item.quantity,
-      unitprice: item.unitprice,
-      vat_type: 0,
+      unitprice: Math.round((item.unitprice / VAT_RATE) * 100) / 100,
     }));
 
     // Calculate total for cs (custom sum) fallback
-    const totalSum = request.items.reduce((sum, item) => sum + item.quantity * item.unitprice, 0);
+    const totalSum = items.reduce((sum, item) => sum + item.quantity * item.unitprice, 0);
     const firstDesc = request.items[0]?.description || "תשלום";
 
     const data = await this.request<{ paypage_url?: string; paypage_id?: number; payment_url?: string; page_id?: string; sale_url?: string }>(
@@ -380,12 +379,7 @@ export class ICountClient {
         webhook_url: request.webhookUrl,
         auto_create_doc: 1,
         doctype: request.docType ? this.mapDocType(request.docType) : "invrec",
-        // VAT settings — multiple approaches for compatibility
-        vat_exempt: 1,
-        include_vat: 0,
-        price_include_vat: 1,
-        no_vat: 1,
-        vat_percent: 0,
+        // VAT: prices sent pre-divided by 1.18 so total with VAT = intended price
         // No max_payments — leave unlimited
         // Hidden metadata — m__ prefix fields are returned in IPN without the prefix
         ...(request.metadata
