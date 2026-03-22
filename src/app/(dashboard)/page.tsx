@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
-  Mail, Loader2, Tags, Settings, Plus,
+  Mail, Loader2, Tags, Settings, Plus, Send,
   ClipboardList, CheckCircle2, Upload, FileText, ChevronDown, ChevronUp,
   LayoutDashboard
 } from "lucide-react"
@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { HeroMusicSpiral3D } from "@/components/ui/HeroMusicSpiral3D"
+import { InviteCustomerDialog } from "@/components/customers/invite-customer-dialog"
 
 interface MissingInfoCustomer {
   id: number
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [missingInfoExpanded, setMissingInfoExpanded] = useState(false)
   const [uploadingId, setUploadingId] = useState<number | null>(null)
   const [heroRevealed, setHeroRevealed] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setHeroRevealed(true), 600)
@@ -70,7 +72,7 @@ export default function HomePage() {
 
   const quickActions = [
     { label: "לקוח חדש", icon: UserPlus, href: "/customers/new", bg: "bg-green-50 hover:bg-green-100", color: "text-green-600", border: "border-green-200/60" },
-    { label: "עריכת לקוח", icon: UserCog, href: "/customers", bg: "bg-blue-50 hover:bg-blue-100", color: "text-blue-700", border: "border-blue-200/60" },
+    { label: "הזמן לקוח", icon: Send, href: "__invite__", bg: "bg-indigo-50 hover:bg-indigo-100", color: "text-indigo-600", border: "border-indigo-200/60" },
     { label: "רשימת לקוחות", icon: Users, href: "/customers", bg: "bg-sky-50 hover:bg-sky-100", color: "text-sky-600", border: "border-sky-200/60" },
     { label: "שליחת מיילים", icon: Mail, href: "/emails", bg: "bg-pink-50 hover:bg-pink-100", color: "text-pink-600", border: "border-pink-200/60" },
     { label: "עדכונים", icon: RefreshCw, href: "/updates", bg: "bg-orange-50 hover:bg-orange-100", color: "text-orange-600", border: "border-orange-200/60" },
@@ -128,7 +130,7 @@ export default function HomePage() {
                       <button
                         key={item.label}
                         type="button"
-                        onClick={() => router.push(item.href)}
+                        onClick={() => item.href === "__invite__" ? setInviteOpen(true) : router.push(item.href)}
                         className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/95 px-2 py-4 text-center shadow-md shadow-black/15 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-xl sm:py-5"
                       >
                         <Icon
@@ -224,6 +226,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      <InviteCustomerDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }

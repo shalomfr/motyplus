@@ -20,8 +20,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
-import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle, RefreshCw } from "lucide-react"
+import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle, RefreshCw, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { InviteCustomerDialog } from "@/components/customers/invite-customer-dialog"
 
 const PAGE_SIZE = 20
 
@@ -50,6 +51,7 @@ export default function CustomersListPage() {
   const [lastBatchTag, setLastBatchTag] = useState<string | null>(null)
   const [isDeletingImport, setIsDeletingImport] = useState(false)
   const [isSyncingInfo, setIsSyncingInfo] = useState(false)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [latestVersion, setLatestVersion] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -384,6 +386,10 @@ export default function CustomersListPage() {
             )}
             ייצוא לאקסל
           </Button>
+          <Button variant="outline" onClick={() => setInviteDialogOpen(true)}>
+            <Send className="h-4 w-4 ml-2" />
+            הזמן לקוח
+          </Button>
           <Link href="/customers/new">
             <Button>
               <Plus className="h-4 w-4 ml-2" />
@@ -589,6 +595,8 @@ export default function CustomersListPage() {
         latestVersion={latestVersion}
         onPageChange={setPage}
       />
+
+      <InviteCustomerDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen} />
     </div>
   )
 }
