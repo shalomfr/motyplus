@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { VariableTextarea } from "./variable-textarea"
+import { VariableTextarea, type VariableTextareaHandle } from "./variable-textarea"
+import { useRef } from "react"
 import {
   Select,
   SelectContent,
@@ -158,10 +159,16 @@ function ButtonsEditor({
   )
 }
 
-function renderBlockFields(
-  block: EmailBlock,
+function RenderBlockFields({
+  block,
+  onChange,
+}: {
+  block: EmailBlock
   onChange: (b: EmailBlock) => void
-) {
+}) {
+  const textareaRef = useRef<VariableTextareaHandle>(null)
+  const textareaLeftRef = useRef<VariableTextareaHandle>(null)
+
   switch (block.type) {
     case "heading":
       return (
@@ -182,6 +189,7 @@ function renderBlockFields(
             </Select>
           </div>
           <VariableTextarea
+            ref={textareaRef}
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder={block.layout === "split" ? "כותרת ימין (עברית)" : "טקסט כותרת"}
@@ -191,6 +199,7 @@ function renderBlockFields(
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">צד שמאל:</Label>
               <VariableTextarea
+                ref={textareaLeftRef}
                 value={block.textLeft || ""}
                 onChange={(textLeft) => onChange({ ...block, textLeft })}
                 placeholder="כותרת שמאל (Version 5.0)"
@@ -202,7 +211,7 @@ function renderBlockFields(
                     key={v.name}
                     variant="outline"
                     className="text-[10px] cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 py-0 px-1.5"
-                    onClick={() => onChange({ ...block, textLeft: (block.textLeft || "") + `{{${v.name}}}` })}
+                    onClick={() => textareaLeftRef.current?.insertAtCursor(`{{${v.name}}}`)}
                   >
                     {v.label}
                   </Badge>
@@ -217,6 +226,7 @@ function renderBlockFields(
       return (
         <div className="space-y-1.5">
           <VariableTextarea
+            ref={textareaRef}
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט באנר"
@@ -262,6 +272,7 @@ function renderBlockFields(
             </Button>
           </div>
           <VariableTextarea
+            ref={textareaRef}
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט פסקה..."
@@ -327,6 +338,7 @@ function renderBlockFields(
       return (
         <div className="space-y-1.5">
           <VariableTextarea
+            ref={textareaRef}
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט המבצע"
@@ -361,6 +373,7 @@ function renderBlockFields(
     case "warning":
       return (
         <VariableTextarea
+          ref={textareaRef}
           value={block.text}
           onChange={(text) => onChange({ ...block, text })}
           placeholder="טקסט אזהרה..."
@@ -431,6 +444,7 @@ function renderBlockFields(
     case "instructions":
       return (
         <VariableTextarea
+          ref={textareaRef}
           value={block.text}
           onChange={(text) => onChange({ ...block, text })}
           placeholder="הוראות הורדה והתקנה..."
@@ -504,7 +518,7 @@ export function BlockItem({
           <Trash2 className="h-3 w-3" />
         </Button>
       </div>
-      <div className="p-3">{renderBlockFields(block, onChange)}</div>
+      <div className="p-3"><RenderBlockFields block={block} onChange={onChange} /></div>
     </div>
   )
 }

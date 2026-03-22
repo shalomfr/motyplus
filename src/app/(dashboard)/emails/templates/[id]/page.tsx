@@ -213,13 +213,48 @@ export default function EditTemplatePage() {
 
           <div className="space-y-2">
             <Label htmlFor="subject">נושא</Label>
-            <Input
-              id="subject"
-              value={form.subject}
-              onChange={(e) => setForm({ ...form, subject: e.target.value })}
-              placeholder="נושא המייל"
-              required
-            />
+            <div className="flex gap-2 items-center">
+              <Input
+                id="subject"
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                placeholder="נושא המייל"
+                required
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="whitespace-nowrap text-xs"
+                onClick={() => {
+                  const input = document.getElementById("subject") as HTMLInputElement
+                  const start = input.selectionStart ?? form.subject.length
+                  const end = input.selectionEnd ?? form.subject.length
+                  const newSubject = form.subject.slice(0, start) + "{{גרסת_עדכון}}" + form.subject.slice(end)
+                  setForm({ ...form, subject: newSubject })
+                  setTimeout(() => { input.focus(); input.setSelectionRange(start + 14, start + 14) }, 0)
+                }}
+              >
+                גרסת עדכון
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="whitespace-nowrap text-xs"
+                onClick={() => {
+                  const input = document.getElementById("subject") as HTMLInputElement
+                  const start = input.selectionStart ?? form.subject.length
+                  const end = input.selectionEnd ?? form.subject.length
+                  const newSubject = form.subject.slice(0, start) + "{{תאריך}}" + form.subject.slice(end)
+                  setForm({ ...form, subject: newSubject })
+                  setTimeout(() => { input.focus(); input.setSelectionRange(start + 9, start + 9) }, 0)
+                }}
+              >
+                תאריך
+              </Button>
+            </div>
           </div>
 
           <EmailEditor

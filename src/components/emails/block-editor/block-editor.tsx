@@ -106,9 +106,39 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
       if (idx === -1) return
 
       const block = blocks[idx]
-      if ("text" in block && typeof block.text === "string") {
-        updateBlock(idx, { ...block, text: block.text + `{{${varName}}}` } as EmailBlock)
+      if (!("text" in block) || typeof block.text !== "string") return
+
+      // Try to find the focused VariableTextarea contentEditable and insert at cursor
+      const activeEl = document.activeElement
+      if (activeEl && activeEl.getAttribute("contenteditable") === "true") {
+        const sel = window.getSelection()
+        if (sel && sel.rangeCount > 0 && activeEl.contains(sel.getRangeAt(0).startContainer)) {
+          // Insert via DOM at cursor position
+          const range = sel.getRangeAt(0)
+          range.deleteContents()
+          const varTag = `{{${varName}}}`
+          const label = varName
+          const span = document.createElement("span")
+          span.setAttribute("data-var", varName)
+          span.setAttribute("contenteditable", "false")
+          span.style.cssText = "display:inline-flex;align-items:center;padding:1px 8px;margin:0 2px;border-radius:9999px;font-size:12px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;cursor:default;user-select:none;"
+          // Get label from EMAIL_VARIABLES
+          span.textContent = EMAIL_VARIABLES.find(v => v.name === varName)?.label || varName
+          range.insertNode(span)
+          // Move cursor after
+          const newRange = document.createRange()
+          newRange.setStartAfter(span)
+          newRange.collapse(true)
+          sel.removeAllRanges()
+          sel.addRange(newRange)
+          // Trigger input event to sync value
+          activeEl.dispatchEvent(new Event("input", { bubbles: true }))
+          return
+        }
       }
+
+      // Fallback: append to end
+      updateBlock(idx, { ...block, text: block.text + `{{${varName}}}` } as EmailBlock)
     },
     [blocks, selectedBlockId, updateBlock]
   )

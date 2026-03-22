@@ -1,8 +1,12 @@
 "use client"
 
-import { useRef, useCallback, useEffect } from "react"
+import { useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from "react"
 import { EMAIL_VARIABLES } from "../variable-badge-extension"
 import { cn } from "@/lib/utils"
+
+export interface VariableTextareaHandle {
+  insertAtCursor: (text: string) => void
+}
 
 interface VariableTextareaProps {
   value: string
@@ -66,17 +70,94 @@ function domToValue(el: HTMLElement): string {
   return result
 }
 
-export function VariableTextarea({
+export const VariableTextarea = forwardRef<VariableTextareaHandle, VariableTextareaProps>(function VariableTextarea({
   value,
   onChange,
   placeholder,
   rows = 2,
   className,
   singleLine = false,
-}: VariableTextareaProps) {
+}, ref) {
   const editableRef = useRef<HTMLDivElement>(null)
   const lastValueRef = useRef<string>("")
   const isTypingRef = useRef(false)
+  const savedRangeRef = useRef<Range | null>(null)
+
+  // Save cursor position on selection change / blur
+  const saveCursorPosition = useCallback(() => {
+    const el = editableRef.current
+    if (!el) return
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0)
+      if (el.contains(range.startContainer)) {
+        savedRangeRef.current = range.cloneRange()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener("selectionchange", saveCursorPosition)
+    return () => document.removeEventListener("selectionchange", saveCursorPosition)
+  }, [saveCursorPosition])
+
+  // Expose insertAtCursor to parent via ref
+  useImperativeHandle(ref, () => ({
+    insertAtCursor(text: string) {
+      const el = editableRef.current
+      if (!el) return
+
+      // Build the variable badge HTML
+      const html = valueToHtml(text)
+
+      el.focus()
+      const sel = window.getSelection()
+      if (!sel) return
+
+      // Restore saved cursor position if available
+      if (savedRangeRef.current && el.contains(savedRangeRef.current.startContainer)) {
+        sel.removeAllRanges()
+        sel.addRange(savedRangeRef.current)
+      }
+
+      // If selection is not inside our element, place cursor at end
+      if (!sel.rangeCount || !el.contains(sel.getRangeAt(0).startContainer)) {
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        range.collapse(false)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
+
+      // Insert at cursor position
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      const temp = document.createElement("span")
+      temp.innerHTML = html
+      const frag = document.createDocumentFragment()
+      let lastNode: Node | null = null
+      while (temp.firstChild) {
+        lastNode = frag.appendChild(temp.firstChild)
+      }
+      range.insertNode(frag)
+
+      // Move cursor after inserted content
+      if (lastNode) {
+        const newRange = document.createRange()
+        newRange.setStartAfter(lastNode)
+        newRange.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(newRange)
+      }
+
+      // Sync value
+      isTypingRef.current = true
+      const extracted = domToValue(el)
+      lastValueRef.current = extracted
+      onChange(extracted)
+      requestAnimationFrame(() => { isTypingRef.current = false })
+    }
+  }), [onChange])
 
   // Sync DOM from value — only when value changes externally
   useEffect(() => {
@@ -134,4 +215,4 @@ export function VariableTextarea({
       style={!value ? { color: "#9ca3af" } : undefined}
     />
   )
-}
+})
