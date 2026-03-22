@@ -269,7 +269,39 @@ function RenderBlockFields({
               title="הדגש (bold)"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
-                document.execCommand("bold", false)
+                const sel = window.getSelection()
+                if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+                  document.execCommand("bold", false)
+                  return
+                }
+                const range = sel.getRangeAt(0)
+                // Check if already inside <b>/<strong> — toggle off
+                let ancestor = range.commonAncestorContainer as Node
+                if (ancestor.nodeType === Node.TEXT_NODE) ancestor = ancestor.parentNode!
+                const boldParent = (ancestor as HTMLElement).closest?.("b, strong")
+                if (boldParent) {
+                  // Unwrap bold
+                  const parent = boldParent.parentNode!
+                  while (boldParent.firstChild) {
+                    parent.insertBefore(boldParent.firstChild, boldParent)
+                  }
+                  parent.removeChild(boldParent)
+                } else {
+                  // Wrap entire selection (including variable badges) in <b>
+                  const fragment = range.extractContents()
+                  const bold = document.createElement("b")
+                  bold.appendChild(fragment)
+                  range.insertNode(bold)
+                  const newRange = document.createRange()
+                  newRange.selectNodeContents(bold)
+                  sel.removeAllRanges()
+                  sel.addRange(newRange)
+                }
+                // Trigger input event to sync value
+                const editable = (range.startContainer.nodeType === Node.TEXT_NODE
+                  ? range.startContainer.parentElement
+                  : range.startContainer as HTMLElement)?.closest("[contenteditable]")
+                editable?.dispatchEvent(new Event("input", { bubbles: true }))
               }}
             >
               <Bold className="h-3 w-3" />
