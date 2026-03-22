@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { ProcessPayment } from "./process-payment";
 
 export default function OrderSuccessPage() {
   return (
@@ -30,6 +31,9 @@ export default function OrderSuccessPage() {
       <p className="text-xs text-gray-400 mt-8">
         לשאלות ובירורים ניתן לפנות אלינו בכל עת
       </p>
+
+      {/* Process payment from URL params as fallback if webhook didn't fire */}
+      <ProcessPayment />
     </div>
   );
 }
