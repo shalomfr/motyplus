@@ -44,7 +44,7 @@ function valueToHtml(text: string): string {
 
 function domToValue(el: HTMLElement): string {
   let result = ""
-  el.childNodes.forEach((node) => {
+  el.childNodes.forEach((node, idx) => {
     if (node.nodeType === Node.TEXT_NODE) {
       result += node.textContent || ""
     } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -54,6 +54,10 @@ function domToValue(el: HTMLElement): string {
         result += `{{${varName}}}`
       } else if (element.tagName === "BR") {
         result += "\n"
+      } else if (element.tagName === "DIV" || element.tagName === "P") {
+        // contentEditable wraps new lines in <div> or <p>
+        if (idx > 0) result += "\n"
+        result += domToValue(element)
       } else {
         result += element.textContent || ""
       }
