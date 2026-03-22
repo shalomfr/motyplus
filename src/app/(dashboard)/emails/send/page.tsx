@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { VariableTextarea } from "@/components/emails/block-editor/variable-textarea"
+import { EMAIL_VARIABLES } from "@/components/emails/variable-badge-extension"
+import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -269,13 +271,26 @@ export default function SendEmailPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">נושא (תומך משתנים כמו {"{{updateVersion}}"})</Label>
+                <Label htmlFor="subject">נושא</Label>
                 <VariableTextarea
                   value={subject}
                   onChange={setSubject}
                   placeholder="נושא המייל — למשל: עדכון {{updateVersion}} זמין!"
                   singleLine
                 />
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-xs text-muted-foreground self-center">הוסף משתנה:</span>
+                  {EMAIL_VARIABLES.filter(v => ["updateVersion", "organ", "fullName", "releaseDate", "currentVersion"].includes(v.name)).map((v) => (
+                    <Badge
+                      key={v.name}
+                      variant="outline"
+                      className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                      onClick={() => setSubject(prev => prev + `{{${v.name}}}`)}
+                    >
+                      {v.label}
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
               <EmailEditor value={body} onChange={setBody} />
