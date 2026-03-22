@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { ProcessPayment } from "./process-payment";
 
@@ -33,7 +34,9 @@ export default function OrderSuccessPage() {
       </p>
 
       {/* Process payment from URL params as fallback if webhook didn't fire */}
-      <ProcessPayment />
+      <Suspense>
+        <ProcessPayment />
+      </Suspense>
     </div>
   );
 }
