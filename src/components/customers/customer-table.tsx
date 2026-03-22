@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -227,15 +227,11 @@ export function CustomerTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Link href={`/customers/${customer.id}`}>
-                        <Button variant="ghost" size="icon" title="צפייה">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                      <Link href={`/customers/${customer.id}`} className={buttonVariants({ variant: "ghost", size: "icon" })} title="צפייה">
+                        <Eye className="h-4 w-4" />
                       </Link>
-                      <Link href={`/customers/${customer.id}`}>
-                        <Button variant="ghost" size="icon" title="עריכה">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                      <Link href={`/customers/${customer.id}`} className={buttonVariants({ variant: "ghost", size: "icon" })} title="עריכה">
+                        <Pencil className="h-4 w-4" />
                       </Link>
                       {onToggleSuspend && (
                         <Button

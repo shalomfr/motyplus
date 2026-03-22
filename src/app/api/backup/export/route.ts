@@ -10,6 +10,9 @@ export async function GET() {
     if (!session?.user) {
       return NextResponse.json({ error: "לא מורשה" }, { status: 401 })
     }
+    if ((session.user as { role?: string }).role !== "ADMIN") {
+      return NextResponse.json({ error: "פעולה זו מותרת למנהלים בלבד" }, { status: 403 })
+    }
 
     const backup = await exportAllData()
 

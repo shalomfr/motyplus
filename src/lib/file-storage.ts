@@ -9,6 +9,11 @@ import { Readable } from "stream";
 // In-memory cache: path segment → Drive folder ID
 const folderCache = new Map<string, string>();
 
+// Escape single quotes for Google Drive API queries
+function escapeDriveQuery(name: string): string {
+  return name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 // === Internal helpers ===
 
 export async function ensureFolderPath(folderPath: string): Promise<string> {
@@ -29,7 +34,7 @@ export async function ensureFolderPath(folderPath: string): Promise<string> {
 
     // Search for existing folder
     const res = await drive.files.list({
-      q: `name='${part}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      q: `name='${escapeDriveQuery(part)}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
       fields: "files(id)",
       spaces: "drive",
     });
@@ -64,7 +69,7 @@ async function resolveFileId(path: string): Promise<string | null> {
   const folderId = folderPath ? await ensureFolderPath(folderPath) : getRootFolderId();
 
   const res = await drive.files.list({
-    q: `name='${filename}' and '${folderId}' in parents and trashed=false`,
+    q: `name='${escapeDriveQuery(filename)}' and '${folderId}' in parents and trashed=false`,
     fields: "files(id)",
     spaces: "drive",
   });
@@ -92,7 +97,7 @@ export async function uploadFile(
 
   // Check if file already exists (upsert)
   const existing = await drive.files.list({
-    q: `name='${filename}' and '${folderId}' in parents and trashed=false`,
+    q: `name='${escapeDriveQuery(filename)}' and '${folderId}' in parents and trashed=false`,
     fields: "files(id)",
     spaces: "drive",
   });

@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/header";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
-const MIN_SPLASH_MS = 1800;
+const MIN_SPLASH_MS = 800;
 
 export default function DashboardLayout({
   children,

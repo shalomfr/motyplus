@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { LeadPipeline } from "@/components/leads/lead-pipeline"
 import { Plus, Loader2, Filter } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Lead {
   id: string
@@ -32,6 +33,7 @@ interface Agent {
 
 export default function LeadsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [leads, setLeads] = useState<Lead[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,6 +55,7 @@ export default function LeadsPage() {
       }
     } catch (err) {
       console.error("Error fetching leads:", err)
+      toast({ title: "שגיאה בטעינת לידים", variant: "destructive" })
     } finally {
       setLoading(false)
     }

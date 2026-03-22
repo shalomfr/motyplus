@@ -10,6 +10,9 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
+  if ((session.user as { role?: string }).role !== "ADMIN") {
+    return NextResponse.json({ error: "פעולה זו מותרת למנהלים בלבד" }, { status: 403 });
+  }
 
   const { id } = await params;
   const body = await request.json();
@@ -36,6 +39,9 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
+  if ((session.user as { role?: string }).role !== "ADMIN") {
+    return NextResponse.json({ error: "פעולה זו מותרת למנהלים בלבד" }, { status: 403 });
+  }
 
   const { id } = await params;
   await prisma.user.delete({ where: { id } });

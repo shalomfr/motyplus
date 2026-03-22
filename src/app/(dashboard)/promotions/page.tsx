@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Percent, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface Promotion {
   id: string
@@ -31,6 +32,7 @@ interface Promotion {
 
 export default function PromotionsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -44,6 +46,7 @@ export default function PromotionsPage() {
         }
       } catch (err) {
         console.error("Error fetching promotions:", err)
+        toast({ title: "שגיאה בטעינת מבצעים", variant: "destructive" })
       } finally {
         setLoading(false)
       }

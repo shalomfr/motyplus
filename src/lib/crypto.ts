@@ -5,7 +5,10 @@ const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
 function getKey(): Buffer {
-  const key = process.env.ENCRYPTION_KEY || process.env.AUTH_SECRET || "";
+  const key = process.env.ENCRYPTION_KEY || process.env.AUTH_SECRET;
+  if (!key) {
+    throw new Error("ENCRYPTION_KEY or AUTH_SECRET must be set for encryption");
+  }
   // Pad or hash to 32 bytes
   const buf = Buffer.alloc(32);
   buf.write(key, "utf8");

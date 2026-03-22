@@ -270,8 +270,16 @@ function OrgansTab() {
             </div>
             <div className="space-y-2">
               <Label>כינוי תיקייה (folderAlias)</Label>
-              <Input value={formFolderAlias} onChange={(e) => setFormFolderAlias(e.target.value)} placeholder="שם התיקייה ב-ZIP" dir="ltr" />
-              <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: Genos2, Tyros5-1G</p>
+              <Input
+                value={formFolderAlias}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^a-zA-Z0-9_ -]/g, "")
+                  setFormFolderAlias(val)
+                }}
+                placeholder="שם התיקייה ב-ZIP"
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">שם התיקייה בקובץ ה-ZIP. למשל: Genos2, Tyros5-1G (אותיות, מספרים, רווח, מקף, קו תחתון)</p>
             </div>
             <div className="space-y-2">
               <Label>כינוי Demo (demoAlias)</Label>

@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: "לא מורשה" }, { status: 401 })
     }
+    if ((session.user as { role?: string }).role !== "ADMIN") {
+      return NextResponse.json({ error: "פעולה זו מותרת למנהלים בלבד" }, { status: 403 })
+    }
 
     const formData = await request.formData()
     const file = formData.get("file") as File | null

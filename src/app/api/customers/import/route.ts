@@ -131,10 +131,19 @@ function buildHeaderMap(headers: string[]): Map<string, number> {
   return map;
 }
 
+function sanitizeCellValue(value: string): string {
+  // הגנה מפני CSV injection — תווים מסוכנים בתחילת ערך
+  if (/^[=+\-@\t\r]/.test(value)) {
+    return value.replace(/^[=+\-@\t\r]+/, "");
+  }
+  return value;
+}
+
 function getCell(row: string[], headerMap: Map<string, number>, key: string): string {
   const idx = headerMap.get(key);
   if (idx === undefined || idx >= row.length) return "";
-  return row[idx]?.trim() || "";
+  const raw = row[idx]?.trim() || "";
+  return sanitizeCellValue(raw);
 }
 
 // ===== POST /api/customers/import =====

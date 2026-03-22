@@ -54,4 +54,4 @@ USER nextjs
 EXPOSE 3000
 
 # Run migrations then start server
-CMD ["sh", "-c", "npx prisma migrate deploy 2>&1 || echo 'Migration skipped' && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy 2>&1 && node server.js"]

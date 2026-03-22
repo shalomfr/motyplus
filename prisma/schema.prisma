@@ -130,6 +130,7 @@ model Customer {
 
   @@index([organId])
   @@index([setTypeId])
+  @@index([organId, setTypeId])
   @@index([status])
   @@index([email])
   @@index([fullName])
@@ -436,6 +437,7 @@ model Payment {
   @@index([customerId])
   @@index([status])
   @@index([promotionId])
+  @@index([externalPaymentId])
 }
 
 // ===== יומן פעילות =====

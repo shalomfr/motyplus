@@ -77,12 +77,13 @@ export async function POST(request: NextRequest) {
     let sent = 0;
     let failed = 0;
 
-    for (const customer of customers) {
-      const fullSetPrice = await prisma.setType.findFirst({
-        where: { includesUpdates: true },
-        select: { price: true },
-      });
+    // שליפת מחיר סט מלא פעם אחת מחוץ ללולאה
+    const fullSetPrice = await prisma.setType.findFirst({
+      where: { includesUpdates: true },
+      select: { price: true },
+    });
 
+    for (const customer of customers) {
       const remainingForFullSet = fullSetPrice
         ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
         : 0;

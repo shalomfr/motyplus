@@ -244,6 +244,8 @@ export default function SettingsPage() {
   }
 
   const handleToggleUser = async (userId: string, isActive: boolean) => {
+    const action = isActive ? "להשבית" : "להפעיל"
+    if (!confirm(`האם ${action} את המשתמש?`)) return
     try {
       await fetch(`/api/users/${userId}`, {
         method: "PATCH",

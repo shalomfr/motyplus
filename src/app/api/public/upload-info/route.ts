@@ -70,6 +70,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "לקוח לא נמצא" }, { status: 404 });
     }
 
+    // מחיקת הטוקן מיד — מונע שימוש חוזר בו-זמנית
+    await prisma.systemSetting.delete({
+      where: { key: `upload-token:${token}` },
+    });
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -95,11 +100,6 @@ export async function POST(request: NextRequest) {
     await prisma.customer.update({
       where: { id: tokenData.customerId },
       data: { infoFileUrl: url },
-    });
-
-    // מחיקת הטוקן — חד-פעמי
-    await prisma.systemSetting.delete({
-      where: { key: `upload-token:${token}` },
     });
 
     return NextResponse.json({ success: true, fileName: newFileName });

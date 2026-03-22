@@ -30,21 +30,18 @@ export default function HomePage() {
   const [uploadingId, setUploadingId] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch("/api/tasks?limit=0")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.counts) {
-          const total = data.counts.IDEA + data.counts.PLANNING + data.counts.IN_PROGRESS + data.counts.DONE
-          setTaskCounts({ DONE: data.counts.DONE, total })
-        }
-      })
-      .catch(() => {})
-
-    // טעינת לקוחות חסרי אינפו
-    fetch("/api/customers/missing-info")
-      .then((r) => r.ok ? r.json() : { customers: [] })
-      .then((data) => setMissingInfo(data.customers || []))
-      .catch(() => {})
+    Promise.all([
+      fetch("/api/tasks?limit=0").then((r) => r.ok ? r.json() : null),
+      fetch("/api/customers/missing-info").then((r) => r.ok ? r.json() : { customers: [] }),
+    ]).then(([tasksData, missingData]) => {
+      if (tasksData?.counts) {
+        const total = tasksData.counts.IDEA + tasksData.counts.PLANNING + tasksData.counts.IN_PROGRESS + tasksData.counts.DONE
+        setTaskCounts({ DONE: tasksData.counts.DONE, total })
+      }
+      setMissingInfo(missingData.customers || [])
+    }).catch(() => {
+      toast({ title: "שגיאה בטעינת נתונים", variant: "destructive" })
+    })
   }, [])
 
   const handleUploadInfoFor = (customerId: number) => {

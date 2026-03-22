@@ -7,6 +7,16 @@ import { logActivity } from "@/lib/activity-logger";
 // נקרא ע"י NotifyUrl אחרי תשלום בדף סליקה
 export async function POST(request: NextRequest) {
   try {
+    // אימות webhook — בדיקת secret token ב-query string
+    const webhookSecret = process.env.YESHINVOICE_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const token = request.nextUrl.searchParams.get("secret");
+      if (token !== webhookSecret) {
+        console.error("YeshInvoice webhook: invalid secret token");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     const body = await request.json();
 
     // Parse metadata from Fields1
