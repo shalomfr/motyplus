@@ -87,6 +87,13 @@ function ProviderCard({
       }
       apiKey = JSON.stringify({ apiName: field1, apiPassword: field2, terminalNumber: field3 })
       displayName = "CardCom"
+    } else if (providerType === "GREEN_INVOICE") {
+      if (!field1 || !field2) {
+        toast({ title: "יש להזין API Key ID ו-API Secret", variant: "destructive" })
+        return
+      }
+      apiKey = JSON.stringify({ id: field1, secret: field2 })
+      displayName = "morning (Green Invoice)"
     }
 
     setSaving(true)
@@ -279,6 +286,17 @@ function ProviderCard({
                       <Input value={field3} onChange={(e) => setField3(e.target.value)} placeholder="1000" dir="ltr" />
                     </div>
                   </>
+                ) : providerType === "GREEN_INVOICE" ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label>API Key ID</Label>
+                      <Input value={field1} onChange={(e) => setField1(e.target.value)} placeholder="xxxxxxxx-xxxx-..." dir="ltr" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>API Secret</Label>
+                      <Input type="password" value={field2} onChange={(e) => setField2(e.target.value)} placeholder="••••••••" dir="ltr" />
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div className="space-y-1">
@@ -347,6 +365,17 @@ function ProviderCard({
                   <Input value={field3} onChange={(e) => setField3(e.target.value)} placeholder="1000" dir="ltr" />
                 </div>
               </>
+            ) : providerType === "GREEN_INVOICE" ? (
+              <>
+                <div className="space-y-1">
+                  <Label>API Key ID</Label>
+                  <Input value={field1} onChange={(e) => setField1(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-..." dir="ltr" />
+                </div>
+                <div className="space-y-1">
+                  <Label>API Secret</Label>
+                  <Input type="password" value={field2} onChange={(e) => setField2(e.target.value)} placeholder="••••••••" dir="ltr" />
+                </div>
+              </>
             ) : (
               <>
                 <div className="space-y-1">
@@ -406,6 +435,18 @@ export function ConnectionsTab() {
 
   return (
     <div className="space-y-6">
+      <ProviderCard
+        providerType="GREEN_INVOICE"
+        label="morning (Green Invoice)"
+        description="סליקה, חשבוניות, קבלות וניהול לקוחות"
+        icon={
+          <div className="p-2 bg-emerald-100 rounded-lg">
+            <Plug className="h-5 w-5 text-emerald-600" />
+          </div>
+        }
+        providers={providers}
+        onRefresh={fetchProviders}
+      />
       <ProviderCard
         providerType="YESHINVOICE"
         label="יש חשבונית"

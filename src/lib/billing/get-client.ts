@@ -7,6 +7,7 @@ import type { BillingClient } from "./client";
 import { ICountAdapter } from "./icount-adapter";
 import { YeshInvoiceClient } from "./yeshinvoice-client";
 import { CardComClient } from "./cardcom-client";
+import { GreenInvoiceClient } from "./greeninvoice-client";
 
 export interface BillingClientResult {
   client: BillingClient;
@@ -46,6 +47,11 @@ function buildClient(provider: BillingProvider): BillingClientResult {
   if (provider.provider === "CARDCOM") {
     const authJson = decrypt(provider.apiKey);
     return { client: new CardComClient(authJson), provider };
+  }
+
+  if (provider.provider === "GREEN_INVOICE") {
+    const authJson = decrypt(provider.apiKey);
+    return { client: new GreenInvoiceClient(authJson), provider };
   }
 
   // Default: ICOUNT

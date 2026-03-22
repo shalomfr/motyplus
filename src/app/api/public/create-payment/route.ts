@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
     const webhookPathMap: Record<string, string> = {
+      GREEN_INVOICE: "/api/webhooks/greeninvoice",
       CARDCOM: "/api/webhooks/cardcom",
       YESHINVOICE: "/api/webhooks/yeshinvoice",
       ICOUNT: "/api/webhooks/icount",
@@ -108,11 +109,12 @@ export async function POST(request: NextRequest) {
     });
 
     let webhookUrl = `${baseUrl}${webhookPath}`;
-    const webhookSecret = billing.provider.provider === "CARDCOM"
-      ? process.env.CARDCOM_WEBHOOK_SECRET
-      : billing.provider.provider === "YESHINVOICE"
-        ? process.env.YESHINVOICE_WEBHOOK_SECRET
-        : null;
+    const webhookSecretMap: Record<string, string | undefined> = {
+      GREEN_INVOICE: process.env.GREENINVOICE_WEBHOOK_SECRET,
+      CARDCOM: process.env.CARDCOM_WEBHOOK_SECRET,
+      YESHINVOICE: process.env.YESHINVOICE_WEBHOOK_SECRET,
+    };
+    const webhookSecret = webhookSecretMap[billing.provider.provider] || null;
     if (webhookSecret) {
       webhookUrl += `?secret=${webhookSecret}`;
     }
