@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       paymentPage = await billing.client.createPaymentPage({
         customer: { name: fullName, email, phone },
         items: [{ description, quantity: 1, unitPrice: amount }],
-        successUrl: `${baseUrl}/order/success`,
+        successUrl: `${baseUrl}/order/success?oid=${pendingOrder.id}`,
         cancelUrl: `${baseUrl}/order/cancel`,
         webhookUrl,
         autoCreateDoc: true,

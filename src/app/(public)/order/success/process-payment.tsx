@@ -19,15 +19,20 @@ export function ProcessPayment() {
     const params = new URLSearchParams(window.location.search);
     let pendingOrderId = "";
 
-    // Method 1: direct param (iCount strips m__ prefix)
-    pendingOrderId = params.get("pendingOrderId") || "";
+    // Method 1: oid param (set by create-payment in success_url)
+    pendingOrderId = params.get("oid") || "";
 
-    // Method 2: m__ prefixed param
+    // Method 2: direct param (iCount strips m__ prefix)
+    if (!pendingOrderId) {
+      pendingOrderId = params.get("pendingOrderId") || "";
+    }
+
+    // Method 3: m__ prefixed param
     if (!pendingOrderId) {
       pendingOrderId = params.get("m__pendingOrderId") || "";
     }
 
-    // Method 3: custom[{json}] format (legacy)
+    // Method 4: custom[{json}] format (legacy)
     if (!pendingOrderId) {
       for (const [key] of params.entries()) {
         if (key.startsWith("custom[") || key.startsWith("custom%5B")) {
