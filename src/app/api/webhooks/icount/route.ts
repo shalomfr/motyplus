@@ -95,10 +95,31 @@ async function parseRequestBody(request: NextRequest): Promise<Record<string, un
 
 /**
  * Extract pendingOrderId from iCount's custom field format
- * iCount sends custom fields as: custom[{"pendingOrderId":"..."}]= (key with empty value)
- * or as: custom_fields={"pendingOrderId":"..."}
+ * iCount returns m__ prefixed fields without the prefix in IPN
+ * Also supports: custom[{json}], custom_fields, direct fields
  */
 function extractCustomFields(body: Record<string, unknown>): Record<string, string> | null {
+  // Check for m__ prefixed fields (iCount returns them without prefix in IPN)
+  // e.g., m__pendingOrderId → pendingOrderId in IPN
+  const result: Record<string, string> = {};
+
+  // Direct fields (iCount strips m__ prefix in IPN)
+  if (body.pendingOrderId) {
+    result.pendingOrderId = String(body.pendingOrderId);
+  }
+  if (body.promotionId) {
+    result.promotionId = String(body.promotionId);
+  }
+
+  // Check for m__ prefixed fields (in case iCount doesn't strip them)
+  for (const key of Object.keys(body)) {
+    if (key.startsWith("m__")) {
+      result[key.slice(3)] = String(body[key]);
+    }
+  }
+
+  if (result.pendingOrderId) return result;
+
   // Check for standard custom_fields
   if (body.custom_fields) {
     try {
@@ -110,17 +131,15 @@ function extractCustomFields(body: Record<string, unknown>): Record<string, stri
     }
   }
 
-  // Check for custom[{json}] format — iCount sends metadata JSON as key name
+  // Check for custom[{json}] format — legacy fallback
   for (const key of Object.keys(body)) {
     if (key.startsWith("custom[") || key.startsWith("custom%5B")) {
-      // Extract JSON from between brackets
       const match = key.match(/custom[\[%5B](.+?)[\]%5D]/i);
       if (match) {
         try {
           const decoded = decodeURIComponent(match[1]);
           return JSON.parse(decoded);
         } catch {
-          // try without decoding
           try {
             return JSON.parse(match[1]);
           } catch { /* skip */ }

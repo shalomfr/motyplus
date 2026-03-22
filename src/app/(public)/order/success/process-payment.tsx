@@ -16,22 +16,32 @@ export function ProcessPayment() {
     if (processedRef.current) return;
     processedRef.current = true;
 
-    // Look for custom[{json}] param containing pendingOrderId
     const params = new URLSearchParams(window.location.search);
     let pendingOrderId = "";
 
-    for (const [key] of params.entries()) {
-      if (key.startsWith("custom[") || key.startsWith("custom%5B")) {
-        try {
-          const match = key.match(/custom[\[%5B](.+?)[\]%5D]/i);
-          if (match) {
-            const decoded = decodeURIComponent(match[1]);
-            const parsed = JSON.parse(decoded);
-            if (parsed.pendingOrderId) {
-              pendingOrderId = parsed.pendingOrderId;
+    // Method 1: direct param (iCount strips m__ prefix)
+    pendingOrderId = params.get("pendingOrderId") || "";
+
+    // Method 2: m__ prefixed param
+    if (!pendingOrderId) {
+      pendingOrderId = params.get("m__pendingOrderId") || "";
+    }
+
+    // Method 3: custom[{json}] format (legacy)
+    if (!pendingOrderId) {
+      for (const [key] of params.entries()) {
+        if (key.startsWith("custom[") || key.startsWith("custom%5B")) {
+          try {
+            const match = key.match(/custom[\[%5B](.+?)[\]%5D]/i);
+            if (match) {
+              const decoded = decodeURIComponent(match[1]);
+              const parsed = JSON.parse(decoded);
+              if (parsed.pendingOrderId) {
+                pendingOrderId = parsed.pendingOrderId;
+              }
             }
-          }
-        } catch { /* skip */ }
+          } catch { /* skip */ }
+        }
       }
     }
 

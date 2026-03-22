@@ -382,8 +382,11 @@ export class ICountClient {
         vat_exempt: 1,
         include_vat: 0,
         // No max_payments — leave unlimited
+        // Hidden metadata — m__ prefix fields are returned in IPN without the prefix
         ...(request.metadata
-          ? { custom_fields: JSON.stringify(request.metadata) }
+          ? Object.fromEntries(
+              Object.entries(request.metadata).map(([k, v]) => [`m__${k}`, v])
+            )
           : {}),
       }
     );
