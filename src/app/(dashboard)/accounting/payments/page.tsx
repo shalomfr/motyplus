@@ -90,12 +90,14 @@ export default function PaymentsPage() {
   // New payment dialog
   const [dialogOpen, setDialogOpen] = useState(false)
   const [customers, setCustomers] = useState<CustomerOption[]>([])
+  const [promotions, setPromotions] = useState<{ id: string; name: string; couponCode: string; discountPercent: number }[]>([])
   const [saving, setSaving] = useState(false)
   const [newPayment, setNewPayment] = useState({
     customerId: "",
     amount: "",
     description: "",
     paymentMethod: "cash",
+    promotionId: "",
   })
 
   const fetchPayments = useCallback(async () => {
@@ -134,21 +136,42 @@ export default function PaymentsPage() {
 
   const openNewPaymentDialog = async () => {
     setDialogOpen(true)
-    if (customers.length === 0) {
-      try {
-        const res = await fetch("/api/customers?limit=100")
-        if (res.ok) {
-          const data = await res.json()
-          setCustomers(
-            (data.customers || []).map((c: { id: number; fullName: string }) => ({
-              id: c.id,
-              fullName: c.fullName,
-            }))
-          )
-        }
-      } catch {
-        // ignore
+    try {
+      const fetches: Promise<void>[] = []
+      if (customers.length === 0) {
+        fetches.push(
+          fetch("/api/customers?limit=100").then(async (res) => {
+            if (res.ok) {
+              const data = await res.json()
+              setCustomers(
+                (data.customers || []).map((c: { id: number; fullName: string }) => ({
+                  id: c.id,
+                  fullName: c.fullName,
+                }))
+              )
+            }
+          })
+        )
       }
+      if (promotions.length === 0) {
+        fetches.push(
+          fetch("/api/promotions").then(async (res) => {
+            if (res.ok) {
+              const data = await res.json()
+              setPromotions(
+                (data.promotions || data || [])
+                  .filter((p: { isActive: boolean }) => p.isActive)
+                  .map((p: { id: string; name: string; couponCode: string; discountPercent: number }) => ({
+                    id: p.id, name: p.name, couponCode: p.couponCode, discountPercent: p.discountPercent,
+                  }))
+              )
+            }
+          })
+        )
+      }
+      await Promise.all(fetches)
+    } catch {
+      // ignore
     }
   }
 
@@ -167,12 +190,13 @@ export default function PaymentsPage() {
           amount: Number(newPayment.amount),
           description: newPayment.description,
           paymentMethod: newPayment.paymentMethod,
+          promotionId: newPayment.promotionId || undefined,
         }),
       })
       if (!res.ok) throw new Error("שגיאה בשמירה")
       toast({ title: "התשלום נרשם בהצלחה" })
       setDialogOpen(false)
-      setNewPayment({ customerId: "", amount: "", description: "", paymentMethod: "cash" })
+      setNewPayment({ customerId: "", amount: "", description: "", paymentMethod: "cash", promotionId: "" })
       fetchPayments()
     } catch {
       toast({ title: "שגיאה ברישום התשלום", variant: "destructive" })
@@ -405,6 +429,29 @@ export default function PaymentsPage() {
                 </SelectContent>
               </Select>
             </div>
+            {promotions.length > 0 && (
+              <div className="space-y-2">
+                <Label>מבצע / קופון (אופציונלי)</Label>
+                <Select
+                  value={newPayment.promotionId}
+                  onValueChange={(v) =>
+                    setNewPayment((prev) => ({ ...prev, promotionId: v === "none" ? "" : v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="ללא מבצע" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">ללא מבצע</SelectItem>
+                    {promotions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.couponCode}) — {p.discountPercent}%
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button onClick={handleSubmit} disabled={saving}>

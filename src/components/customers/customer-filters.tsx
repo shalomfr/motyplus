@@ -99,41 +99,51 @@ export function CustomerFiltersPanel({
     onFiltersChange({ ...filters, [key]: value })
   }
 
+  const advancedActive =
+    filters.organId !== "" ||
+    filters.setTypeId !== "" ||
+    filters.status !== "" ||
+    filters.dateFrom !== "" ||
+    filters.dateTo !== "" ||
+    filters.missingDetails
+
   return (
     <Card>
-      <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/60 transition-colors"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-gray-500" />
-          <span className="font-medium">סינון וחיפוש</span>
+      <CardContent className="pt-4 pb-4">
+        {/* חיפוש ראשי — תמיד גלוי */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="חיפוש לפי שם / מזהה / מייל..."
+              value={filters.search}
+              onChange={(e) => updateFilter("search", e.target.value)}
+              className="pr-10"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className={cn(advancedActive && "border-blue-400 text-blue-600")}
+          >
+            {isOpen ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+            סינון מתקדם
+            {advancedActive && (
+              <span className="gradient-blue-btn text-white text-xs px-1.5 py-0.5 rounded-full mr-1">!</span>
+            )}
+          </Button>
           {hasActiveFilters && (
-            <span className="gradient-blue-btn text-white text-xs px-2 py-0.5 rounded-full">
-              פעיל
-            </span>
+            <Button variant="ghost" size="sm" onClick={onClear}>
+              <X className="h-4 w-4 ml-1" />
+              נקה
+            </Button>
           )}
         </div>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
-      </div>
 
-      {isOpen && (
-        <CardContent className="pt-0 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label>חיפוש לפי שם / מזהה / מייל</Label>
-              <Input
-                placeholder="הקלד לחיפוש..."
-                value={filters.search}
-                onChange={(e) => updateFilter("search", e.target.value)}
-              />
-            </div>
-
+        {/* פילטרים מתקדמים — מוסתרים כברירת מחדל */}
+        {isOpen && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4 pt-4 border-t">
             {/* Organ Type */}
             <div className="space-y-2">
               <Label>סוג אורגן</Label>
@@ -232,26 +242,9 @@ export function CustomerFiltersPanel({
                 </Label>
               </div>
             </div>
-
-            {/* Clear Filters */}
-            <div className="space-y-2">
-              <Label>&nbsp;</Label>
-              <Button
-                variant="outline"
-                onClick={onClear}
-                className={cn(
-                  "w-full",
-                  !hasActiveFilters && "opacity-50 cursor-not-allowed"
-                )}
-                disabled={!hasActiveFilters}
-              >
-                <X className="h-4 w-4 ml-2" />
-                נקה סינון
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      )}
+        )}
+      </CardContent>
     </Card>
   )
 }

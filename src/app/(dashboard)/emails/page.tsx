@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
-  ChevronDown, ChevronUp, FolderOpen,
+  ChevronDown, ChevronUp, FolderOpen, Trash2,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
@@ -151,6 +151,22 @@ export default function EmailsPage() {
     fetchTemplates()
   }, [])
 
+  const handleDeleteTemplate = async (id: string, name: string) => {
+    if (!confirm(`למחוק את התבנית "${name}"? פעולה זו לא ניתנת לביטול.`)) return
+    try {
+      const res = await fetch(`/api/emails/templates/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setTemplates((prev) => prev.filter((t) => t.id !== id))
+        toast({ title: "התבנית נמחקה" })
+      } else {
+        const data = await res.json()
+        toast({ title: data.error || "שגיאה במחיקה", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה במחיקת התבנית", variant: "destructive" })
+    }
+  }
+
   const toggleSection = (key: string) => {
     setExpandedSections(prev => {
       const next = new Set(prev)
@@ -190,14 +206,14 @@ export default function EmailsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מיילים</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/emails/send")}>
-            <Send className="h-4 w-4 ml-2" />
-            שלח מייל
+        <div className="flex gap-3">
+          <Button onClick={() => router.push("/emails/send")} className="gap-2">
+            <Send className="h-4 w-4" />
+            שליחת מיילים
           </Button>
-          <Button onClick={() => router.push("/emails/templates/new")}>
-            <Plus className="h-4 w-4 ml-2" />
-            תבנית חדשה
+          <Button variant="outline" onClick={() => router.push("/emails/templates/new")} className="gap-2">
+            <Plus className="h-4 w-4" />
+            הכנת תבנית
           </Button>
         </div>
       </div>
@@ -357,13 +373,23 @@ export default function EmailsPage() {
                               {formatDateTime(template.updatedAt)}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => router.push(`/emails/templates/${template.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => router.push(`/emails/templates/${template.id}`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleDeleteTemplate(template.id, template.name)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}

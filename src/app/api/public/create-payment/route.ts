@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     const isUpdateOnly = formData.get("isUpdateOnly") === "true";
     const notes = formData.get("notes") as string | null;
     const infoFile = formData.get("infoFile") as File | null;
+    const couponCode = formData.get("couponCode") as string | null;
 
     if (!fullName || !phone || !email || !organId) {
       return NextResponse.json({ error: "חסרים שדות חובה" }, { status: 400 });
@@ -37,6 +38,27 @@ export async function POST(request: NextRequest) {
       description = `רכישת סט ${setType.name}`;
     } else {
       return NextResponse.json({ error: "יש לבחור סוג סט או עדכון" }, { status: 400 });
+    }
+
+    // בדיקת קוד קופון
+    let promotionId: string | null = null;
+    if (couponCode) {
+      const promotion = await prisma.promotion.findUnique({
+        where: { couponCode: couponCode.trim() },
+      });
+      if (!promotion || !promotion.isActive) {
+        return NextResponse.json({ error: "קוד קופון לא תקין" }, { status: 400 });
+      }
+      const now = new Date();
+      if (now < new Date(promotion.validFrom) || now > new Date(promotion.validUntil)) {
+        return NextResponse.json({ error: "קוד הקופון פג תוקף" }, { status: 400 });
+      }
+      if (promotion.maxUses && promotion.currentUses >= promotion.maxUses) {
+        return NextResponse.json({ error: "קוד הקופון מוצה" }, { status: 400 });
+      }
+      amount = Math.round(amount * (1 - promotion.discountPercent / 100));
+      description += ` (קופון ${couponCode} — ${promotion.discountPercent}% הנחה)`;
+      promotionId = promotion.id;
     }
 
     if (amount <= 0) {
@@ -73,7 +95,7 @@ export async function POST(request: NextRequest) {
       webhookUrl: `${baseUrl}${webhookPath}`,
       autoCreateDoc: true,
       docType: "invoice_receipt",
-      metadata: {},
+      metadata: { promotionId: promotionId || "" },
     });
 
     if (!paymentPage.url) {
@@ -81,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save pending order after payment page created
-    await prisma.pendingOrder.create({
+    const pendingOrder = await prisma.pendingOrder.create({
       data: {
         stripeSessionId: `billing_${Date.now()}`,
         fullName,
@@ -97,6 +119,14 @@ export async function POST(request: NextRequest) {
         notes,
       },
     });
+
+    // עדכון שימוש בקופון
+    if (promotionId) {
+      await prisma.promotion.update({
+        where: { id: promotionId },
+        data: { currentUses: { increment: 1 } },
+      });
+    }
 
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
