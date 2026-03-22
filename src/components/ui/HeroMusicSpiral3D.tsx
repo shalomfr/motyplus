@@ -1,12 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const VIDEO_SRC = "/videos/hero-object-video.mp4";
-const POSTER_SRC = "/images/hero-music-art.webp";
 
 type HeroVariant = "hero-cover" | "embed";
 
@@ -73,23 +71,6 @@ const COVER_SHIFT_OUTER =
   "absolute inset-0 origin-center scale-[1.12] motion-safe:translate-x-[7%]";
 const COVER_SHIFT_INNER = "relative h-full w-full";
 
-function CoverPosterImg() {
-  return (
-    <img
-      src={POSTER_SRC}
-      alt=""
-      width={1920}
-      height={1080}
-      decoding="sync"
-      fetchPriority="high"
-      loading="eager"
-      className="absolute inset-0 h-full w-full object-cover"
-      style={{ backgroundColor: "#0F508E" }}
-      aria-hidden
-    />
-  );
-}
-
 export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DProps) {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -141,24 +122,14 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
 
   if (variant === "hero-cover") {
     return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ backgroundColor: "#0F508E" }}>
         {reduceMotion ? (
           <div className={COVER_SHIFT_OUTER}>
-            <div className={COVER_SHIFT_INNER}>
-              <Image
-                src={POSTER_SRC}
-                alt="רקע ויזואלי — אובייקטים מוזיקליים"
-                fill
-                priority
-                className="object-cover"
-                sizes="100vw"
-              />
-            </div>
+            <div className={COVER_SHIFT_INNER} style={{ backgroundColor: "#0F508E" }} />
           </div>
         ) : (
           <div className={COVER_SHIFT_OUTER}>
             <div className={COVER_SHIFT_INNER}>
-              <CoverPosterImg />
               {isClient ? (
                 <video
                   ref={videoRef}
@@ -195,27 +166,9 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
         aria-hidden
       />
       {reduceMotion ? (
-        <Image
-          src={POSTER_SRC}
-          alt="איור סגנון תלת־ממדי של כלי מיתר וספירלה מוזיקלית"
-          width={1000}
-          height={1000}
-          className="relative z-[1] h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)]"
-          priority
-          sizes="(max-width: 640px) 100vw, 480px"
-        />
+        <div className="relative z-[1] h-full w-full" style={{ backgroundColor: "#0F508E" }} />
       ) : (
         <div className="relative z-[1] h-full w-full">
-          <Image
-            src={POSTER_SRC}
-            alt=""
-            width={1000}
-            height={1000}
-            className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)]"
-            priority
-            sizes="(max-width: 640px) 100vw, 480px"
-            aria-hidden
-          />
           <video
             ref={videoRef}
             className={cn(
