@@ -49,6 +49,7 @@ export const updateVersionSchema = z.object({
   version: z.string().min(1, "יש להזין גרסה"),
   price: z.number().min(0, "מחיר לא תקין"),
   updateType: z.enum(["FULL", "PARTIAL"]).optional().default("FULL"),
+  status: z.enum(["DRAFT", "PREPARING", "READY", "SENDING", "COMPLETED"]).optional(),
   releaseDate: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   rhythmsFileUrl: z.string().optional().nullable(),

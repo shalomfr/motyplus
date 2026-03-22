@@ -181,7 +181,7 @@ export default function UpdateDetailsPage() {
             onClick={() => router.push(`/updates/${id}/wizard`)}
           >
             <Wand2 className="h-4 w-4 ml-2" />
-            אשף שליחה
+            אשף הכנה
           </Button>
           <Button
             variant="outline"
