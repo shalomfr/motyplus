@@ -260,13 +260,11 @@ function RenderBlockFields({
               size="sm"
               className="h-6 w-6 p-0"
               title="הדגש (bold)"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
-                const sel = window.getSelection()?.toString()
-                if (sel) {
-                  onChange({ ...block, text: block.text.replace(sel, `<b>${sel}</b>`) })
-                } else {
-                  onChange({ ...block, text: block.text + "<b>טקסט מודגש</b>" })
-                }
+                // Use execCommand to apply bold on the contentEditable DOM directly
+                // This preserves variable badges and cursor position
+                document.execCommand("bold", false)
               }}
             >
               <Bold className="h-3 w-3" />

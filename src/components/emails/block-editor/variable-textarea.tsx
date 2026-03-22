@@ -21,6 +21,19 @@ const VAR_LABEL_MAP: Record<string, string> = Object.fromEntries(
   EMAIL_VARIABLES.map((v) => [v.name, v.label])
 )
 
+// Allowed HTML tags that should pass through without escaping
+const ALLOWED_TAGS = /(<\/?(?:b|strong|i|em|u)>)/gi
+
+function escapeChunk(chunk: string): string {
+  // Split by allowed tags, escape everything else
+  return chunk.split(ALLOWED_TAGS).map((part, i) => {
+    // Odd indices are the matched tags — keep as-is
+    if (i % 2 === 1) return part
+    // Even indices are text — escape
+    return part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")
+  }).join("")
+}
+
 function valueToHtml(text: string): string {
   const regex = /\{\{(\w+)\}\}/g
   let result = ""
@@ -29,8 +42,7 @@ function valueToHtml(text: string): string {
 
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      const chunk = text.slice(lastIndex, match.index)
-      result += chunk.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")
+      result += escapeChunk(text.slice(lastIndex, match.index))
     }
     const varName = match[1]
     const label = VAR_LABEL_MAP[varName] || varName
@@ -39,11 +51,18 @@ function valueToHtml(text: string): string {
   }
 
   if (lastIndex < text.length) {
-    const chunk = text.slice(lastIndex)
-    result += chunk.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")
+    result += escapeChunk(text.slice(lastIndex))
   }
 
   return result
+}
+
+const INLINE_TAGS: Record<string, { open: string; close: string }> = {
+  B: { open: "<b>", close: "</b>" },
+  STRONG: { open: "<b>", close: "</b>" },
+  I: { open: "<i>", close: "</i>" },
+  EM: { open: "<i>", close: "</i>" },
+  U: { open: "<u>", close: "</u>" },
 }
 
 function domToValue(el: HTMLElement): string {
@@ -62,8 +81,13 @@ function domToValue(el: HTMLElement): string {
         // contentEditable wraps new lines in <div> or <p>
         if (idx > 0) result += "\n"
         result += domToValue(element)
+      } else if (INLINE_TAGS[element.tagName]) {
+        const tag = INLINE_TAGS[element.tagName]
+        const inner = domToValue(element)
+        if (inner) result += tag.open + inner + tag.close
       } else {
-        result += element.textContent || ""
+        // Unknown element — recurse into children to preserve structure
+        result += domToValue(element)
       }
     }
   })
