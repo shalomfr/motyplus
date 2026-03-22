@@ -279,6 +279,7 @@ export async function GET(
         price: updateVersion.price,
         description: updateVersion.description,
         updateType: updateVersion.updateType,
+        emailSubject: updateVersion.emailSubject,
       },
       segments,
       cpiStatus: {

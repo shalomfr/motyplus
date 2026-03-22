@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2 } from "lucide-react"
 import { WizardShell } from "@/components/updates/wizard/wizard-shell"
 import { StepDetails, type UpdateDetailsData } from "@/components/updates/wizard/step-details"
 import { StepRhythms } from "@/components/updates/wizard/step-rhythms"
 import { StepSamples } from "@/components/updates/wizard/step-samples"
+import { StepEmailSelect } from "@/components/updates/wizard/step-email-select"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
 
@@ -15,7 +16,8 @@ const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
   { key: "rhythms", label: "מקצבים", icon: <FolderOpen className="h-4 w-4" /> },
   { key: "samples", label: "דגימות", icon: <Music className="h-4 w-4" /> },
-  { key: "emails", label: "מיילים", icon: <Mail className="h-4 w-4" /> },
+  { key: "email_select", label: "בחירת תבנית", icon: <MailCheck className="h-4 w-4" /> },
+  { key: "emails", label: "תצוגת מייל", icon: <Mail className="h-4 w-4" /> },
   { key: "summary", label: "סיכום", icon: <CheckCircle2 className="h-4 w-4" /> },
 ]
 
@@ -27,6 +29,7 @@ interface WizardData {
     price: number
     description: string | null
     updateType: "FULL" | "PARTIAL"
+    emailSubject: string | null
   }
   segments: Array<{
     key: string
@@ -186,6 +189,14 @@ export default function UpdateWizardPage({
             updateId={id}
             cpiReady={wizardData.cpiStatus.ready}
             cpiTotal={wizardData.cpiStatus.total}
+          />
+        )}
+
+        {activeStepKey === "email_select" && (
+          <StepEmailSelect
+            updateId={id}
+            currentSubject={wizardData.updateVersion.emailSubject}
+            onTemplateApplied={fetchWizardData}
           />
         )}
 
