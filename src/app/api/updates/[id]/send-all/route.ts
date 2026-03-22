@@ -108,19 +108,28 @@ export async function POST(
       }
     }
 
-    // בניית מפה: organId_setTypeId → קישור מקצבים לפי אורגן
-    const updateFiles = await prisma.updateFile.findMany({
-      where: { updateVersionId: id },
-    })
+    // בניית מפה: organId_setTypeId → קישור מקצבים (אוטומטי מתיקיות דרייב)
+    const [allOrgans, allSetTypes] = await Promise.all([
+      prisma.organ.findMany({ select: { id: true, demoAlias: true } }),
+      prisma.setType.findMany({ select: { id: true, demoAlias: true } }),
+    ])
+    const organAliasMap = new Map(allOrgans.map(o => [o.id, o.demoAlias]))
+    const setTypeAliasMap = new Map(allSetTypes.map(st => [st.id, st.demoAlias]))
+
     const rhythmsLinkMap = new Map<string, string>()
-    for (const uf of updateFiles) {
-      const key = `${uf.organId}_${uf.setTypeId}`
-      if (!rhythmsLinkMap.has(key)) {
-        try {
-          rhythmsLinkMap.set(key, await getShareableLink(uf.fileUrl))
-        } catch (err) {
-          console.error(`Failed to get shareable link for ${uf.fileUrl}:`, err)
-        }
+    const uniqueCombos = new Set(eligibleCustomers.map(c => `${c.organId}_${c.setTypeId}`))
+
+    for (const combo of uniqueCombos) {
+      const [organId, setTypeId] = combo.split("_")
+      const organAlias = organAliasMap.get(organId)
+      const setTypeAlias = setTypeAliasMap.get(setTypeId)
+      if (!organAlias || !setTypeAlias) continue
+
+      const folderPath = `updates/beats/${organAlias}/${setTypeAlias}/${updateVersion.version} - ${organAlias}`
+      try {
+        rhythmsLinkMap.set(combo, await getShareableLink(folderPath))
+      } catch (err) {
+        console.error(`Rhythms folder not found: ${folderPath}`, err)
       }
     }
 
