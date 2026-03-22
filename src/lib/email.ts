@@ -41,9 +41,15 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
   }
 }
 
+// Unicode BiDi isolation characters — prevent mixed-direction values
+// from being reordered by the BiDi algorithm in RTL context
+const FSI = "\u2068"; // First Strong Isolate
+const PDI = "\u2069"; // Pop Directional Isolate
+
 /**
  * Replace dynamic variables in email template
  * Variables format: {{variableName}}
+ * Each replaced value is wrapped in FSI/PDI to prevent BiDi reordering
  */
 export function replaceTemplateVariables(
   template: string,
@@ -53,12 +59,13 @@ export function replaceTemplateVariables(
   for (const [key, value] of Object.entries(variables)) {
     // Escape regex special characters in value to prevent injection
     const safeValue = value.replace(/\$/g, "$$$$");
+    const isolated = `${FSI}${safeValue}${PDI}`;
     // Replace {{var}} format
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), safeValue);
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), isolated);
     // Replace <span data-var="var">...</span> format (from rich editor variable badges)
     result = result.replace(
       new RegExp(`<span[^>]*data-var="${key}"[^>]*>[^<]*</span>`, "g"),
-      safeValue
+      isolated
     );
   }
   return result;

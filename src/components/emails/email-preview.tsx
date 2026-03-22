@@ -36,12 +36,16 @@ export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
     remainingForFullSet: "₪350",
   }
 
+  const FSI = "\u2068" // First Strong Isolate
+  const PDI = "\u2069" // Pop Directional Isolate
+
   let processedBody = body
   let processedSubject = subject
   for (const [key, val] of Object.entries(sampleVars)) {
     const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g")
-    processedBody = processedBody.replace(regex, val)
-    processedSubject = processedSubject.replace(regex, val)
+    const isolated = `${FSI}${val}${PDI}`
+    processedBody = processedBody.replace(regex, isolated)
+    processedSubject = processedSubject.replace(regex, isolated)
   }
 
   return (

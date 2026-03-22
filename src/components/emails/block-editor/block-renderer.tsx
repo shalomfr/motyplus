@@ -32,10 +32,13 @@ const SAMPLE_VARS: Record<string, string> = {
   additionalOrganLine: "",
 }
 
+const FSI = "\u2068" // First Strong Isolate
+const PDI = "\u2069" // Pop Directional Isolate
+
 function replaceVariables(html: string): string {
   let result = html
   for (const [key, value] of Object.entries(SAMPLE_VARS)) {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value)
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), `${FSI}${value}${PDI}`)
   }
   return result
 }
