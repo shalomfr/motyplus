@@ -144,6 +144,14 @@ body::before {
   scrollbar-color: rgba(15, 80, 142, 0.2) transparent;
 }
 
+/* Hero video: hidden by default until React marks it visible */
+video[data-hero-video] {
+  opacity: 0 !important;
+}
+video[data-hero-video][data-visible="true"] {
+  opacity: 1 !important;
+}
+
 @keyframes equalizer {
   0%, 100% { height: 20%; }
   50% { height: 100%; }

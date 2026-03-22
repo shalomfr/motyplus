@@ -8,7 +8,20 @@ import { cn } from "@/lib/utils";
 const VIDEO_SRC = "/videos/hero-object-video.mp4";
 const POSTER_SRC = "/images/hero-music-art.webp";
 
-const VIDEO_FADE_MS = 450;
+const VIDEO_FADE_MS = 600;
+
+function scheduleFirstFrameReveal(video: HTMLVideoElement, onReveal: () => void): void {
+  const rVfc = video.requestVideoFrameCallback?.bind(video);
+  if (typeof rVfc === "function") {
+    rVfc(() => {
+      onReveal();
+    });
+    return;
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(onReveal);
+  });
+}
 
 /** הזזה ימינה + scale כדי למלא אחרי חיתוך (overflow על ההורה) */
 const COVER_SHIFT_OUTER =
@@ -82,10 +95,9 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
               />
               <video
                 ref={videoRef}
-                className={cn(
-                  "absolute inset-0 z-[1] h-full w-full object-cover transition-opacity ease-out",
-                  videoVisible ? "opacity-100" : "opacity-0"
-                )}
+                data-hero-video=""
+                data-visible={videoVisible ? "true" : undefined}
+                className="absolute inset-0 z-[1] h-full w-full object-cover transition-opacity ease-out"
                 style={{ transitionDuration: `${VIDEO_FADE_MS}ms` }}
                 autoPlay
                 loop
@@ -138,10 +150,9 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
           />
           <video
             ref={videoRef}
-            className={cn(
-              "relative h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)] transition-opacity ease-out",
-              videoVisible ? "opacity-100" : "opacity-0"
-            )}
+            data-hero-video=""
+            data-visible={videoVisible ? "true" : undefined}
+            className="relative h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)] transition-opacity ease-out"
             style={{ transitionDuration: `${VIDEO_FADE_MS}ms` }}
             autoPlay
             loop
