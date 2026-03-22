@@ -150,6 +150,14 @@ export default function LeadsPage() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
+      ) : leads.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-muted-foreground mb-4">אין לידים עדיין. צור ליד חדש כדי להתחיל.</p>
+          <Button onClick={() => router.push("/leads/new")}>
+            <Plus className="h-4 w-4 ml-2" />
+            ליד חדש
+          </Button>
+        </div>
       ) : (
         <LeadPipeline leads={leads} onStageChange={handleStageChange} />
       )}

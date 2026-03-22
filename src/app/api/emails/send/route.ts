@@ -26,6 +26,15 @@ export async function POST(request: NextRequest) {
     const body: SendEmailBody = await request.json();
     const { templateId, subject, body: emailBody, customerIds, leadIds } = body;
 
+    // הגבלת מספר נמענים
+    const totalRecipients = (customerIds?.length || 0) + (leadIds?.length || 0);
+    if (totalRecipients > 500) {
+      return NextResponse.json(
+        { error: "לא ניתן לשלוח ליותר מ-500 נמענים בבקשה אחת" },
+        { status: 400 }
+      );
+    }
+
     // וידוא שיש תבנית או נושא+תוכן
     let finalSubject = subject || "";
     let finalBody = emailBody || "";

@@ -1,5 +1,6 @@
 "use client"
 
+import DOMPurify from "dompurify"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye } from "lucide-react"
 
@@ -72,7 +73,7 @@ export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
             className="p-4 min-h-[200px] text-sm"
             dir="rtl"
             dangerouslySetInnerHTML={{
-              __html: processedBody || '<p class="text-muted-foreground">(ללא תוכן)</p>',
+              __html: DOMPurify.sanitize(processedBody || '<p class="text-muted-foreground">(ללא תוכן)</p>'),
             }}
           />
         </div>

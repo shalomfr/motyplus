@@ -359,7 +359,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">כתובת שולח:</span>
-                <span dir="ltr">noreply@motyplus.com</span>
+                <span dir="ltr">noreply@mottybeats.com</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">מפתח API:</span>

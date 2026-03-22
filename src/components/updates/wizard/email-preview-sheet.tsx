@@ -1,5 +1,6 @@
 "use client"
 
+import DOMPurify from "dompurify"
 import {
   Dialog,
   DialogContent,
@@ -58,7 +59,7 @@ export function EmailPreviewSheet({
               className="p-4 min-h-[200px] text-sm"
               dir="rtl"
               dangerouslySetInnerHTML={{
-                __html: body || '<p class="text-muted-foreground">(התבנית לא נמצאה)</p>',
+                __html: DOMPurify.sanitize(body || '<p class="text-muted-foreground">(התבנית לא נמצאה)</p>'),
               }}
             />
           </div>

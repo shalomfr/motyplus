@@ -253,6 +253,8 @@ model UpdateFile {
 
   @@unique([updateVersionId, setTypeId, organId])
   @@index([updateVersionId])
+  @@index([setTypeId])
+  @@index([organId])
 }
 
 // ===== לידים =====
@@ -288,6 +290,7 @@ model Lead {
 
   @@index([stage])
   @@index([assignedAgentId])
+  @@index([organId])
 }
 
 model LeadNote {
@@ -349,6 +352,7 @@ model EmailLog {
   @@index([customerId])
   @@index([leadId])
   @@index([status])
+  @@index([sentAt])
 }
 
 // ===== מבצעים =====
@@ -431,6 +435,7 @@ model Payment {
 
   @@index([customerId])
   @@index([status])
+  @@index([promotionId])
 }
 
 // ===== יומן פעילות =====

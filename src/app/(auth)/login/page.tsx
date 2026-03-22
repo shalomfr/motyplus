@@ -70,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-2">
-          אורגנים ומקצבים
+          Motty Beats
         </h1>
         <p className="text-center text-gray-600 mb-8">
           מערכת ניהול
@@ -185,7 +185,7 @@ export default function LoginPage() {
       </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
-          © אורגנים ומקצבים — מערכת ניהול לקוחות
+          © Motty Beats — מערכת ניהול לקוחות
         </p>
     </div>
   );

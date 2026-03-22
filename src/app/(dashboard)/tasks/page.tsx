@@ -361,7 +361,7 @@ export default function TasksPage() {
                         <GripVertical className="h-4 w-4 text-gray-300 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="flex-1 min-w-0">
                           <p
-                            className="text-sm font-medium text-white cursor-pointer hover:text-blue-600 leading-snug"
+                            className="text-sm font-medium text-gray-800 cursor-pointer hover:text-blue-600 leading-snug"
                             onClick={() => setEditTask(task)}
                           >
                             {task.title}

@@ -51,12 +51,14 @@ export function replaceTemplateVariables(
 ): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
+    // Escape regex special characters in value to prevent injection
+    const safeValue = value.replace(/\$/g, "$$$$");
     // Replace {{var}} format
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), safeValue);
     // Replace <span data-var="var">...</span> format (from rich editor variable badges)
     result = result.replace(
       new RegExp(`<span[^>]*data-var="${key}"[^>]*>[^<]*</span>`, "g"),
-      value
+      safeValue
     );
   }
   return result;
