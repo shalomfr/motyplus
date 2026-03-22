@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
+import { getShareableLink } from "@/lib/file-storage";
 
 // POST /api/customers/[id]/send-update-email — שליחת מקצבים/דגימות + שדרוג אוטומטי
 export async function POST(
@@ -56,7 +57,14 @@ export async function POST(
 
     // בניית קישורים
     const updateFile = latestVersion.updateFiles[0];
-    const rhythmsLink = latestVersion.rhythmsFileUrl || "";
+    let rhythmsLink = latestVersion.rhythmsFileUrl || "";
+    if (updateFile?.fileUrl) {
+      try {
+        rhythmsLink = await getShareableLink(updateFile.fileUrl);
+      } catch {
+        // fallback to generic URL
+      }
+    }
     const downloadLink = updateFile?.fileUrl || rhythmsLink;
 
     // טעינת תבנית

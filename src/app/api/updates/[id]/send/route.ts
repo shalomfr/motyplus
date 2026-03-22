@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { logActivity } from "@/lib/activity-logger"
 import { sendEmail, replaceTemplateVariables } from "@/lib/email"
 import { sendWhatsApp } from "@/lib/whatsapp"
-import { listFiles, shareFile } from "@/lib/file-storage"
+import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
 
 // POST /api/updates/[id]/send — שיתוף קבצי CPI ושליחת מייל + WhatsApp ללקוחות זכאים
 export async function POST(
@@ -104,6 +104,8 @@ export async function POST(
         customerId: true,
         status: true,
         updateExpiryDate: true,
+        organId: true,
+        setTypeId: true,
         organ: { select: { name: true } },
         additionalOrgan: { select: { name: true } },
         setType: { select: { includesUpdates: true, name: true } },
@@ -169,6 +171,22 @@ export async function POST(
         entry.additional = f.path
       } else {
         entry.main = f.path
+      }
+    }
+
+    // בניית מפה: organId_setTypeId → קישור מקצבים לפי אורגן
+    const updateFiles = await prisma.updateFile.findMany({
+      where: { updateVersionId: id },
+    })
+    const rhythmsLinkMap = new Map<string, string>()
+    for (const uf of updateFiles) {
+      const key = `${uf.organId}_${uf.setTypeId}`
+      if (!rhythmsLinkMap.has(key)) {
+        try {
+          rhythmsLinkMap.set(key, await getShareableLink(uf.fileUrl))
+        } catch (err) {
+          console.error(`Failed to get shareable link for ${uf.fileUrl}:`, err)
+        }
       }
     }
 
@@ -240,7 +258,7 @@ export async function POST(
               setType: customer.setType?.name || "",
               downloadLink,
               downloadLink2,
-              rhythmsLink: updateVersion.rhythmsFileUrl || "",
+              rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
             }
             const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
             await sendEmail({

@@ -18,7 +18,7 @@ export const EMAIL_VARIABLES = [
   { name: "remainingAmount", label: "יתרה לתשלום" },
   { name: "remainingForFullSet", label: "יתרה להשלמת סט" },
   { name: "samplesLink", label: "קישור דגימות" },
-  { name: "rhythmsLink", label: "קישור מקצבים" },
+  { name: "rhythmsLink", label: "קישור מקצבים (לפי אורגן)" },
   { name: "driveLink", label: "קישור דרייב" },
   { name: "youtubeLink", label: "קישור יוטיוב" },
   { name: "customLink", label: "קישור חריג" },

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { sendWhatsApp } from "@/lib/whatsapp";
-import { listFiles, shareFile } from "@/lib/file-storage";
+import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,8 @@ interface SendableCustomer {
   whatsappPhone: string | null;
   currentUpdateVersion: string | null;
   amountPaid: number;
+  organId: string;
+  setTypeId: string;
   organ: { name: string };
   additionalOrgan: { name: string } | null;
   setType: { name: string; includesUpdates: boolean; price?: number };
@@ -41,7 +43,8 @@ async function sendToEligible(
   customers: SendableCustomer[],
   updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; rhythmsFileUrl: string | null; releaseDate: Date | null },
   cpiMap: Map<number, { main?: string; additional?: string }>,
-  userId: string
+  userId: string,
+  rhythmsLinkMap: Map<string, string>
 ): Promise<{ sent: number; skippedNoFile: number; failed: number }> {
   const results = { sent: 0, skippedNoFile: 0, failed: 0 };
 
@@ -85,7 +88,7 @@ async function sendToEligible(
           organ: customer.organ.name,
           additionalOrganName, additionalOrganLine,
           setType: customer.setType.name,
-          samplesLink: downloadLink, rhythmsLink: updateVersion.rhythmsFileUrl || "",
+          samplesLink: downloadLink, rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
           releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
           downloadLink, downloadLink2,
           customLink: "",
@@ -210,6 +213,22 @@ export async function POST(
     }
     const cpiMap = buildCpiMap(sampleFiles);
 
+    // בניית מפה: organId_setTypeId → קישור מקצבים לפי אורגן
+    const updateFiles = await prisma.updateFile.findMany({
+      where: { updateVersionId: id },
+    });
+    const rhythmsLinkMap = new Map<string, string>();
+    for (const uf of updateFiles) {
+      const key = `${uf.organId}_${uf.setTypeId}`;
+      if (!rhythmsLinkMap.has(key)) {
+        try {
+          rhythmsLinkMap.set(key, await getShareableLink(uf.fileUrl));
+        } catch (err) {
+          console.error(`Failed to get shareable link for ${uf.fileUrl}:`, err);
+        }
+      }
+    }
+
     const results: Record<string, { sent: number; failed: number; skippedNoFile?: number }> = {};
 
     if (segments.includes("eligible")) {
@@ -229,7 +248,8 @@ export async function POST(
         customers as unknown as SendableCustomer[],
         updateVersion,
         cpiMap,
-        session.user.id
+        session.user.id,
+        rhythmsLinkMap
       );
     }
 
