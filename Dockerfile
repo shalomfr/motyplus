@@ -43,6 +43,7 @@ COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/.bin ./node_modules/.bin
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+COPY --from=deps /app/node_modules/effect ./node_modules/effect
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
