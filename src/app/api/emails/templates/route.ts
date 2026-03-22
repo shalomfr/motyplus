@@ -26,12 +26,14 @@ export async function GET() {
         const needsUpdate = !existing.blocks
           || existing.body.includes("{{תאריך}}")
           || existing.body.includes("תוכן העדכון ישתנה")
-          || existing.body.includes("{{downloadLink}}");
+          || existing.body.includes("{{downloadLink}}")
+          || existing.category !== t.category;
         if (needsUpdate) {
           await prisma.emailTemplate.update({
             where: { id: existing.id },
             data: {
               body, subject: t.subject, variables: t.variables,
+              category: t.category,
               blocks: JSON.parse(JSON.stringify(t.blocks)),
             },
           });

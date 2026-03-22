@@ -137,7 +137,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     name: "אחרי קניית עדכון — Tyros 5",
     subject: "עדכון {{updateVersion}} - מוטי פלוס",
-    category: "update",
+    category: "after_purchase",
     variables: ["fullName", "updateVersion", "samplesLink", "rhythmsLink"],
     blocks: [
       b("heading", { text: "עדכון {{updateVersion}} - {{releaseDate}}" }),
@@ -159,7 +159,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     name: "אחרי קניית עדכון — Genos / PSR-SX920",
     subject: "עדכון {{updateVersion}} - מוטי פלוס",
-    category: "update",
+    category: "after_purchase",
     variables: ["fullName", "updateVersion", "samplesLink", "rhythmsLink"],
     blocks: [
       b("heading", { text: "עדכון {{updateVersion}} - {{releaseDate}}" }),
@@ -264,7 +264,7 @@ const TEMPLATES: TemplateDefinition[] = [
   {
     name: "ברכת שנה חדשה",
     subject: "שנה טובה מצוות מוטי פלוס!",
-    category: "general",
+    category: "greeting",
     variables: ["fullName", "firstName"],
     blocks: [
       b("heading", { text: "שנה טובה ומתוקה!" }),

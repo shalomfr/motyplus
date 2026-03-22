@@ -27,11 +27,12 @@ interface TemplateData {
 }
 
 const CATEGORIES = [
-  { value: "update", label: "עדכון" },
-  { value: "welcome", label: "ברוכים הבאים" },
-  { value: "promotion", label: "מבצע" },
-  { value: "general", label: "כללי" },
-  { value: "reminder", label: "תזכורת" },
+  { value: "update", label: "מיילים של עדכון" },
+  { value: "after_purchase", label: "אחרי רכישה" },
+  { value: "welcome", label: "לקוח חדש" },
+  { value: "promotion", label: "מבצעים והצעות מחיר" },
+  { value: "greeting", label: "ברכות וחגים" },
+  { value: "reminder", label: "תזכורות" },
 ]
 
 export default function EditTemplatePage() {
