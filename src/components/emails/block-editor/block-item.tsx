@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X } from "lucide-react"
+import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { BLOCK_LABELS } from "./types"
 import type { EmailBlock, ButtonConfig } from "./types"
@@ -165,12 +165,38 @@ function renderBlockFields(
   switch (block.type) {
     case "heading":
       return (
-        <VariableTextarea
-          value={block.text}
-          onChange={(text) => onChange({ ...block, text })}
-          placeholder="טקסט כותרת"
-          singleLine
-        />
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Label className="text-xs">פריסה:</Label>
+            <Select
+              value={block.layout || "center"}
+              onValueChange={(v) => onChange({ ...block, layout: v as "center" | "split" })}
+            >
+              <SelectTrigger className="h-7 text-xs w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="center">ממורכז</SelectItem>
+                <SelectItem value="split">ימין + שמאל</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <VariableTextarea
+            value={block.text}
+            onChange={(text) => onChange({ ...block, text })}
+            placeholder={block.layout === "split" ? "כותרת ימין (עברית)" : "טקסט כותרת"}
+            singleLine
+          />
+          {block.layout === "split" && (
+            <Input
+              value={block.textLeft || ""}
+              onChange={(e) => onChange({ ...block, textLeft: e.target.value })}
+              className="h-8 text-sm"
+              placeholder="כותרת שמאל (Version 5.0)"
+              dir="ltr"
+            />
+          )}
+        </div>
       )
 
     case "banner":
@@ -202,12 +228,32 @@ function renderBlockFields(
 
     case "paragraph":
       return (
-        <VariableTextarea
-          value={block.text}
-          onChange={(text) => onChange({ ...block, text })}
-          placeholder="טקסט פסקה..."
-          rows={2}
-        />
+        <div className="space-y-1">
+          <div className="flex gap-1 mb-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 w-6 p-0"
+              title="הדגש (bold)"
+              onClick={() => {
+                const sel = window.getSelection()?.toString()
+                if (sel) {
+                  onChange({ ...block, text: block.text.replace(sel, `<b>${sel}</b>`) })
+                } else {
+                  onChange({ ...block, text: block.text + "<b>טקסט מודגש</b>" })
+                }
+              }}
+            >
+              <Bold className="h-3 w-3" />
+            </Button>
+          </div>
+          <VariableTextarea
+            value={block.text}
+            onChange={(text) => onChange({ ...block, text })}
+            placeholder="טקסט פסקה..."
+            rows={2}
+          />
+        </div>
       )
 
     case "folder":
@@ -318,13 +364,41 @@ function renderBlockFields(
     case "image":
       return (
         <div className="space-y-1.5">
-          <Input
-            value={block.url}
-            onChange={(e) => onChange({ ...block, url: e.target.value })}
-            className="h-7 text-xs"
-            placeholder="כתובת URL של התמונה"
-            dir="ltr"
-          />
+          <div className="flex gap-1.5">
+            <Input
+              value={block.url}
+              onChange={(e) => onChange({ ...block, url: e.target.value })}
+              className="h-7 text-xs flex-1"
+              placeholder="כתובת URL או העלה תמונה"
+              dir="ltr"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs shrink-0"
+              onClick={() => {
+                const input = document.createElement("input")
+                input.type = "file"
+                input.accept = "image/*"
+                input.onchange = (ev) => {
+                  const file = (ev.target as HTMLInputElement).files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    onChange({ ...block, url: reader.result as string, alt: block.alt || file.name })
+                  }
+                  reader.readAsDataURL(file)
+                }
+                input.click()
+              }}
+            >
+              <Upload className="h-3 w-3 ml-1" />
+              העלה
+            </Button>
+          </div>
+          {block.url && block.url.startsWith("data:") && (
+            <div className="text-[10px] text-green-600">תמונה הועלתה בהצלחה</div>
+          )}
           <Input
             value={block.alt}
             onChange={(e) => onChange({ ...block, alt: e.target.value })}

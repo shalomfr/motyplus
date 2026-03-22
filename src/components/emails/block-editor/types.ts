@@ -2,6 +2,8 @@ export interface HeadingBlock {
   type: "heading"
   id: string
   text: string
+  layout?: "center" | "split"
+  textLeft?: string
 }
 
 export interface BannerBlock {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { VariableTextarea } from "@/components/emails/block-editor/variable-textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -268,12 +269,12 @@ export default function SendEmailPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">נושא</Label>
-                <Input
-                  id="subject"
+                <Label htmlFor="subject">נושא (תומך משתנים כמו {"{{updateVersion}}"})</Label>
+                <VariableTextarea
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="נושא המייל"
+                  onChange={setSubject}
+                  placeholder="נושא המייל — למשל: עדכון {{updateVersion}} זמין!"
+                  singleLine
                 />
               </div>
 

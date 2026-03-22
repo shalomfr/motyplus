@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { BlockToolbar } from "./block-toolbar"
 import { BlockItem } from "./block-item"
 import { BlockRenderer } from "./block-renderer"
@@ -9,6 +9,10 @@ import { createDefaultBlock } from "./types"
 import type { EmailBlock } from "./types"
 import { EMAIL_VARIABLES } from "../variable-badge-extension"
 import { Badge } from "@/components/ui/badge"
+import { Undo2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+const MAX_UNDO = 50
 
 interface BlockEditorProps {
   blocks: EmailBlock[]
@@ -18,13 +22,42 @@ interface BlockEditorProps {
 
 export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  // Undo stack
+  const undoStackRef = useRef<EmailBlock[][]>([])
+
+  const pushUndo = useCallback(() => {
+    undoStackRef.current = [...undoStackRef.current.slice(-MAX_UNDO + 1), JSON.parse(JSON.stringify(blocks))]
+  }, [blocks])
+
+  const handleUndo = useCallback(() => {
+    if (undoStackRef.current.length === 0) return
+    const prev = undoStackRef.current.pop()!
+    onChange(prev)
+    onHtmlChange(blocksToHtml(prev))
+  }, [onChange, onHtmlChange])
+
+  // Ctrl+Z listener
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault()
+        handleUndo()
+      }
+    }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [handleUndo])
 
   const updateBlocks = useCallback(
     (newBlocks: EmailBlock[]) => {
+      pushUndo()
       onChange(newBlocks)
       onHtmlChange(blocksToHtml(newBlocks))
     },
-    [onChange, onHtmlChange]
+    [onChange, onHtmlChange, pushUndo]
   )
 
   const addBlock = useCallback(
@@ -80,12 +113,44 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
     [blocks, selectedBlockId, updateBlock]
   )
 
+  // Drag & Drop handlers
+  const handleDragStart = (index: number) => {
+    setDragIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+    pushUndo()
+    const newBlocks = [...blocks]
+    const [moved] = newBlocks.splice(dragIndex, 1)
+    newBlocks.splice(dropIndex, 0, moved)
+    onChange(newBlocks)
+    onHtmlChange(blocksToHtml(newBlocks))
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+
   return (
     <div className="border rounded-lg overflow-hidden bg-white">
       <BlockToolbar onAdd={addBlock} />
 
-      {/* Variables bar */}
-      <div className="border-b bg-orange-50/50 px-3 py-2 flex flex-wrap gap-1.5">
+      {/* Variables bar + Undo */}
+      <div className="border-b bg-blue-50/50 px-3 py-2 flex flex-wrap gap-1.5 items-center">
         <span className="text-xs text-muted-foreground ml-1 self-center">
           משתנים:
         </span>
@@ -93,12 +158,25 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
           <Badge
             key={v.name}
             variant="outline"
-            className="text-xs cursor-pointer bg-orange-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+            className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
             onClick={() => insertVariable(v.name)}
           >
             {v.label}
           </Badge>
         ))}
+        <div className="mr-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-gray-500 hover:text-blue-700"
+            onClick={handleUndo}
+            disabled={undoStackRef.current.length === 0}
+            title="בטל (Ctrl+Z)"
+          >
+            <Undo2 className="h-3.5 w-3.5 ml-1" />
+            בטל
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[500px]">
@@ -110,18 +188,31 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
             </div>
           ) : (
             blocks.map((block, idx) => (
-              <BlockItem
+              <div
                 key={block.id}
-                block={block}
-                index={idx}
-                total={blocks.length}
-                isSelected={block.id === selectedBlockId}
-                onSelect={() => setSelectedBlockId(block.id)}
-                onChange={(updated) => updateBlock(idx, updated)}
-                onDelete={() => deleteBlock(idx)}
-                onMoveUp={() => moveBlock(idx, -1)}
-                onMoveDown={() => moveBlock(idx, 1)}
-              />
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={(e) => handleDragOver(e, idx)}
+                onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                className={
+                  dragOverIndex === idx && dragIndex !== idx
+                    ? "border-t-2 border-blue-400"
+                    : ""
+                }
+              >
+                <BlockItem
+                  block={block}
+                  index={idx}
+                  total={blocks.length}
+                  isSelected={block.id === selectedBlockId}
+                  onSelect={() => setSelectedBlockId(block.id)}
+                  onChange={(updated) => updateBlock(idx, updated)}
+                  onDelete={() => deleteBlock(idx)}
+                  onMoveUp={() => moveBlock(idx, -1)}
+                  onMoveDown={() => moveBlock(idx, 1)}
+                />
+              </div>
             ))
           )}
         </div>

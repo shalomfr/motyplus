@@ -37,6 +37,9 @@ function escapeHtml(text: string): string {
 function renderBlockToHtml(block: EmailBlock): string {
   switch (block.type) {
     case "heading":
+      if (block.layout === "split" && block.textLeft) {
+        return `<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;"><tr><td align="right" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;">${escapeHtml(block.text)}</td><td align="left" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;font-family:Arial;" dir="ltr">${escapeHtml(block.textLeft)}</td></tr></table>`
+      }
       return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#124F90;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(block.text)}</div>`
 
     case "banner": {
@@ -45,8 +48,16 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:${style.color};border:2px solid ${style.border};border-radius:10px;padding:12px;${isGradient ? `background:${style.bg}` : `background-color:${style.bg}`};box-shadow:0 3px 10px rgba(0,0,0,0.12);">${escapeHtml(block.text)}</div>`
     }
 
-    case "paragraph":
-      return `<p style="margin:0 0 12px 0;">${escapeHtml(block.text)}</p>`
+    case "paragraph": {
+      // Allow <b> tags in paragraphs for bold text
+      const safeText = block.text
+        .replace(/<b>/gi, "%%BOLD_OPEN%%")
+        .replace(/<\/b>/gi, "%%BOLD_CLOSE%%")
+      const escaped = escapeHtml(safeText)
+        .replace(/%%BOLD_OPEN%%/g, "<b>")
+        .replace(/%%BOLD_CLOSE%%/g, "</b>")
+      return `<p style="margin:0 0 12px 0;">${escaped}</p>`
+    }
 
     case "folder": {
       const header = `<div style="margin:16px 0 12px auto;padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:right;max-width:200px;">${escapeHtml(block.name)}</div>`
@@ -115,6 +126,7 @@ function wrapEmail(bodyContent: string): string {
 <tr><td align="center" style="padding:10px;">
 <div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #C5D5EA;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#124F90;" dir="rtl">
 <div style="background-color:#F6F9FE;border-radius:0;padding:20px 20px 0 20px;margin:0;">
+<div style="font-size:12px;font-weight:bold;color:#8fa3b9;margin-bottom:10px;text-align:right;">בס&quot;ד</div>
 <!-- BODY_START -->
 ${bodyContent}
 <!-- BODY_END -->
