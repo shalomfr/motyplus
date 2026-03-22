@@ -188,12 +188,27 @@ function renderBlockFields(
             singleLine
           />
           {block.layout === "split" && (
-            <VariableTextarea
-              value={block.textLeft || ""}
-              onChange={(textLeft) => onChange({ ...block, textLeft })}
-              placeholder="כותרת שמאל (Version 5.0)"
-              singleLine
-            />
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">צד שמאל:</Label>
+              <VariableTextarea
+                value={block.textLeft || ""}
+                onChange={(textLeft) => onChange({ ...block, textLeft })}
+                placeholder="כותרת שמאל (Version 5.0)"
+                singleLine
+              />
+              <div className="flex flex-wrap gap-1">
+                {EMAIL_VARIABLES.filter(v => ["updateVersion", "releaseDate", "organ", "currentVersion"].includes(v.name)).map((v) => (
+                  <Badge
+                    key={v.name}
+                    variant="outline"
+                    className="text-[10px] cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 py-0 px-1.5"
+                    onClick={() => onChange({ ...block, textLeft: (block.textLeft || "") + `{{${v.name}}}` })}
+                  >
+                    {v.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )
