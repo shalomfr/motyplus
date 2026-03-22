@@ -13,10 +13,13 @@ export interface BannerBlock {
   color: "orange" | "blue" | "red"
 }
 
+export type TextAlign = "right" | "center" | "left" | "justify"
+
 export interface ParagraphBlock {
   type: "paragraph"
   id: string
   text: string
+  align?: TextAlign
 }
 
 export interface FolderBlock {

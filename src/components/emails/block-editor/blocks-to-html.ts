@@ -49,14 +49,23 @@ function renderBlockToHtml(block: EmailBlock): string {
     }
 
     case "paragraph": {
-      // Allow <b> tags in paragraphs for bold text
+      // Allow <b>, <i>, <u> tags in paragraphs
       const safeText = block.text
         .replace(/<b>/gi, "%%BOLD_OPEN%%")
         .replace(/<\/b>/gi, "%%BOLD_CLOSE%%")
+        .replace(/<i>/gi, "%%ITALIC_OPEN%%")
+        .replace(/<\/i>/gi, "%%ITALIC_CLOSE%%")
+        .replace(/<u>/gi, "%%UNDER_OPEN%%")
+        .replace(/<\/u>/gi, "%%UNDER_CLOSE%%")
       const escaped = escapeHtml(safeText)
         .replace(/%%BOLD_OPEN%%/g, "<b>")
         .replace(/%%BOLD_CLOSE%%/g, "</b>")
-      return `<p style="margin:0 0 12px 0;">${escaped}</p>`
+        .replace(/%%ITALIC_OPEN%%/g, "<i>")
+        .replace(/%%ITALIC_CLOSE%%/g, "</i>")
+        .replace(/%%UNDER_OPEN%%/g, "<u>")
+        .replace(/%%UNDER_CLOSE%%/g, "</u>")
+      const align = block.align || "right"
+      return `<p style="margin:0 0 12px 0;text-align:${align};">${escaped}</p>`
     }
 
     case "folder": {

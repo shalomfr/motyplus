@@ -12,10 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold } from "lucide-react"
+import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold, AlignRight, AlignCenter, AlignLeft, AlignJustify } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { BLOCK_LABELS } from "./types"
-import type { EmailBlock, ButtonConfig } from "./types"
+import type { EmailBlock, ButtonConfig, TextAlign } from "./types"
 import { cn } from "@/lib/utils"
 import { EMAIL_VARIABLES } from "../variable-badge-extension"
 
@@ -251,7 +251,14 @@ function RenderBlockFields({
         </div>
       )
 
-    case "paragraph":
+    case "paragraph": {
+      const alignOptions: { value: TextAlign; icon: typeof AlignRight; label: string }[] = [
+        { value: "right", icon: AlignRight, label: "ימין" },
+        { value: "center", icon: AlignCenter, label: "מרכז" },
+        { value: "left", icon: AlignLeft, label: "שמאל" },
+        { value: "justify", icon: AlignJustify, label: "מלא" },
+      ]
+      const currentAlign = block.align || "right"
       return (
         <div className="space-y-1">
           <div className="flex gap-1 mb-1">
@@ -262,13 +269,24 @@ function RenderBlockFields({
               title="הדגש (bold)"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
-                // Use execCommand to apply bold on the contentEditable DOM directly
-                // This preserves variable badges and cursor position
                 document.execCommand("bold", false)
               }}
             >
               <Bold className="h-3 w-3" />
             </Button>
+            <div className="border-r mx-1" />
+            {alignOptions.map(({ value, icon: Icon, label }) => (
+              <Button
+                key={value}
+                variant={currentAlign === value ? "default" : "outline"}
+                size="sm"
+                className="h-6 w-6 p-0"
+                title={`יישור ${label}`}
+                onClick={() => onChange({ ...block, align: value })}
+              >
+                <Icon className="h-3 w-3" />
+              </Button>
+            ))}
           </div>
           <VariableTextarea
             ref={textareaRef}
@@ -279,6 +297,7 @@ function RenderBlockFields({
           />
         </div>
       )
+    }
 
     case "folder":
       return (
