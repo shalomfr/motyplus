@@ -198,6 +198,7 @@ export function CustomerFiltersPanel({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">כל המצבים</SelectItem>
+                  <SelectItem value="PENDING_APPROVAL">ממתין לאישור</SelectItem>
                   <SelectItem value="ACTIVE">פעיל</SelectItem>
                   <SelectItem value="BLOCKED">חסום</SelectItem>
                   <SelectItem value="FROZEN">מוקפא</SelectItem>

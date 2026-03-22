@@ -297,7 +297,7 @@ export async function processCompletedOrder(
       hasV3: true,
       sampleType: "CPI",
       currentUpdateVersion,
-      status: "ACTIVE",
+      status: "PENDING_APPROVAL",
       notes: pendingOrder.notes,
       icountClientId: payment.clientId,
     },

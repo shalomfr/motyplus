@@ -61,6 +61,10 @@ interface CustomerFormProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
+  PENDING_APPROVAL: {
+    label: "ממתין לאישור",
+    className: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  },
   ACTIVE: {
     label: "פעיל",
     className: "bg-green-100 text-green-800 border-green-200",
@@ -143,7 +147,7 @@ export function CustomerForm({
       infoFileUrl: initialData?.infoFileUrl || "",
       additionalInfoFileUrl: initialData?.additionalInfoFileUrl || "",
       ...(mode === "edit" && {
-        status: initialData?.status as "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
+        status: initialData?.status as "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION" | undefined,
         hasV3: initialData?.hasV3 ?? true,
         isCasual: initialData?.isCasual ?? false,
         sampleType: initialData?.sampleType as "CPI" | "CPF" | undefined,

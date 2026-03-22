@@ -75,6 +75,7 @@ model VerificationToken {
 // ===== לקוחות =====
 
 enum CustomerStatus {
+  PENDING_APPROVAL // ממתין לאישור — נוצר אוטומטית אחרי תשלום
   ACTIVE
   BLOCKED
   FROZEN

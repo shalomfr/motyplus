@@ -90,7 +90,7 @@ interface CustomerActionsProps {
   customerName: string
   customerPhone: string
   customerWhatsapp: string | null
-  status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
+  status: "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   sampleType: "CPI" | "CPF"
   amountPaid: number
   balance: number | null

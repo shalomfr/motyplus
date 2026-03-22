@@ -16,7 +16,7 @@ interface CustomerCardProps {
   email: string
   organName: string
   setTypeName: string
-  status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
+  status: "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   purchaseDate: string
   showActions?: boolean
 }
@@ -25,6 +25,10 @@ const statusConfig: Record<
   string,
   { label: string; className: string }
 > = {
+  PENDING_APPROVAL: {
+    label: "ממתין לאישור",
+    className: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  },
   ACTIVE: {
     label: "פעיל",
     className: "bg-green-100 text-green-800 border-green-200",
