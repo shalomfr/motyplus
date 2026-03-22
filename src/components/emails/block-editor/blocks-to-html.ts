@@ -1,22 +1,22 @@
 import type { EmailBlock, ButtonConfig } from "./types"
 
 const BUTTON_COLORS: Record<ButtonConfig["color"], { bg: string; border: string }> = {
-  gold: { bg: "linear-gradient(145deg,#d4af37,#b8860b)", border: "#a97c1e" },
+  gold: { bg: "linear-gradient(145deg,#124F90,#0A3D6E)", border: "#0A3D6E" },
   green: { bg: "linear-gradient(145deg,#43a047,#2e7d32)", border: "#1b5e20" },
   red: { bg: "linear-gradient(145deg,#e53935,#c62828)", border: "#8e0000" },
-  blue: { bg: "linear-gradient(145deg,#1e88e5,#1565c0)", border: "#0d47a1" },
+  blue: { bg: "linear-gradient(145deg,#124F90,#0A3D6E)", border: "#0A3D6E" },
 }
 
 const BANNER_STYLES: Record<string, { bg: string; border: string; color: string }> = {
   orange: {
-    bg: "linear-gradient(135deg,#ffb300,#ff9800,#fff176)",
-    border: "#ff9800",
+    bg: "linear-gradient(135deg,#124F90,#1A6AB5,#7BADD4)",
+    border: "#124F90",
     color: "#ffffff",
   },
   blue: {
-    bg: "#f4f9ff",
-    border: "#1a73e8",
-    color: "#1a73e8",
+    bg: "#EBF1F9",
+    border: "#124F90",
+    color: "#124F90",
   },
   red: {
     bg: "#fff5f5",
@@ -37,7 +37,7 @@ function escapeHtml(text: string): string {
 function renderBlockToHtml(block: EmailBlock): string {
   switch (block.type) {
     case "heading":
-      return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#d4af37;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(block.text)}</div>`
+      return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#124F90;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(block.text)}</div>`
 
     case "banner": {
       const style = BANNER_STYLES[block.color] || BANNER_STYLES.orange
@@ -49,7 +49,7 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `<p style="margin:0 0 12px 0;">${escapeHtml(block.text)}</p>`
 
     case "folder": {
-      const header = `<div style="margin:16px 0 12px auto;padding:8px 16px;border-radius:8px;background-color:#fffdf5;border:1px solid #e0c067;font-weight:bold;color:#b8860b;text-align:right;max-width:200px;">${escapeHtml(block.name)}</div>`
+      const header = `<div style="margin:16px 0 12px auto;padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:right;max-width:200px;">${escapeHtml(block.name)}</div>`
       if (block.items.length === 0) return header
       const items = block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")
       return `${header}\n<ul>\n${items}\n</ul>`
@@ -69,7 +69,7 @@ function renderBlockToHtml(block: EmailBlock): string {
           return `<td align="center" style="padding:5px;width:${width};"><a href="${escapeHtml(btn.url)}" style="background:${colors.bg};color:#fff;text-decoration:none;border-radius:8px;display:block;font-weight:bold;font-size:15px;border:1px solid ${colors.border};text-align:center;padding:12px 0;box-shadow:0 4px 8px rgba(0,0,0,0.15);">${escapeHtml(btn.label)}</a></td>`
         })
         .join("\n")
-      return `<div style="font-size:18px;font-weight:bold;color:#d4af37;margin-bottom:16px;">הורדות</div>\n<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%;table-layout:fixed;"><tr>\n${cells}\n</tr></table>`
+      return `<div style="font-size:18px;font-weight:bold;color:#124F90;margin-bottom:16px;">הורדות</div>\n<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="width:100%;table-layout:fixed;"><tr>\n${cells}\n</tr></table>`
     }
 
     case "promo": {
@@ -79,11 +79,11 @@ function renderBlockToHtml(block: EmailBlock): string {
       const expiryHtml = block.expiry
         ? `<br>המבצע בתוקף עד <b>${escapeHtml(block.expiry)}</b>.`
         : ""
-      return `<div style="margin:20px 0;text-align:center;font-size:16px;font-weight:bold;color:#a67c00;border-left:2px solid #d4af37;border-right:2px solid #d4af37;border-radius:10px;padding:14px;background:linear-gradient(135deg,#fffdf5,#fdf3d6,#f7e7a0,#fffdf5);box-shadow:0 2px 6px rgba(0,0,0,0.06);"><div style="height:3px;background:linear-gradient(90deg,#fffdf5,#d4af37,#fffdf5);margin:-14px -14px 14px -14px;border-top-left-radius:10px;border-top-right-radius:10px;"></div>${escapeHtml(block.text)}${expiryHtml}${priceHtml}<div style="height:3px;background:linear-gradient(90deg,#fffdf5,#d4af37,#fffdf5);margin:14px -14px -14px -14px;border-bottom-left-radius:10px;border-bottom-right-radius:10px;"></div></div>`
+      return `<div style="margin:20px 0;text-align:center;font-size:16px;font-weight:bold;color:#0A3D6E;border-left:2px solid #124F90;border-right:2px solid #124F90;border-radius:10px;padding:14px;background:linear-gradient(135deg,#EBF1F9,#D6E3F5,#C5D5EA,#EBF1F9);box-shadow:0 2px 6px rgba(0,0,0,0.06);"><div style="height:3px;background:linear-gradient(90deg,#EBF1F9,#124F90,#EBF1F9);margin:-14px -14px 14px -14px;border-top-left-radius:10px;border-top-right-radius:10px;"></div>${escapeHtml(block.text)}${expiryHtml}${priceHtml}<div style="height:3px;background:linear-gradient(90deg,#EBF1F9,#124F90,#EBF1F9);margin:14px -14px -14px -14px;border-bottom-left-radius:10px;border-bottom-right-radius:10px;"></div></div>`
     }
 
     case "bankTable":
-      return `<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;"><tr style="background-color:#f9f9f9;"><td style="border:1px solid #ddd;padding:8px;font-weight:bold;">בנק</td><td style="border:1px solid #ddd;padding:8px;">הפועלים</td></tr><tr><td style="border:1px solid #ddd;padding:8px;font-weight:bold;">סניף</td><td style="border:1px solid #ddd;padding:8px;">446</td></tr><tr style="background-color:#f9f9f9;"><td style="border:1px solid #ddd;padding:8px;font-weight:bold;">חשבון</td><td style="border:1px solid #ddd;padding:8px;">113689</td></tr><tr><td style="border:1px solid #ddd;padding:8px;font-weight:bold;">שם</td><td style="border:1px solid #ddd;padding:8px;">חוה גפנר</td></tr></table>`
+      return `<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;"><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">בנק</td><td style="border:1px solid #D6E3F5;padding:8px;">הפועלים</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">סניף</td><td style="border:1px solid #D6E3F5;padding:8px;">446</td></tr><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5;padding:8px;">113689</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5;padding:8px;">חוה גפנר</td></tr></table>`
 
     case "warning":
       return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:center;border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtml(block.text)}</div>`
@@ -96,10 +96,10 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `<div style="margin:12px 0;text-align:center;"><img src="${escapeHtml(block.url)}" alt="${escapeHtml(block.alt)}" style="max-width:100%;height:auto;border-radius:8px;" /></div>`
 
     case "divider":
-      return `<hr style="border:none;border-top:1px solid #e0c067;margin:20px 0;" />`
+      return `<hr style="border:none;border-top:1px solid #C5D5EA;margin:20px 0;" />`
 
     case "instructions":
-      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#1a73e8;border:2px solid #1a73e8;border-radius:10px;padding:12px;background-color:#f4f9ff;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;">${escapeHtml(block.text)}</div>`
+      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#124F90;border:2px solid #124F90;border-radius:10px;padding:12px;background-color:#EBF1F9;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;">${escapeHtml(block.text)}</div>`
   }
 }
 
@@ -110,11 +110,11 @@ function wrapEmail(bodyContent: string): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background:#EEF3FB;font-family:'Assistant',Arial,Helvetica,'Segoe UI',Tahoma,sans-serif;color:#111;">
+<body style="margin:0;padding:0;background:#EEF3FB;font-family:'Assistant',Arial,Helvetica,'Segoe UI',Tahoma,sans-serif;color:#124F90;" dir="rtl">
 <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#EEF3FB" dir="rtl">
 <tr><td align="center" style="padding:10px;">
-<div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #e0c067;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#111;" dir="rtl">
-<div style="background-color:#fffdf5;border-radius:0;padding:20px 20px 0 20px;margin:0;">
+<div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #C5D5EA;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#124F90;" dir="rtl">
+<div style="background-color:#F6F9FE;border-radius:0;padding:20px 20px 0 20px;margin:0;">
 <!-- BODY_START -->
 ${bodyContent}
 <!-- BODY_END -->

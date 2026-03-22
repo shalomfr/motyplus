@@ -58,7 +58,7 @@ export async function POST(
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${link}"
-             style="background-color: #7C5CFC; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
+             style="background-color: #124F90; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
             העלאת קובץ אינפו
           </a>
         </div>
