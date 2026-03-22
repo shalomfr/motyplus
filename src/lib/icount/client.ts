@@ -378,6 +378,9 @@ export class ICountClient {
         webhook_url: request.webhookUrl,
         auto_create_doc: 1,
         doctype: request.docType ? this.mapDocType(request.docType) : "invrec",
+        // VAT exempt — prices include everything, no separate VAT
+        vat_exempt: 1,
+        include_vat: 0,
         // No max_payments — leave unlimited
         ...(request.metadata
           ? { custom_fields: JSON.stringify(request.metadata) }
