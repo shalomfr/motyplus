@@ -34,11 +34,60 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { customerIds } = body as { customerIds: number[] }
+    const { customerIds, force, email } = body as {
+      customerIds?: number[]
+      force?: boolean
+      email?: string
+    }
 
+    // מצב 1: שליחה למייל ידני (ללא לקוח במערכת)
+    if (email) {
+      const folder = "updates/samples"
+      const sampleFiles = await listFiles(folder)
+
+      // שליחת מייל עם תבנית העדכון
+      if (updateVersion.emailSubject && updateVersion.emailBody) {
+        const templateVars = {
+          customerName: email,
+          version: updateVersion.version,
+          updateVersion: updateVersion.version,
+          organName: "",
+          additionalOrganName: "",
+          additionalOrganLine: "",
+          setType: "",
+          downloadLink: "",
+          downloadLink2: "",
+          rhythmsLink: updateVersion.rhythmsFileUrl || "",
+        }
+        const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
+        await sendEmail({
+          to: email,
+          subject: replaceTemplateVariables(updateVersion.emailSubject, templateVars),
+          html,
+        })
+      }
+
+      await logActivity({
+        userId: session.user.id,
+        action: "SEND_UPDATE",
+        entityType: "CUSTOMER_UPDATE",
+        entityId: id,
+        details: { version: updateVersion.version, manualEmail: email },
+      })
+
+      return NextResponse.json({
+        message: `העדכון נשלח בהצלחה ל-${email}`,
+        sent: 1,
+        skippedNoFile: 0,
+        failed: 0,
+        alreadyReceived: 0,
+      })
+    }
+
+    // מצב 2: שליחה ללקוחות לפי מזהים
     if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
       return NextResponse.json(
-        { error: "יש לספק רשימת מזהי לקוחות" },
+        { error: "יש לספק רשימת מזהי לקוחות או מייל" },
         { status: 400 }
       )
     }
@@ -78,18 +127,25 @@ export async function POST(
     })
     const alreadyReceivedIds = new Set(alreadyReceived.map((cu) => cu.customerId))
 
-    // סינון לקוחות זכאים
     const now = new Date()
-    const eligible = customers.filter((c) => {
-      if (alreadyReceivedIds.has(c.id)) return false
-      if (c.status === "EXCEPTION") return true
-      if (c.updateExpiryDate && c.updateExpiryDate >= now) return true
-      return false
-    })
+    let eligible: typeof customers
+
+    if (force) {
+      // force — דילוג על בדיקת זכאות, רק סינון מי שכבר קיבל
+      eligible = customers.filter((c) => !alreadyReceivedIds.has(c.id))
+    } else {
+      // סינון לקוחות זכאים
+      eligible = customers.filter((c) => {
+        if (alreadyReceivedIds.has(c.id)) return false
+        if (c.status === "EXCEPTION") return true
+        if (c.updateExpiryDate && c.updateExpiryDate >= now) return true
+        return false
+      })
+    }
 
     if (eligible.length === 0) {
       return NextResponse.json(
-        { error: "אין לקוחות זכאים לשליחה" },
+        { error: force ? "הלקוח כבר קיבל את העדכון הזה" : "אין לקוחות זכאים לשליחה" },
         { status: 400 }
       )
     }
