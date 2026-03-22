@@ -175,12 +175,36 @@ export async function DELETE(
       where: { id },
     });
 
-    // Try to delete Google Drive beats folder (don't block on failure)
-    // Samples are shared across versions — don't delete them
+    // מחיקת תיקיות Google Drive — מבנה חדש: updates/beats/{organ}/{package}/{version - organ}
     try {
-      await deleteFolder(`updates/beats/${existing.version}`);
+      const organs = await prisma.organ.findMany({
+        where: { supportsUpdates: true, demoAlias: { not: null } },
+        select: { demoAlias: true },
+      });
+      const setTypes = await prisma.setType.findMany({
+        where: { isActive: true, demoAlias: { not: null } },
+        select: { demoAlias: true },
+      });
+
+      for (const organ of organs) {
+        for (const setType of setTypes) {
+          const folderPath = `updates/beats/${organ.demoAlias}/${setType.demoAlias}/${existing.version} - ${organ.demoAlias}`;
+          try {
+            await deleteFolder(folderPath);
+          } catch {
+            // תיקייה לא קיימת — ממשיכים
+          }
+        }
+      }
+
+      // ניסיון למחוק גם מבנה ישן (updates/beats/{version}) למקרה שנשאר
+      try {
+        await deleteFolder(`updates/beats/${existing.version}`);
+      } catch {
+        // לא קיים — ממשיכים
+      }
     } catch (err) {
-      console.error("Failed to delete Drive folder beats/:", err);
+      console.error("Failed to delete Drive folders:", err);
     }
 
     // Log activity
