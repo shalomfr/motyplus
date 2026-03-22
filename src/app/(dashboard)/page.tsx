@@ -28,6 +28,12 @@ export default function HomePage() {
   const [missingInfo, setMissingInfo] = useState<MissingInfoCustomer[]>([])
   const [missingInfoExpanded, setMissingInfoExpanded] = useState(false)
   const [uploadingId, setUploadingId] = useState<number | null>(null)
+  const [heroRevealed, setHeroRevealed] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setHeroRevealed(true), 600)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     fetch("/api/customers/missing-info").then((r) => r.ok ? r.json() : { customers: [] })
@@ -83,7 +89,7 @@ export default function HomePage() {
         <div className="overflow-hidden rounded-[28px] shadow-2xl sm:rounded-[32px]">
 
           {/* Hero מלא: וידאו רקע + טקסט + עמודת כפתורים */}
-          <div className="relative min-h-[min(88vh,920px)] w-full">
+          <div className="relative min-h-[min(88vh,920px)] w-full" style={{ backgroundColor: "#0F508E" }}>
             <HeroMusicSpiral3D variant="hero-cover" />
             {/* קריאות לטקסט בצד ימין (RTL) */}
             <div
@@ -97,7 +103,7 @@ export default function HomePage() {
             <div className="relative z-[2] flex min-h-[min(88vh,920px)] flex-col lg:grid lg:grid-cols-[1fr_minmax(280px,400px)]">
               <div className="flex flex-1 flex-col justify-center px-6 pb-6 pt-10 sm:px-10 sm:pt-14 lg:px-14 lg:pb-14 lg:ps-16 xl:ps-20">
                 {/* רוחב מוגבל + ריווח מקצה ה"סיום" (שמאל ב-RTL) כדי שלא יחפוף את הווידאו */}
-                <div className="w-full max-w-[13.5rem] self-start break-words sm:max-w-[16rem] md:max-w-[18rem] lg:max-w-[20rem] xl:max-w-[22rem] pe-2 sm:pe-4 lg:pe-8">
+                <div className={`w-full max-w-[13.5rem] self-start break-words sm:max-w-[16rem] md:max-w-[18rem] lg:max-w-[20rem] xl:max-w-[22rem] pe-2 sm:pe-4 lg:pe-8 transition-all duration-[2000ms] ease-in-out ${heroRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}>
                   <h1 className="mb-3 text-4xl font-black leading-[1.15] text-white drop-shadow-md sm:text-5xl lg:text-6xl xl:text-7xl">
                     <span className="block">שלום,</span>
                     <span className="mt-1 block bg-gradient-to-l from-cyan-200 to-white bg-clip-text text-transparent break-words">

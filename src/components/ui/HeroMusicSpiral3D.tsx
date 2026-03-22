@@ -8,61 +8,136 @@ import { cn } from "@/lib/utils";
 const VIDEO_SRC = "/videos/hero-object-video.mp4";
 const POSTER_SRC = "/images/hero-music-art.webp";
 
-const VIDEO_FADE_MS = 600;
-
-function scheduleFirstFrameReveal(video: HTMLVideoElement, onReveal: () => void): void {
-  const rVfc = video.requestVideoFrameCallback?.bind(video);
-  if (typeof rVfc === "function") {
-    rVfc(() => {
-      onReveal();
-    });
-    return;
-  }
-  requestAnimationFrame(() => {
-    requestAnimationFrame(onReveal);
-  });
-}
-
-/** הזזה ימינה + scale כדי למלא אחרי חיתוך (overflow על ההורה) */
-const COVER_SHIFT_OUTER =
-  "absolute inset-0 origin-center scale-[1.12] motion-safe:translate-x-[7%]";
-const COVER_SHIFT_INNER = "relative h-full w-full";
-
 type HeroVariant = "hero-cover" | "embed";
 
 interface HeroMusicSpiral3DProps {
   variant?: HeroVariant;
 }
 
+function scheduleRevealAfterFirstPaint(
+  video: HTMLVideoElement,
+  onReveal: () => void
+): () => void {
+  const typed = video as HTMLVideoElement & {
+    requestVideoFrameCallback?: (
+      cb: (now: number, meta: unknown) => void
+    ) => number;
+    cancelVideoFrameCallback?: (id: number) => void;
+  };
+
+  let finished = false;
+  let vfcId: number | null = null;
+  let rafOuter: number | null = null;
+  const fallbackMs = 320;
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    window.clearTimeout(timeoutId);
+    if (rafOuter !== null) cancelAnimationFrame(rafOuter);
+    if (
+      vfcId !== null &&
+      typeof typed.cancelVideoFrameCallback === "function"
+    ) {
+      typed.cancelVideoFrameCallback(vfcId);
+    }
+    onReveal();
+  };
+
+  const timeoutId = window.setTimeout(finish, fallbackMs);
+
+  if (typeof typed.requestVideoFrameCallback === "function") {
+    vfcId = typed.requestVideoFrameCallback(() => {
+      rafOuter = requestAnimationFrame(finish);
+    });
+  } else {
+    rafOuter = requestAnimationFrame(() => {
+      requestAnimationFrame(finish);
+    });
+  }
+
+  return () => {
+    finished = true;
+    window.clearTimeout(timeoutId);
+    if (rafOuter !== null) cancelAnimationFrame(rafOuter);
+    if (
+      vfcId !== null &&
+      typeof typed.cancelVideoFrameCallback === "function"
+    ) {
+      typed.cancelVideoFrameCallback(vfcId);
+    }
+  };
+}
+
+const COVER_SHIFT_OUTER =
+  "absolute inset-0 origin-center scale-[1.12] motion-safe:translate-x-[7%]";
+const COVER_SHIFT_INNER = "relative h-full w-full";
+
+function CoverPosterImg() {
+  return (
+    <img
+      src={POSTER_SRC}
+      alt=""
+      width={1920}
+      height={1080}
+      decoding="sync"
+      fetchPriority="high"
+      loading="eager"
+      className="absolute inset-0 h-full w-full object-cover"
+      style={{ backgroundColor: "#0F508E" }}
+      aria-hidden
+    />
+  );
+}
+
 export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DProps) {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const revealCleanupRef = useRef<(() => void) | null>(null);
+  const revealPendingRef = useRef(false);
+
+  const [isClient, setIsClient] = useState(false);
   const [videoVisible, setVideoVisible] = useState(false);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const resetReveal = useCallback(() => {
+    revealCleanupRef.current?.();
+    revealCleanupRef.current = null;
+    revealPendingRef.current = false;
+    setVideoVisible(false);
+  }, []);
+
+  useEffect(() => {
+    resetReveal();
+  }, [reduceMotion, resetReveal]);
+
+  useEffect(() => {
+    return () => {
+      revealCleanupRef.current?.();
+      revealCleanupRef.current = null;
+    };
+  }, []);
+
   const handlePlaying = useCallback(() => {
-    requestAnimationFrame(() => {
+    const el = videoRef.current;
+    if (!el || revealPendingRef.current) return;
+    revealPendingRef.current = true;
+    revealCleanupRef.current?.();
+    revealCleanupRef.current = scheduleRevealAfterFirstPaint(el, () => {
       setVideoVisible(true);
+      revealCleanupRef.current = null;
+      revealPendingRef.current = false;
     });
   }, []);
 
   useEffect(() => {
-    setVideoVisible(false);
-  }, [reduceMotion]);
-
-  useEffect(() => {
     const el = videoRef.current;
-    if (!el) return;
-    if (reduceMotion) {
-      el.pause();
-      try {
-        el.currentTime = 0;
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
+    if (!el || reduceMotion || variant !== "embed") return;
     void el.play().catch(() => {});
-  }, [reduceMotion]);
+  }, [reduceMotion, variant]);
 
   if (variant === "hero-cover") {
     return (
@@ -83,32 +158,25 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
         ) : (
           <div className={COVER_SHIFT_OUTER}>
             <div className={COVER_SHIFT_INNER}>
-              {/* פוסטר נפרד — בלי poster על ה-video כדי למנוע בזק בין תמונה לפריים ראשון */}
-              <Image
-                src={POSTER_SRC}
-                alt=""
-                fill
-                priority
-                className="object-cover"
-                sizes="100vw"
-                aria-hidden
-              />
-              <video
-                ref={videoRef}
-                data-hero-video=""
-                data-visible={videoVisible ? "true" : undefined}
-                className="absolute inset-0 z-[1] h-full w-full object-cover transition-opacity ease-out"
-                style={{ transitionDuration: `${VIDEO_FADE_MS}ms` }}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                onPlaying={handlePlaying}
-                aria-hidden
-              >
-                <source src={VIDEO_SRC} type="video/mp4" />
-              </video>
+              <CoverPosterImg />
+              {isClient ? (
+                <video
+                  ref={videoRef}
+                  className={cn(
+                    "absolute inset-0 z-[1] h-full w-full object-cover transition-opacity duration-[2000ms] ease-in-out [transform:translateZ(0)] [backface-visibility:hidden]",
+                    videoVisible ? "opacity-100" : "opacity-0"
+                  )}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  onPlaying={handlePlaying}
+                  aria-hidden
+                >
+                  <source src={VIDEO_SRC} type="video/mp4" />
+                </video>
+              ) : null}
             </div>
           </div>
         )}
@@ -150,10 +218,10 @@ export function HeroMusicSpiral3D({ variant = "hero-cover" }: HeroMusicSpiral3DP
           />
           <video
             ref={videoRef}
-            data-hero-video=""
-            data-visible={videoVisible ? "true" : undefined}
-            className="relative h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)] transition-opacity ease-out"
-            style={{ transitionDuration: `${VIDEO_FADE_MS}ms` }}
+            className={cn(
+              "relative h-full w-full object-contain drop-shadow-[0_12px_40px_rgba(15,80,142,0.12)] transition-opacity duration-[2000ms] ease-in-out [transform:translateZ(0)]",
+              videoVisible ? "opacity-100" : "opacity-0"
+            )}
             autoPlay
             loop
             muted
