@@ -108,7 +108,7 @@ export default function EmailsPage() {
   const [loading, setLoading] = useState(true)
   const [bulkSending, setBulkSending] = useState<string | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(CATEGORIES_CONFIG.map(c => c.key).concat(["uncategorized"]))
+    new Set()
   )
 
   const handleBulkSend = async (type: "not_updated" | "half_set") => {
