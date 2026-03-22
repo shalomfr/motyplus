@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         subject: data.subject,
         body: finalBody,
         category: data.category,
+        folderId: body.folderId || undefined,
         variables: data.variables || [],
         blocks: blocks ? JSON.parse(JSON.stringify(blocks)) : undefined,
       },

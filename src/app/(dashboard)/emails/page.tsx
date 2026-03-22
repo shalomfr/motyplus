@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -12,11 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import {
   Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
-  ChevronDown, ChevronUp, FolderOpen, Trash2,
+  ChevronDown, ChevronUp, FolderOpen, FolderPlus, Trash2, Pencil,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
@@ -27,6 +35,7 @@ interface EmailTemplate {
   name: string
   subject: string
   category: string | null
+  folderId: string | null
   variables: string[]
   isActive: boolean
   createdAt: string
@@ -36,80 +45,65 @@ interface EmailTemplate {
   }
 }
 
-interface CategoryConfig {
+interface EmailFolder {
+  id: string
+  name: string
   key: string
-  label: string
-  icon: LucideIcon
   color: string
-  bgColor: string
-  iconColor: string
+  iconName: string
+  order: number
+  _count?: { templates: number }
 }
 
-const CATEGORIES_CONFIG: CategoryConfig[] = [
-  {
-    key: "update",
-    label: "מיילים של עדכון",
-    icon: RefreshCw,
-    color: "border-r-blue-500",
-    bgColor: "bg-blue-100",
-    iconColor: "text-blue-600",
-  },
-  {
-    key: "after_purchase",
-    label: "אחרי רכישה",
-    icon: ShoppingBag,
-    color: "border-r-emerald-500",
-    bgColor: "bg-emerald-100",
-    iconColor: "text-emerald-600",
-  },
-  {
-    key: "welcome",
-    label: "לקוח חדש",
-    icon: UserPlus,
-    color: "border-r-green-500",
-    bgColor: "bg-green-100",
-    iconColor: "text-green-600",
-  },
-  {
-    key: "promotion",
-    label: "מבצעים והצעות מחיר",
-    icon: Percent,
-    color: "border-r-orange-500",
-    bgColor: "bg-orange-100",
-    iconColor: "text-orange-600",
-  },
-  {
-    key: "greeting",
-    label: "ברכות וחגים",
-    icon: Gift,
-    color: "border-r-pink-500",
-    bgColor: "bg-pink-100",
-    iconColor: "text-pink-600",
-  },
-  {
-    key: "reminder",
-    label: "תזכורות",
-    icon: Bell,
-    color: "border-r-amber-500",
-    bgColor: "bg-amber-100",
-    iconColor: "text-amber-600",
-  },
-]
+const ICON_MAP: Record<string, LucideIcon> = {
+  RefreshCw,
+  ShoppingBag,
+  UserPlus,
+  Percent,
+  Gift,
+  Bell,
+  FolderOpen,
+}
 
-// Fallback mapping for old category values
-const CATEGORY_FALLBACK: Record<string, string> = {
-  general: "greeting",
+const COLOR_MAP: Record<string, { border: string; bg: string; text: string }> = {
+  blue:    { border: "border-r-blue-500",    bg: "bg-blue-100",    text: "text-blue-600" },
+  emerald: { border: "border-r-emerald-500", bg: "bg-emerald-100", text: "text-emerald-600" },
+  green:   { border: "border-r-green-500",   bg: "bg-green-100",   text: "text-green-600" },
+  orange:  { border: "border-r-orange-500",  bg: "bg-orange-100",  text: "text-orange-600" },
+  pink:    { border: "border-r-pink-500",    bg: "bg-pink-100",    text: "text-pink-600" },
+  amber:   { border: "border-r-amber-500",   bg: "bg-amber-100",   text: "text-amber-600" },
+  gray:    { border: "border-r-gray-500",    bg: "bg-gray-100",    text: "text-gray-600" },
+  red:     { border: "border-r-red-500",     bg: "bg-red-100",     text: "text-red-600" },
+  purple:  { border: "border-r-purple-500",  bg: "bg-purple-100",  text: "text-purple-600" },
+  cyan:    { border: "border-r-cyan-500",    bg: "bg-cyan-100",    text: "text-cyan-600" },
+  indigo:  { border: "border-r-indigo-500",  bg: "bg-indigo-100",  text: "text-indigo-600" },
+}
+
+const AVAILABLE_COLORS = Object.keys(COLOR_MAP)
+
+function getColorClasses(color: string) {
+  return COLOR_MAP[color] || COLOR_MAP.gray
+}
+
+function getIcon(iconName: string): LucideIcon {
+  return ICON_MAP[iconName] || FolderOpen
 }
 
 export default function EmailsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [folders, setFolders] = useState<EmailFolder[]>([])
   const [loading, setLoading] = useState(true)
   const [bulkSending, setBulkSending] = useState<string | null>(null)
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set()
-  )
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+
+  // Dialog state
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
+  const [editingFolder, setEditingFolder] = useState<EmailFolder | null>(null)
+  const [folderName, setFolderName] = useState("")
+  const [folderColor, setFolderColor] = useState("gray")
+  const [folderSaving, setFolderSaving] = useState(false)
 
   const handleBulkSend = async (type: "not_updated" | "half_set") => {
     const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
@@ -135,20 +129,27 @@ export default function EmailsPage() {
   }
 
   useEffect(() => {
-    const fetchTemplates = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/emails/templates")
-        if (res.ok) {
-          const data = await res.json()
+        const [templatesRes, foldersRes] = await Promise.all([
+          fetch("/api/emails/templates"),
+          fetch("/api/emails/folders"),
+        ])
+        if (templatesRes.ok) {
+          const data = await templatesRes.json()
           setTemplates(data.templates || data)
         }
+        if (foldersRes.ok) {
+          const data = await foldersRes.json()
+          setFolders(data)
+        }
       } catch (err) {
-        console.error("Error fetching templates:", err)
+        console.error("Error fetching data:", err)
       } finally {
         setLoading(false)
       }
     }
-    fetchTemplates()
+    fetchData()
   }, [])
 
   const handleDeleteTemplate = async (id: string, name: string) => {
@@ -176,31 +177,157 @@ export default function EmailsPage() {
     })
   }
 
+  // Group templates by folderId, fallback to category for backward compat
   const groupedTemplates = useMemo(() => {
     const groups: Record<string, EmailTemplate[]> = {}
-    for (const cat of CATEGORIES_CONFIG) {
-      groups[cat.key] = []
+    for (const folder of folders) {
+      groups[folder.id] = []
     }
     groups["uncategorized"] = []
 
     for (const t of templates) {
-      let cat = t.category || "uncategorized"
-      // Map old category values to new ones
-      if (CATEGORY_FALLBACK[cat]) {
-        cat = CATEGORY_FALLBACK[cat]
-      }
-      if (groups[cat]) {
-        groups[cat].push(t)
+      if (t.folderId && groups[t.folderId]) {
+        groups[t.folderId].push(t)
       } else {
-        groups["uncategorized"].push(t)
+        // Try matching by category → folder.key for backward compat
+        const matchedFolder = folders.find(
+          (f) => f.key === t.category || (t.category === "general" && f.key === "greeting")
+        )
+        if (matchedFolder) {
+          groups[matchedFolder.id].push(t)
+        } else {
+          groups["uncategorized"].push(t)
+        }
       }
     }
 
     return groups
-  }, [templates])
+  }, [templates, folders])
 
-  const allKeys = CATEGORIES_CONFIG.map(c => c.key).concat(["uncategorized"])
+  const allKeys = folders.map(f => f.id).concat(["uncategorized"])
   const allExpanded = allKeys.every(k => expandedSections.has(k))
+
+  // Folder CRUD
+  const openNewFolderDialog = () => {
+    setEditingFolder(null)
+    setFolderName("")
+    setFolderColor("gray")
+    setFolderDialogOpen(true)
+  }
+
+  const openEditFolderDialog = (folder: EmailFolder) => {
+    setEditingFolder(folder)
+    setFolderName(folder.name)
+    setFolderColor(folder.color)
+    setFolderDialogOpen(true)
+  }
+
+  const handleSaveFolder = async () => {
+    if (!folderName.trim()) return
+    setFolderSaving(true)
+    try {
+      if (editingFolder) {
+        const res = await fetch(`/api/emails/folders/${editingFolder.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: folderName.trim(), color: folderColor }),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setFolders((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)))
+          toast({ title: "התיקייה עודכנה" })
+        }
+      } else {
+        const res = await fetch("/api/emails/folders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: folderName.trim(), color: folderColor }),
+        })
+        if (res.ok) {
+          const newFolder = await res.json()
+          setFolders((prev) => [...prev, newFolder])
+          toast({ title: "התיקייה נוצרה" })
+        }
+      }
+      setFolderDialogOpen(false)
+    } catch {
+      toast({ title: "שגיאה בשמירת תיקייה", variant: "destructive" })
+    } finally {
+      setFolderSaving(false)
+    }
+  }
+
+  const handleDeleteFolder = async (folder: EmailFolder) => {
+    const count = groupedTemplates[folder.id]?.length || 0
+    const msg = count > 0
+      ? `למחוק את התיקייה "${folder.name}"? ${count} תבניות יעברו לללא קטגוריה.`
+      : `למחוק את התיקייה "${folder.name}"?`
+    if (!confirm(msg)) return
+    try {
+      const res = await fetch(`/api/emails/folders/${folder.id}`, { method: "DELETE" })
+      if (res.ok) {
+        setFolders((prev) => prev.filter((f) => f.id !== folder.id))
+        // Move templates to uncategorized in UI
+        setTemplates((prev) =>
+          prev.map((t) => (t.folderId === folder.id ? { ...t, folderId: null } : t))
+        )
+        toast({ title: "התיקייה נמחקה" })
+      }
+    } catch {
+      toast({ title: "שגיאה במחיקת תיקייה", variant: "destructive" })
+    }
+  }
+
+  const renderTemplateTable = (templatesList: EmailTemplate[]) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>שם</TableHead>
+          <TableHead>נושא</TableHead>
+          <TableHead>משתנים</TableHead>
+          <TableHead>שימושים</TableHead>
+          <TableHead>עדכון אחרון</TableHead>
+          <TableHead className="w-20">פעולות</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {templatesList.map((template) => (
+          <TableRow key={template.id}>
+            <TableCell className="font-medium">{template.name}</TableCell>
+            <TableCell className="max-w-[200px] truncate">{template.subject}</TableCell>
+            <TableCell>
+              <span className="text-sm text-muted-foreground">
+                {template.variables.length}
+              </span>
+            </TableCell>
+            <TableCell>{template._count?.emailLogs ?? 0}</TableCell>
+            <TableCell className="text-sm">
+              {formatDateTime(template.updatedAt)}
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push(`/emails/templates/${template.id}`)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleDeleteTemplate(template.id, template.name)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
 
   return (
     <div className="space-y-6">
@@ -274,36 +401,42 @@ export default function EmailsPage() {
         </Card>
       </div>
 
-      {/* כותרת + הרחב/כווץ */}
+      {/* כותרת + הרחב/כווץ + הוסף תיקייה */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
           <h3 className="font-semibold text-lg">תבניות מייל</h3>
           <Badge variant="outline">{templates.length} תבניות</Badge>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            if (allExpanded) {
-              setExpandedSections(new Set())
-            } else {
-              setExpandedSections(new Set(allKeys))
-            }
-          }}
-        >
-          {allExpanded ? (
-            <>
-              <ChevronUp className="h-4 w-4 ml-1" />
-              כווץ הכל
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4 ml-1" />
-              הרחב הכל
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={openNewFolderDialog} className="gap-1">
+            <FolderPlus className="h-4 w-4" />
+            תיקייה חדשה
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (allExpanded) {
+                setExpandedSections(new Set())
+              } else {
+                setExpandedSections(new Set(allKeys))
+              }
+            }}
+          >
+            {allExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 ml-1" />
+                כווץ הכל
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 ml-1" />
+                הרחב הכל
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* תוכן */}
@@ -311,90 +444,73 @@ export default function EmailsPage() {
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : templates.length === 0 ? (
+      ) : templates.length === 0 && folders.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           אין תבניות מייל. צור תבנית חדשה כדי להתחיל.
         </div>
       ) : (
         <div className="space-y-3">
-          {CATEGORIES_CONFIG.map(cat => {
-            const catTemplates = groupedTemplates[cat.key]
-            if (!catTemplates || catTemplates.length === 0) return null
-            const Icon = cat.icon
-            const isExpanded = expandedSections.has(cat.key)
+          {folders.map(folder => {
+            const folderTemplates = groupedTemplates[folder.id] || []
+            const Icon = getIcon(folder.iconName)
+            const colors = getColorClasses(folder.color)
+            const isExpanded = expandedSections.has(folder.id)
 
             return (
-              <Card key={cat.key} className={`border-r-4 ${cat.color}`}>
+              <Card key={folder.id} className={`border-r-4 ${colors.border}`}>
                 <div
                   className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleSection(cat.key)}
+                  onClick={() => toggleSection(folder.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${cat.bgColor}`}>
-                      <Icon className={`h-4 w-4 ${cat.iconColor}`} />
+                    <div className={`p-2 rounded-lg ${colors.bg}`}>
+                      <Icon className={`h-4 w-4 ${colors.text}`} />
                     </div>
-                    <span className="font-medium">{cat.label}</span>
+                    <span className="font-medium">{folder.name}</span>
                     <Badge variant="outline" className="text-xs">
-                      {catTemplates.length}
+                      {folderTemplates.length}
                     </Badge>
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); openEditFolderDialog(folder) }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-red-400 hover:text-red-600"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder) }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
 
                 {isExpanded && (
                   <CardContent className="pt-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>שם</TableHead>
-                          <TableHead>נושא</TableHead>
-                          <TableHead>משתנים</TableHead>
-                          <TableHead>שימושים</TableHead>
-                          <TableHead>עדכון אחרון</TableHead>
-                          <TableHead className="w-20">פעולות</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {catTemplates.map((template) => (
-                          <TableRow key={template.id}>
-                            <TableCell className="font-medium">{template.name}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">{template.subject}</TableCell>
-                            <TableCell>
-                              <span className="text-sm text-muted-foreground">
-                                {template.variables.length}
-                              </span>
-                            </TableCell>
-                            <TableCell>{template._count?.emailLogs ?? 0}</TableCell>
-                            <TableCell className="text-sm">
-                              {formatDateTime(template.updatedAt)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => router.push(`/emails/templates/${template.id}`)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => handleDeleteTemplate(template.id, template.name)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    {folderTemplates.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">
+                        אין תבניות בתיקייה זו.{" "}
+                        <button
+                          className="text-blue-600 hover:underline"
+                          onClick={() => router.push(`/emails/templates/new?folderId=${folder.id}`)}
+                        >
+                          צור תבנית חדשה
+                        </button>
+                      </p>
+                    ) : (
+                      renderTemplateTable(folderTemplates)
+                    )}
                   </CardContent>
                 )}
               </Card>
@@ -426,50 +542,59 @@ export default function EmailsPage() {
 
               {expandedSections.has("uncategorized") && (
                 <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>שם</TableHead>
-                        <TableHead>נושא</TableHead>
-                        <TableHead>משתנים</TableHead>
-                        <TableHead>שימושים</TableHead>
-                        <TableHead>עדכון אחרון</TableHead>
-                        <TableHead className="w-20">פעולות</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {groupedTemplates["uncategorized"].map((template) => (
-                        <TableRow key={template.id}>
-                          <TableCell className="font-medium">{template.name}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">{template.subject}</TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {template.variables.length}
-                            </span>
-                          </TableCell>
-                          <TableCell>{template._count?.emailLogs ?? 0}</TableCell>
-                          <TableCell className="text-sm">
-                            {formatDateTime(template.updatedAt)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => router.push(`/emails/templates/${template.id}`)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  {renderTemplateTable(groupedTemplates["uncategorized"])}
                 </CardContent>
               )}
             </Card>
           )}
         </div>
       )}
+
+      {/* Dialog — יצירה/עריכת תיקייה */}
+      <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingFolder ? "עריכת תיקייה" : "תיקייה חדשה"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">שם התיקייה</label>
+              <Input
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="לדוגמה: מיילים של חגים"
+                dir="rtl"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">צבע</label>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_COLORS.map((c) => {
+                  const cls = getColorClasses(c)
+                  return (
+                    <button
+                      key={c}
+                      className={`w-8 h-8 rounded-full border-2 ${cls.bg} ${
+                        folderColor === c ? "ring-2 ring-offset-2 ring-blue-500" : ""
+                      }`}
+                      onClick={() => setFolderColor(c)}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveFolder} disabled={folderSaving || !folderName.trim()}>
+              {folderSaving ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+              {editingFolder ? "שמור" : "צור תיקייה"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

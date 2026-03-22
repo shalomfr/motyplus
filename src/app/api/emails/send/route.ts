@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
+import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 
 interface SendEmailBody {
   templateId?: string;
@@ -69,11 +70,87 @@ export async function POST(request: NextRequest) {
         include: { organ: true, setType: true },
       });
 
+      // בדיקה האם התבנית מכילה משתני קישורים (samplesLink / rhythmsLink)
+      const needsLinks = finalBody.includes("samplesLink") || finalBody.includes("rhythmsLink")
+        || finalSubject.includes("samplesLink") || finalSubject.includes("rhythmsLink");
+
+      // בניית מפות קישורים אם צריך
+      let cpiMap = new Map<number, { main?: string; additional?: string }>();
+      let rhythmsLinkMap = new Map<string, string>();
+
+      if (needsLinks) {
+        // קבצי CPI (דגימות) לכל לקוח
+        try {
+          const sampleFiles = await listFiles("updates/samples");
+          for (const f of sampleFiles) {
+            const name = f.path.split("/").pop() || "";
+            const baseName = name.replace(/\.cpi$/i, "");
+            const isAdditional = baseName.includes("_");
+            const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName);
+            if (isNaN(custId)) continue;
+            if (!cpiMap.has(custId)) cpiMap.set(custId, {});
+            const entry = cpiMap.get(custId)!;
+            if (isAdditional) entry.additional = f.path;
+            else entry.main = f.path;
+          }
+        } catch (err) {
+          console.error("Error listing sample files:", err);
+        }
+
+        // קישורי מקצבים לפי אורגן וסוג סט
+        try {
+          const latestVersion = await prisma.updateVersion.findFirst({
+            where: { status: { not: "DRAFT" } },
+            orderBy: { sortOrder: "desc" },
+          });
+
+          if (latestVersion) {
+            const [allOrgans, allSetTypes] = await Promise.all([
+              prisma.organ.findMany({ select: { id: true, demoAlias: true } }),
+              prisma.setType.findMany({ select: { id: true, demoAlias: true } }),
+            ]);
+            const organAliasMap = new Map(allOrgans.map(o => [o.id, o.demoAlias]));
+            const setTypeAliasMap = new Map(allSetTypes.map(st => [st.id, st.demoAlias]));
+
+            const uniqueCombos = new Set(customers.map(c => `${c.organId}_${c.setTypeId}`));
+            for (const combo of uniqueCombos) {
+              const [organId, setTypeId] = combo.split("_");
+              const organAlias = organAliasMap.get(organId);
+              const setTypeAlias = setTypeAliasMap.get(setTypeId);
+              if (!organAlias || !setTypeAlias) continue;
+
+              const folderPath = `updates/beats/${organAlias}/${setTypeAlias}/${latestVersion.version} - ${organAlias}`;
+              try {
+                rhythmsLinkMap.set(combo, await getShareableLink(folderPath));
+              } catch (err) {
+                console.error(`Rhythms folder not found: ${folderPath}`, err);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error building rhythms links:", err);
+        }
+      }
+
       for (const customer of customers) {
         // החלפת משתנים דינמיים (#30/#31: משתנים כספיים)
         const setPrice = Number(customer.setType.price || 0);
         const paid = Number(customer.amountPaid || 0);
         const remaining = Math.max(0, setPrice - paid);
+
+        // קישור דגימות — שיתוף קובץ CPI עם הלקוח
+        let samplesLink = "";
+        if (needsLinks) {
+          const cpiFiles = cpiMap.get(customer.id);
+          if (cpiFiles?.main) {
+            try {
+              samplesLink = await shareFile(cpiFiles.main, customer.email, "reader");
+            } catch (err) {
+              console.error(`Failed to share CPI for customer ${customer.id}:`, err);
+            }
+          }
+        }
+
         const variables: Record<string, string> = {
           fullName: customer.fullName,
           firstName: customer.fullName.split(" ")[0],
@@ -87,6 +164,11 @@ export async function POST(request: NextRequest) {
           remainingAmount: remaining.toLocaleString("he-IL"),
           remainingForFullSet: remaining > 0 ? `${remaining.toLocaleString("he-IL")} ₪` : "שולם במלואו",
           currentVersion: customer.currentUpdateVersion || "לא עודכן",
+          samplesLink,
+          rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || "",
+          driveLink: "",
+          youtubeLink: "",
+          customLink: "",
         };
 
         const personalizedSubject = replaceTemplateVariables(finalSubject, variables);

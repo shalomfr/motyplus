@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,37 +22,46 @@ interface TemplateData {
   subject: string
   body: string
   category: string
+  folderId: string
   variables: string[]
   blocks: EmailBlock[]
 }
 
-const CATEGORIES = [
-  { value: "update", label: "מיילים של עדכון" },
-  { value: "after_purchase", label: "אחרי רכישה" },
-  { value: "welcome", label: "לקוח חדש" },
-  { value: "promotion", label: "מבצעים והצעות מחיר" },
-  { value: "greeting", label: "ברכות וחגים" },
-  { value: "reminder", label: "תזכורות" },
-]
+interface EmailFolder {
+  id: string
+  name: string
+  key: string
+}
 
 export default function EditTemplatePage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const id = params.id as string
   const isNew = id === "new"
 
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [folders, setFolders] = useState<EmailFolder[]>([])
 
   const [form, setForm] = useState<TemplateData>({
     name: "",
     subject: "",
     body: "",
-    category: "general",
+    category: "",
+    folderId: searchParams.get("folderId") || "",
     variables: [],
     blocks: [],
   })
+
+  // Fetch folders
+  useEffect(() => {
+    fetch("/api/emails/folders")
+      .then((res) => res.json())
+      .then((data) => setFolders(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (isNew) return
@@ -66,7 +75,8 @@ export default function EditTemplatePage() {
             name: data.name || "",
             subject: data.subject || "",
             body: data.body || "",
-            category: data.category || "general",
+            category: data.category || "",
+            folderId: data.folderId || "",
             variables: data.variables || [],
             blocks: (data.blocks as EmailBlock[]) || [],
           })
@@ -98,11 +108,16 @@ export default function EditTemplatePage() {
       const url = isNew ? "/api/emails/templates" : `/api/emails/templates/${id}`
       const method = isNew ? "POST" : "PATCH"
 
+      // Find folder key for backward compat category field
+      const matchedFolder = folders.find((f) => f.id === form.folderId)
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          category: matchedFolder?.key || form.category || null,
+          folderId: form.folderId || null,
           blocks: form.blocks.length > 0 ? form.blocks : undefined,
         }),
       })
@@ -176,18 +191,19 @@ export default function EditTemplatePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>קטגוריה</Label>
+              <Label>תיקייה</Label>
               <Select
-                value={form.category}
-                onValueChange={(v) => setForm({ ...form, category: v })}
+                value={form.folderId || "_none"}
+                onValueChange={(v) => setForm({ ...form, folderId: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="בחר תיקייה" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
+                  <SelectItem value="_none">ללא תיקייה</SelectItem>
+                  {folders.map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {folder.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

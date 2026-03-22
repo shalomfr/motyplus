@@ -316,6 +316,19 @@ enum EmailStatus {
   FAILED
 }
 
+model EmailFolder {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  color     String   @default("gray")
+  iconName  String   @default("FolderOpen")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  templates EmailTemplate[]
+}
+
 model EmailTemplate {
   id        String   @id @default(cuid())
   name      String
@@ -323,13 +336,17 @@ model EmailTemplate {
   body      String   @db.Text
   blocks    Json?
   category  String?
+  folderId  String?
   variables String[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
+  folder    EmailFolder? @relation(fields: [folderId], references: [id])
   emailLogs EmailLog[]
+
+  @@index([folderId])
 }
 
 model EmailLog {
