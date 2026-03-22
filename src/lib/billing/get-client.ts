@@ -6,6 +6,7 @@ import type { BillingProvider } from "@prisma/client";
 import type { BillingClient } from "./client";
 import { ICountAdapter } from "./icount-adapter";
 import { YeshInvoiceClient } from "./yeshinvoice-client";
+import { CardComClient } from "./cardcom-client";
 
 export interface BillingClientResult {
   client: BillingClient;
@@ -40,6 +41,11 @@ function buildClient(provider: BillingProvider): BillingClientResult {
   if (provider.provider === "YESHINVOICE") {
     const authJson = decrypt(provider.apiKey);
     return { client: new YeshInvoiceClient(authJson), provider };
+  }
+
+  if (provider.provider === "CARDCOM") {
+    const authJson = decrypt(provider.apiKey);
+    return { client: new CardComClient(authJson), provider };
   }
 
   // Default: ICOUNT

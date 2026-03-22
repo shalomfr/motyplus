@@ -14,5 +14,6 @@ export type {
 } from "./types";
 export { ICountAdapter } from "./icount-adapter";
 export { YeshInvoiceClient } from "./yeshinvoice-client";
+export { CardComClient } from "./cardcom-client";
 export { getBillingClient, getBillingClientById } from "./get-client";
 export type { BillingClientResult } from "./get-client";

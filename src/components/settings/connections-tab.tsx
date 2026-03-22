@@ -80,6 +80,13 @@ function ProviderCard({
       }
       apiKey = JSON.stringify({ secret: field1, userkey: field2 })
       displayName = "יש חשבונית"
+    } else if (providerType === "CARDCOM") {
+      if (!field1 || !field2 || !field3) {
+        toast({ title: "יש להזין API Name, API Password ו-Terminal Number", variant: "destructive" })
+        return
+      }
+      apiKey = JSON.stringify({ apiName: field1, apiPassword: field2, terminalNumber: field3 })
+      displayName = "CardCom"
     }
 
     setSaving(true)
@@ -257,6 +264,21 @@ function ProviderCard({
                       <Input type="password" value={field3} onChange={(e) => setField3(e.target.value)} placeholder="••••••••" dir="ltr" />
                     </div>
                   </>
+                ) : providerType === "CARDCOM" ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label>API Name</Label>
+                      <Input value={field1} onChange={(e) => setField1(e.target.value)} placeholder="kzFKfoh..." dir="ltr" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>API Password</Label>
+                      <Input type="password" value={field2} onChange={(e) => setField2(e.target.value)} placeholder="••••••••" dir="ltr" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Terminal Number</Label>
+                      <Input value={field3} onChange={(e) => setField3(e.target.value)} placeholder="1000" dir="ltr" />
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div className="space-y-1">
@@ -309,6 +331,21 @@ function ProviderCard({
                     </div>
                   </>
                 )}
+              </>
+            ) : providerType === "CARDCOM" ? (
+              <>
+                <div className="space-y-1">
+                  <Label>API Name</Label>
+                  <Input value={field1} onChange={(e) => setField1(e.target.value)} placeholder="kzFKfoh..." dir="ltr" />
+                </div>
+                <div className="space-y-1">
+                  <Label>API Password</Label>
+                  <Input type="password" value={field2} onChange={(e) => setField2(e.target.value)} placeholder="••••••••" dir="ltr" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Terminal Number</Label>
+                  <Input value={field3} onChange={(e) => setField3(e.target.value)} placeholder="1000" dir="ltr" />
+                </div>
               </>
             ) : (
               <>
@@ -376,6 +413,18 @@ export function ConnectionsTab() {
         icon={
           <div className="p-2 bg-green-100 rounded-lg">
             <Plug className="h-5 w-5 text-green-600" />
+          </div>
+        }
+        providers={providers}
+        onRefresh={fetchProviders}
+      />
+      <ProviderCard
+        providerType="CARDCOM"
+        label="CardCom"
+        description="סליקת אשראי, חשבוניות מס וקבלות"
+        icon={
+          <div className="p-2 bg-purple-100 rounded-lg">
+            <Plug className="h-5 w-5 text-purple-600" />
           </div>
         }
         providers={providers}

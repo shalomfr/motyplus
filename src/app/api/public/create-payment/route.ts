@@ -82,27 +82,14 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-    const webhookPath = billing.provider.provider === "YESHINVOICE"
-      ? "/api/webhooks/yeshinvoice"
-      : "/api/webhooks/icount";
+    const webhookPathMap: Record<string, string> = {
+      CARDCOM: "/api/webhooks/cardcom",
+      YESHINVOICE: "/api/webhooks/yeshinvoice",
+      ICOUNT: "/api/webhooks/icount",
+    };
+    const webhookPath = webhookPathMap[billing.provider.provider] || "/api/webhooks/icount";
 
-    // Create payment page first
-    const paymentPage = await billing.client.createPaymentPage({
-      customer: { name: fullName, email, phone },
-      items: [{ description, quantity: 1, unitPrice: amount }],
-      successUrl: `${baseUrl}/order/success`,
-      cancelUrl: `${baseUrl}/order/cancel`,
-      webhookUrl: `${baseUrl}${webhookPath}`,
-      autoCreateDoc: true,
-      docType: "invoice_receipt",
-      metadata: { promotionId: promotionId || "" },
-    });
-
-    if (!paymentPage.url) {
-      return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
-    }
-
-    // Save pending order after payment page created
+    // Create pending order FIRST so we can pass its ID in metadata
     const pendingOrder = await prisma.pendingOrder.create({
       data: {
         stripeSessionId: `billing_${Date.now()}`,
@@ -119,6 +106,40 @@ export async function POST(request: NextRequest) {
         notes,
       },
     });
+
+    let webhookUrl = `${baseUrl}${webhookPath}`;
+    const webhookSecret = billing.provider.provider === "CARDCOM"
+      ? process.env.CARDCOM_WEBHOOK_SECRET
+      : billing.provider.provider === "YESHINVOICE"
+        ? process.env.YESHINVOICE_WEBHOOK_SECRET
+        : null;
+    if (webhookSecret) {
+      webhookUrl += `?secret=${webhookSecret}`;
+    }
+
+    // Create payment page with pendingOrderId in metadata
+    let paymentPage;
+    try {
+      paymentPage = await billing.client.createPaymentPage({
+        customer: { name: fullName, email, phone },
+        items: [{ description, quantity: 1, unitPrice: amount }],
+        successUrl: `${baseUrl}/order/success`,
+        cancelUrl: `${baseUrl}/order/cancel`,
+        webhookUrl,
+        autoCreateDoc: true,
+        docType: "invoice_receipt",
+        metadata: { pendingOrderId: pendingOrder.id, promotionId: promotionId || "" },
+      });
+    } catch (err) {
+      // Cleanup pending order if payment page creation fails
+      await prisma.pendingOrder.delete({ where: { id: pendingOrder.id } });
+      throw err;
+    }
+
+    if (!paymentPage.url) {
+      await prisma.pendingOrder.delete({ where: { id: pendingOrder.id } });
+      return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
+    }
 
     // עדכון שימוש בקופון
     if (promotionId) {
