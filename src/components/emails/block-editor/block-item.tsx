@@ -12,9 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { BLOCK_LABELS } from "./types"
 import type { EmailBlock, ButtonConfig } from "./types"
 import { cn } from "@/lib/utils"
+import { EMAIL_VARIABLES } from "../variable-badge-extension"
 
 interface BlockItemProps {
   block: EmailBlock
@@ -134,6 +136,18 @@ function ButtonsEditor({
             placeholder="קישור (URL או {{משתנה}})"
             dir="ltr"
           />
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {EMAIL_VARIABLES.map((v) => (
+              <Badge
+                key={v.name}
+                variant="outline"
+                className="text-[10px] cursor-pointer bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200 py-0 px-1.5"
+                onClick={() => updateButton(idx, "url", btn.url + `{{${v.name}}}`)}
+              >
+                {v.label}
+              </Badge>
+            ))}
+          </div>
         </div>
       ))}
       <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={addButton}>
