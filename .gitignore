@@ -5,5 +5,6 @@ node_modules/
 deploy.zip
 source.zip
 *.log
+*.tsbuildinfo
 .env
 generated-info-files/
