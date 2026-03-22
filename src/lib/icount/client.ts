@@ -343,10 +343,12 @@ export class ICountClient {
 
   async createPaymentPage(request: CreatePaymentPageRequest): Promise<CreatePaymentPageResponse> {
     // iCount paypage uses items array with desc/quantity/unitprice keys
+    // Mark items as VAT exempt (vat_type: 0) so no VAT is added
     const items = request.items.map((item) => ({
       desc: item.description,
       quantity: item.quantity,
       unitprice: item.unitprice,
+      vat_type: 0,
     }));
 
     // Calculate total for cs (custom sum) fallback
@@ -378,9 +380,12 @@ export class ICountClient {
         webhook_url: request.webhookUrl,
         auto_create_doc: 1,
         doctype: request.docType ? this.mapDocType(request.docType) : "invrec",
-        // VAT exempt — prices include everything, no separate VAT
+        // VAT settings — multiple approaches for compatibility
         vat_exempt: 1,
         include_vat: 0,
+        price_include_vat: 1,
+        no_vat: 1,
+        vat_percent: 0,
         // No max_payments — leave unlimited
         // Hidden metadata — m__ prefix fields are returned in IPN without the prefix
         ...(request.metadata
