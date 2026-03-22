@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, use } from "react"
+import { useState, useEffect, useCallback, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, CheckCircle2 } from "lucide-react"
@@ -11,7 +11,7 @@ import { StepSamples } from "@/components/updates/wizard/step-samples"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
 
-const WIZARD_STEPS = [
+const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
   { key: "rhythms", label: "מקצבים", icon: <FolderOpen className="h-4 w-4" /> },
   { key: "samples", label: "דגימות", icon: <Music className="h-4 w-4" /> },
@@ -63,6 +63,13 @@ export default function UpdateWizardPage({
   })
   const [foldersReady, setFoldersReady] = useState(false)
 
+  const isPartial = wizardData?.updateVersion.updateType === "PARTIAL"
+  const wizardSteps = useMemo(
+    () => isPartial ? ALL_WIZARD_STEPS.filter((s) => s.key !== "samples") : ALL_WIZARD_STEPS,
+    [isPartial]
+  )
+  const activeStepKey = wizardSteps[currentStep]?.key
+
   const fetchFolderStatus = useCallback(async () => {
     try {
       const res = await fetch(`/api/updates/${id}/folders`)
@@ -104,7 +111,8 @@ export default function UpdateWizardPage({
   }, [fetchWizardData, fetchFolderStatus])
 
   const handleStepChange = (step: number) => {
-    if (step === 3 || step === 4) {
+    const stepKey = wizardSteps[step]?.key
+    if (stepKey === "emails" || stepKey === "summary") {
       fetchWizardData()
       fetchFolderStatus()
     }
@@ -149,13 +157,13 @@ export default function UpdateWizardPage({
       </div>
 
       <WizardShell
-        steps={WIZARD_STEPS}
+        steps={wizardSteps}
         currentStep={currentStep}
         onStepChange={handleStepChange}
         canGoNext={true}
         completedSteps={completedSteps}
       >
-        {currentStep === 0 && (
+        {activeStepKey === "details" && (
           <StepDetails
             data={updateDetails}
             onChange={setUpdateDetails}
@@ -166,14 +174,14 @@ export default function UpdateWizardPage({
           />
         )}
 
-        {currentStep === 1 && (
+        {activeStepKey === "rhythms" && (
           <StepRhythms
             updateId={id}
             version={wizardData.updateVersion.version}
           />
         )}
 
-        {currentStep === 2 && (
+        {activeStepKey === "samples" && (
           <StepSamples
             updateId={id}
             cpiReady={wizardData.cpiStatus.ready}
@@ -181,11 +189,11 @@ export default function UpdateWizardPage({
           />
         )}
 
-        {currentStep === 3 && (
+        {activeStepKey === "emails" && (
           <StepEmailPreview segments={wizardData.segments} />
         )}
 
-        {currentStep === 4 && (
+        {activeStepKey === "summary" && (
           <StepSummary
             updateId={id}
             version={wizardData.updateVersion.version}

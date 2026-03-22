@@ -540,6 +540,106 @@ export function CustomerActions({
             צור קישור להעלאת אינפו
           </Button>
 
+          {/* שלח קישור העלאת אינפו במייל */}
+          {customerEmail && (
+            <Button variant="outline" className="w-full justify-start"
+              onClick={async () => {
+                setLoadingAction("sendUploadLink")
+                try {
+                  const res = await fetch(`/api/customers/${customerId}/send-upload-link`, { method: "POST" })
+                  const data = await res.json()
+                  if (data.success) {
+                    toast({ title: "הקישור נשלח במייל!", description: customerEmail })
+                  } else {
+                    toast({ title: "שגיאה", description: data.error || "שגיאה בשליחה", variant: "destructive" })
+                  }
+                } catch {
+                  toast({ title: "שגיאה", description: "שגיאה בשליחת הקישור", variant: "destructive" })
+                } finally {
+                  setLoadingAction(null)
+                }
+              }}
+              disabled={loadingAction === "sendUploadLink"}
+            >
+              {loadingAction === "sendUploadLink" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
+              שלח קישור העלאת אינפו במייל
+            </Button>
+          )}
+
+          {/* החלפת אינפו */}
+          {infoFileUrl && (
+            <Button variant="outline" className="w-full justify-start"
+              onClick={() => {
+                const input = document.createElement("input")
+                input.type = "file"
+                input.accept = ".n27"
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (!file) return
+                  setLoadingAction("replaceInfo")
+                  try {
+                    const formData = new FormData()
+                    formData.append("file", file)
+                    const res = await fetch(`/api/customers/${customerId}/upload-info`, { method: "POST", body: formData })
+                    const data = await res.json()
+                    if (res.ok) {
+                      toast({ title: "האינפו הוחלף בהצלחה!" })
+                      onStatusChange()
+                    } else {
+                      toast({ title: "שגיאה", description: data.error || "שגיאה בהחלפת אינפו", variant: "destructive" })
+                    }
+                  } catch {
+                    toast({ title: "שגיאה", description: "שגיאה בהחלפת אינפו", variant: "destructive" })
+                  } finally {
+                    setLoadingAction(null)
+                  }
+                }
+                input.click()
+              }}
+              disabled={loadingAction === "replaceInfo"}
+            >
+              {loadingAction === "replaceInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Upload className="h-4 w-4 ml-2" />}
+              החלף אינפו
+            </Button>
+          )}
+
+          {/* החלפת אינפו נוסף */}
+          {additionalInfoFileUrl && (
+            <Button variant="outline" className="w-full justify-start"
+              onClick={() => {
+                const input = document.createElement("input")
+                input.type = "file"
+                input.accept = ".n27"
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (!file) return
+                  setLoadingAction("replaceAdditionalInfo")
+                  try {
+                    const formData = new FormData()
+                    formData.append("file", file)
+                    const res = await fetch(`/api/customers/${customerId}/upload-info?type=additional`, { method: "POST", body: formData })
+                    const data = await res.json()
+                    if (res.ok) {
+                      toast({ title: "האינפו הנוסף הוחלף בהצלחה!" })
+                      onStatusChange()
+                    } else {
+                      toast({ title: "שגיאה", description: data.error || "שגיאה בהחלפת אינפו", variant: "destructive" })
+                    }
+                  } catch {
+                    toast({ title: "שגיאה", description: "שגיאה בהחלפת אינפו", variant: "destructive" })
+                  } finally {
+                    setLoadingAction(null)
+                  }
+                }
+                input.click()
+              }}
+              disabled={loadingAction === "replaceAdditionalInfo"}
+            >
+              {loadingAction === "replaceAdditionalInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Upload className="h-4 w-4 ml-2" />}
+              החלף אינפו נוסף
+            </Button>
+          )}
+
           <Button variant="outline" className={cn("w-full justify-start", status === "BLOCKED" && "border-red-300 text-red-700")} onClick={handleToggleBlock} disabled={loadingAction === "toggleBlock"}>
             {loadingAction === "toggleBlock" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Ban className="h-4 w-4 ml-2" />}
             {status === "BLOCKED" ? "שחרור חסימה" : "חסימה"}
