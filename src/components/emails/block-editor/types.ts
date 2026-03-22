@@ -128,7 +128,7 @@ export function createDefaultBlock(type: EmailBlock["type"]): EmailBlock {
 
   switch (type) {
     case "heading":
-      return { type, id, text: "עדכון {{updateVersion}} - {{תאריך}}" }
+      return { type, id, text: "" }
     case "banner":
       return { type, id, text: "מה חדש בעדכון?", color: "orange" }
     case "paragraph":

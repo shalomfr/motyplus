@@ -188,12 +188,11 @@ function renderBlockFields(
             singleLine
           />
           {block.layout === "split" && (
-            <Input
+            <VariableTextarea
               value={block.textLeft || ""}
-              onChange={(e) => onChange({ ...block, textLeft: e.target.value })}
-              className="h-8 text-sm"
+              onChange={(textLeft) => onChange({ ...block, textLeft })}
               placeholder="כותרת שמאל (Version 5.0)"
-              dir="ltr"
+              singleLine
             />
           )}
         </div>
