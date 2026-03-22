@@ -116,8 +116,6 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
           // Insert via DOM at cursor position
           const range = sel.getRangeAt(0)
           range.deleteContents()
-          const varTag = `{{${varName}}}`
-          const label = varName
           const span = document.createElement("span")
           span.setAttribute("data-var", varName)
           span.setAttribute("contenteditable", "false")
@@ -189,6 +187,7 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
             key={v.name}
             variant="outline"
             className="text-xs cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => insertVariable(v.name)}
           >
             {v.label}

@@ -211,6 +211,7 @@ function RenderBlockFields({
                     key={v.name}
                     variant="outline"
                     className="text-[10px] cursor-pointer bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 py-0 px-1.5"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => textareaLeftRef.current?.insertAtCursor(`{{${v.name}}}`)}
                   >
                     {v.label}
