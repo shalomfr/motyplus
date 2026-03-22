@@ -17,10 +17,10 @@ interface FileUploadProgressProps {
 
 const colorMap = {
   blue: {
-    indicator: "bg-blue-500",
-    icon: "text-blue-500",
+    indicator: "bg-orange-500",
+    icon: "text-orange-500",
     border: "border-blue-200",
-    bg: "bg-blue-50",
+    bg: "bg-orange-50",
     successBg: "bg-green-50",
     successBorder: "border-green-200",
   },

@@ -20,8 +20,8 @@ interface UpdateVersion {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "טיוטה", className: "bg-gray-100 text-gray-800 border-gray-200" },
   PREPARING: { label: "בהכנה", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  READY: { label: "מוכן", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  SENDING: { label: "בשליחה", className: "bg-orange-100 text-orange-800 border-orange-200" },
+  READY: { label: "מוכן", className: "bg-orange-100 text-blue-800 border-blue-200" },
+  SENDING: { label: "בשליחה", className: "bg-orange-100 text-blue-800 border-blue-200" },
   COMPLETED: { label: "הושלם", className: "bg-green-100 text-green-800 border-green-200" },
 }
 
@@ -78,9 +78,9 @@ export default function UpdatesPage() {
         {/* צור עדכון חדש */}
         <button
           onClick={() => router.push("/updates/wizard")}
-          className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg transition-all text-center"
+          className="group flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-blue-200 bg-white hover:border-orange-400 hover:shadow-lg transition-all text-center"
         >
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 group-hover:bg-blue-200 transition-colors">
             <Plus className="h-8 w-8 text-blue-600" />
           </div>
           <div>

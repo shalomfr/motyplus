@@ -55,8 +55,8 @@ interface TaskCounts {
 
 const COLUMNS = [
   { key: "IDEA" as const, label: "רעיון", icon: Lightbulb, color: "bg-amber-500", lightBg: "bg-amber-50 border-amber-200" },
-  { key: "PLANNING" as const, label: "תכנון", icon: ClipboardList, color: "bg-blue-500", lightBg: "bg-blue-50 border-blue-200" },
-  { key: "IN_PROGRESS" as const, label: "בביצוע", icon: Hammer, color: "bg-purple-500", lightBg: "bg-purple-50 border-purple-200" },
+  { key: "PLANNING" as const, label: "תכנון", icon: ClipboardList, color: "bg-orange-500", lightBg: "bg-orange-50 border-blue-200" },
+  { key: "IN_PROGRESS" as const, label: "בביצוע", icon: Hammer, color: "bg-orange-500", lightBg: "bg-orange-50 border-blue-200" },
   { key: "DONE" as const, label: "הושלם", icon: CheckCircle2, color: "bg-green-500", lightBg: "bg-green-50 border-green-200" },
 ]
 
@@ -328,7 +328,7 @@ export default function TasksPage() {
             <div
               key={col.key}
               className={`rounded-xl border-2 transition-colors min-h-[300px] ${
-                isDragOver ? "border-blue-400 bg-blue-50/50" : "border-white/10 bg-white/5"
+                isDragOver ? "border-orange-400 bg-orange-50/50" : "border-white/10 bg-white/5"
               }`}
               onDragOver={(e) => handleDragOver(e, col.key)}
               onDragLeave={() => setDragOverColumn(null)}

@@ -117,8 +117,8 @@ export function StepEmailSelect({
               className={cn(
                 "border-2 cursor-pointer transition-all hover:shadow-md",
                 isApplied
-                  ? "border-blue-500 bg-blue-50 shadow-sm"
-                  : "border-gray-200 hover:border-blue-300"
+                  ? "border-blue-500 bg-orange-50 shadow-sm"
+                  : "border-gray-200 hover:border-orange-300"
               )}
             >
               <CardContent className="p-4 space-y-3">
@@ -139,7 +139,7 @@ export function StepEmailSelect({
                     )}
                   </div>
                   {isApplying && (
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-500 shrink-0" />
+                    <Loader2 className="h-4 w-4 animate-spin text-orange-500 shrink-0" />
                   )}
                 </div>
 

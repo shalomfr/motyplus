@@ -5,32 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-  Home,
-  Users,
-  RefreshCw,
-  Mail,
-  Target,
-  Database,
-  Percent,
-  ScrollText,
-  LayoutDashboard,
-  ClipboardList,
-  Receipt,
-  Settings,
-  LogOut,
-  X,
-  ChevronRight,
-  ChevronLeft,
-  type LucideIcon,
+  Home, Users, RefreshCw, Mail, Target, Database, Percent,
+  ScrollText, LayoutDashboard, ClipboardList, Receipt, Settings,
+  LogOut, X, ChevronRight, ChevronLeft, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
 
-interface NavItem {
-  label: string;
-  icon: LucideIcon;
-  path: string;
-}
+interface NavItem { label: string; icon: LucideIcon; path: string; }
 
 const NAV_ITEMS: NavItem[] = [
   { label: "דף הבית", icon: Home, path: "/" },
@@ -44,7 +26,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "חשבונות", icon: Receipt, path: "/accounting" },
   { label: "יומן פעילות", icon: ScrollText, path: "/activity-log" },
   { label: "משימות", icon: ClipboardList, path: "/tasks" },
-  { label: "הגדרות", icon: Settings, path: "/settings" },
 ];
 
 interface SidebarProps {
@@ -52,6 +33,8 @@ interface SidebarProps {
   userEmail?: string;
   isMobileOpen: boolean;
   onMobileToggle: () => void;
+  isCollapsed?: boolean;
+  onCollapseToggle?: () => void;
 }
 
 export function Sidebar({
@@ -59,15 +42,13 @@ export function Sidebar({
   userEmail = "",
   isMobileOpen,
   onMobileToggle,
+  isCollapsed = true,
+  onCollapseToggle,
 }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Close mobile sidebar on route change
   useEffect(() => {
-    if (isMobileOpen) {
-      onMobileToggle();
-    }
+    if (isMobileOpen) onMobileToggle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
@@ -75,111 +56,134 @@ export function Sidebar({
     await signOut({ callbackUrl: "/login" });
   };
 
+  const allItems = [...NAV_ITEMS, { label: "הגדרות", icon: Settings, path: "/settings" }];
+
   return (
     <>
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 md:hidden"
-          onClick={onMobileToggle}
-        />
+        <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onMobileToggle} />
       )}
 
-      {/* Sidebar */}
+      {/* Mobile sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex flex-col glass-sidebar text-gray-700 transition-all duration-300",
-          "md:static md:z-auto",
-          isMobileOpen ? "translate-x-0" : "translate-x-full",
-          "md:translate-x-0",
-          isCollapsed ? "md:w-20" : "md:w-64",
-          "w-64"
+          "fixed inset-y-0 right-0 z-50 flex flex-col glass-sidebar text-gray-700 w-64 transition-transform duration-300 md:hidden",
+          isMobileOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
-        {/* Logo / Title area */}
-        <div
-          className={cn(
-            "flex items-center border-b border-gray-200/60 p-4 min-h-[72px]",
-            isCollapsed ? "justify-center flex-col gap-2" : "justify-between"
-          )}
-        >
-          <AnimatedLogo size={isCollapsed ? 36 : 44} />
-
-          <div className="flex items-center gap-1">
-            {/* Mobile close button */}
-            <button
-              onClick={onMobileToggle}
-              className="p-2 rounded-lg hover:bg-gray-100/60 transition-colors md:hidden"
-              aria-label="סגור תפריט"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Desktop collapse toggle */}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex p-2 rounded-lg hover:bg-gray-100/60 transition-colors"
-              aria-label={isCollapsed ? "הרחב תפריט" : "כווץ תפריט"}
-            >
-              {isCollapsed ? (
-                <ChevronLeft size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
+        <div className="flex items-center justify-between border-b border-gray-200/60 p-4 min-h-[72px]">
+          <AnimatedLogo size={36} />
+          <button onClick={onMobileToggle} className="p-2 rounded-lg hover:bg-gray-100/60"><X size={20} /></button>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {allItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.path === "/" ? pathname === "/" : pathname.startsWith(item.path);
+            return (
+              <Link key={item.path} href={item.path}
+                className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                  isActive ? "gradient-blue-btn text-white shadow-lg" : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-800"
+                )}>
+                <Icon size={20} className="shrink-0" /><span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="border-t border-gray-200/60 p-4">
+          <div className="mb-3 px-1">
+            <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
+            {userEmail && <p className="text-xs text-gray-500 truncate">{userEmail}</p>}
           </div>
+          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50/60">
+            <LogOut size={20} className="shrink-0" /><span>התנתק</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop sidebar — static, pushes content */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col glass-sidebar transition-all duration-300 shrink-0",
+          isCollapsed ? "w-[72px] items-center py-5" : "w-64 py-4"
+        )}
+      >
+        {/* Logo + toggle */}
+        <div className={cn("flex items-center min-h-[56px] mb-2", isCollapsed ? "justify-center px-2.5" : "justify-between px-4 border-b border-gray-200/60 pb-4")}>
+          <AnimatedLogo size={isCollapsed ? 40 : 44} />
+          {!isCollapsed && (
+            <button onClick={onCollapseToggle} className="p-2 rounded-lg hover:bg-gray-100/60 text-gray-400 hover:text-gray-600">
+              <ChevronRight size={18} />
+            </button>
+          )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {/* Expand button when collapsed */}
+        {isCollapsed && (
+          <button
+            onClick={onCollapseToggle}
+            className="mb-3 w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
+
+        {/* Nav */}
+        <nav className={cn("flex-1 overflow-y-auto", isCollapsed ? "flex flex-col items-center gap-1 w-full px-2.5" : "px-3 py-2 space-y-1")}>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              item.path === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.path);
+            const isActive = item.path === "/" ? pathname === "/" : pathname.startsWith(item.path);
 
             return (
               <Link
                 key={item.path}
                 href={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
-                  isActive
-                    ? "gradient-blue-btn text-white shadow-lg shadow-blue-500/30"
-                    : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-700",
-                  isCollapsed && "justify-center px-2"
+                  isCollapsed
+                    ? cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
+                        isActive ? "gradient-blue-btn text-white shadow-lg" : "text-gray-400 hover:bg-blue-50 hover:text-blue-700")
+                    : cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                        isActive ? "gradient-blue-btn text-white shadow-lg" : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-800")
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon size={20} className="shrink-0" />
+                <Icon size={isCollapsed ? 22 : 20} className="shrink-0" />
                 {!isCollapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        {/* User info + logout */}
-        <div className="border-t border-gray-200/60 p-4">
+        {/* Bottom */}
+        <div className={cn("border-t border-gray-200/60 pt-3", isCollapsed ? "flex flex-col items-center gap-1 w-full px-2.5" : "px-3 space-y-1")}>
+          <Link href="/settings"
+            className={cn(
+              isCollapsed
+                ? cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
+                    pathname.startsWith("/settings") ? "gradient-blue-btn text-white shadow-lg" : "text-gray-400 hover:bg-blue-50 hover:text-blue-700")
+                : cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                    pathname.startsWith("/settings") ? "gradient-blue-btn text-white shadow-lg" : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-800")
+            )}
+            title={isCollapsed ? "הגדרות" : undefined}>
+            <Settings size={isCollapsed ? 22 : 20} className="shrink-0" />
+            {!isCollapsed && <span>הגדרות</span>}
+          </Link>
+
           {!isCollapsed && (
-            <div className="mb-3 px-1">
-              <p className="text-sm font-semibold text-gray-800 truncate">
-                {userName}
-              </p>
-              {userEmail && (
-                <p className="text-xs text-gray-500 truncate">{userEmail}</p>
-              )}
+            <div className="px-3 py-2">
+              <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
+              {userEmail && <p className="text-xs text-gray-500 truncate">{userEmail}</p>}
             </div>
           )}
-          <button
-            onClick={handleLogout}
+
+          <button onClick={handleLogout}
             className={cn(
-              "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50/60 hover:text-red-600 transition-colors",
-              isCollapsed && "justify-center px-2"
+              isCollapsed
+                ? "w-12 h-12 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200"
+                : "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50/60 transition-colors"
             )}
-            title={isCollapsed ? "התנתק" : undefined}
-          >
-            <LogOut size={20} className="shrink-0" />
+            title={isCollapsed ? "התנתק" : undefined}>
+            <LogOut size={isCollapsed ? 22 : 20} className="shrink-0" />
             {!isCollapsed && <span>התנתק</span>}
           </button>
         </div>

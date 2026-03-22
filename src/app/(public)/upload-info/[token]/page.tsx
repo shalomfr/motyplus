@@ -85,13 +85,13 @@ export default function UploadInfoPage() {
         <CardContent>
           {state === "loading" && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
               <p className="text-muted-foreground">טוען...</p>
             </div>
           )}
 
           {state === "ready" && (
-            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-blue-50 transition-colors">
               <Upload className="h-10 w-10 text-gray-400 mb-3" />
               <span className="text-sm text-gray-600 font-medium">לחץ לבחירת קובץ .n27</span>
               <span className="text-xs text-gray-400 mt-1">מקסימום 10MB</span>
@@ -106,7 +106,7 @@ export default function UploadInfoPage() {
 
           {state === "uploading" && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
               <p className="text-sm text-gray-600">מעלה את {fileName}...</p>
             </div>
           )}

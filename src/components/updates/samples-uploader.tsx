@@ -285,7 +285,7 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
               <Progress
                 value={totalUploads > 0 ? (completedCount / totalUploads) * 100 : 0}
                 className="h-2 flex-1"
-                indicatorClassName="bg-blue-500"
+                indicatorClassName="bg-orange-500"
               />
               <span className="text-sm font-medium tabular-nums whitespace-nowrap" dir="ltr">
                 {completedCount}/{totalUploads}
@@ -344,11 +344,11 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
                     </TableCell>
                     <TableCell>
                       {f.isAdditional ? (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                        <span className="text-xs bg-orange-100 text-blue-700 px-2 py-0.5 rounded">
                           אורגן נוסף
                         </span>
                       ) : (
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                        <span className="text-xs bg-orange-100 text-blue-700 px-2 py-0.5 rounded">
                           ראשי
                         </span>
                       )}

@@ -93,7 +93,7 @@ export function StepDetails({ data, onChange, onSubmit, isExisting, loading, err
               onClick={() => handleChange("updateType", "FULL")}
               className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
                 data.updateType === "FULL"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  ? "border-blue-500 bg-orange-50 text-blue-700"
                   : "border-gray-200 hover:border-gray-300"
               }`}
               disabled={isExisting}
@@ -109,7 +109,7 @@ export function StepDetails({ data, onChange, onSubmit, isExisting, loading, err
               onClick={() => handleChange("updateType", "PARTIAL")}
               className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
                 data.updateType === "PARTIAL"
-                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  ? "border-blue-500 bg-orange-50 text-blue-700"
                   : "border-gray-200 hover:border-gray-300"
               }`}
               disabled={isExisting}

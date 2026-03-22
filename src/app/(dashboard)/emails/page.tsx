@@ -66,17 +66,17 @@ const ICON_MAP: Record<string, LucideIcon> = {
 }
 
 const COLOR_MAP: Record<string, { border: string; bg: string; text: string }> = {
-  blue:    { border: "border-r-blue-500",    bg: "bg-blue-100",    text: "text-blue-600" },
+  blue:    { border: "border-r-orange-500",    bg: "bg-orange-100",    text: "text-blue-600" },
   emerald: { border: "border-r-emerald-500", bg: "bg-emerald-100", text: "text-emerald-600" },
   green:   { border: "border-r-green-500",   bg: "bg-green-100",   text: "text-green-600" },
-  orange:  { border: "border-r-orange-500",  bg: "bg-orange-100",  text: "text-orange-600" },
+  orange:  { border: "border-r-orange-500",  bg: "bg-orange-100",  text: "text-blue-600" },
   pink:    { border: "border-r-pink-500",    bg: "bg-pink-100",    text: "text-pink-600" },
   amber:   { border: "border-r-amber-500",   bg: "bg-amber-100",   text: "text-amber-600" },
   gray:    { border: "border-r-gray-500",    bg: "bg-gray-100",    text: "text-gray-600" },
   red:     { border: "border-r-red-500",     bg: "bg-red-100",     text: "text-red-600" },
-  purple:  { border: "border-r-purple-500",  bg: "bg-purple-100",  text: "text-purple-600" },
+  purple:  { border: "border-r-orange-500",  bg: "bg-orange-100",  text: "text-blue-600" },
   cyan:    { border: "border-r-cyan-500",    bg: "bg-cyan-100",    text: "text-cyan-600" },
-  indigo:  { border: "border-r-indigo-500",  bg: "bg-indigo-100",  text: "text-indigo-600" },
+  indigo:  { border: "border-r-blue-500",  bg: "bg-blue-100",  text: "text-blue-600" },
 }
 
 const AVAILABLE_COLORS = Object.keys(COLOR_MAP)
@@ -346,7 +346,7 @@ export default function EmailsPage() {
       </div>
 
       {/* הסבר על תבניות */}
-      <Card className="border-blue-200 bg-blue-50/50">
+      <Card className="border-blue-200 bg-orange-50/50">
         <CardContent className="p-4">
           <div className="flex gap-3">
             <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />

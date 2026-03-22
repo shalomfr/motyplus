@@ -114,7 +114,7 @@ export function ZipUploadDialog({
         <div className="space-y-4">
           {/* File selection */}
           <div
-            className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
+            className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-orange-400 transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             <input
@@ -126,7 +126,7 @@ export function ZipUploadDialog({
             />
             {selectedFile ? (
               <div className="flex items-center justify-center gap-2">
-                <FileArchive className="h-8 w-8 text-blue-500" />
+                <FileArchive className="h-8 w-8 text-orange-500" />
                 <div className="text-right">
                   <p className="font-medium" dir="ltr">{selectedFile.name}</p>
                   <p className="text-sm text-muted-foreground">
@@ -181,11 +181,11 @@ export function ZipUploadDialog({
 
               {result.unmatchedFolders.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-orange-600 mb-2">
+                  <p className="text-sm font-medium text-blue-600 mb-2">
                     <AlertTriangle className="h-3 w-3 inline ml-1" />
                     תיקיות שלא זוהו:
                   </p>
-                  <div className="text-xs text-orange-600 space-y-1">
+                  <div className="text-xs text-blue-600 space-y-1">
                     {result.unmatchedFolders.map((f, i) => (
                       <div key={i} className="bg-orange-50 p-2 rounded" dir="ltr">{f}</div>
                     ))}

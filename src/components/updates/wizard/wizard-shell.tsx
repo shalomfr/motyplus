@@ -41,7 +41,7 @@ function StepIndicator({
       onClick={onClick}
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
-        isActive && "bg-blue-100 text-blue-800 shadow-sm",
+        isActive && "bg-orange-100 text-blue-800 shadow-sm",
         isCompleted && !isActive && "text-green-700 hover:bg-green-50",
         !isActive && !isCompleted && "text-gray-400 hover:text-gray-600"
       )}

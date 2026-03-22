@@ -107,7 +107,7 @@ export function VariableTextarea({
               key={i}
               data-var={part.value}
               contentEditable={false}
-              className="inline-flex items-center px-2 py-0.5 mx-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 cursor-default select-none"
+              className="inline-flex items-center px-2 py-0.5 mx-0.5 rounded-full text-xs font-semibold bg-orange-100 text-blue-800 border border-blue-200 cursor-default select-none"
             >
               {part.label}
             </span>

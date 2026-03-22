@@ -11,7 +11,7 @@ interface EqualizerProps {
 
 const COLOR_CLASSES: Record<EqualizerColor, string> = {
   cyan: 'bg-cyan-400',
-  purple: 'bg-purple-500',
+  purple: 'bg-blue-500',
   pink: 'bg-pink-500',
   green: 'bg-green-500',
   blue: 'bg-blue-500',

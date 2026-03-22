@@ -353,7 +353,7 @@ export default function UpdateWorkPage() {
       </Card>
 
       {sendAllResult && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="rounded-lg border border-blue-200 bg-orange-50 p-4">
           <p className="font-medium text-blue-800">
             תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות
             {sendAllResult.skippedNoFile > 0 && ` | ${sendAllResult.skippedNoFile} דולגו (אין קובץ CPI)`}

@@ -195,7 +195,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                 onClick={() => handleChange("updateType", "FULL")}
                 className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
                   form.updateType === "FULL"
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    ? "border-blue-500 bg-orange-50 text-blue-700"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -210,7 +210,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                 onClick={() => handleChange("updateType", "PARTIAL")}
                 className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-right ${
                   form.updateType === "PARTIAL"
-                    ? "border-orange-500 bg-orange-50 text-orange-700"
+                    ? "border-blue-500 bg-orange-50 text-blue-700"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -262,7 +262,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
             <div className="flex items-center gap-2">
               {rhythmsFileName ? (
                 <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                  <FileText className="h-4 w-4 text-orange-500 shrink-0" />
                   <span className="truncate">{rhythmsFileName}</span>
                   <button
                     type="button"
@@ -277,7 +277,7 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
                 </div>
               ) : (
                 <label className={cn(
-                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
+                  "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-blue-600 transition-colors flex-1",
                   isUploadingRhythms && "opacity-50 cursor-not-allowed"
                 )}>
                   {isUploadingRhythms ? (

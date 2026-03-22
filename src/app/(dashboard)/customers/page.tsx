@@ -432,7 +432,7 @@ export default function CustomersListPage() {
               <div className="flex flex-col items-center gap-4">
                 <label
                   htmlFor="csv-upload"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-white/5 transition-colors text-gray-300"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-white/5 transition-colors text-gray-300"
                 >
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
                   <span className="text-sm text-gray-600">
@@ -456,9 +456,9 @@ export default function CustomersListPage() {
             {/* Loading */}
             {isImporting && (
               <div className="flex flex-col items-center gap-3 py-8">
-                <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+                <Loader2 className="h-10 w-10 text-orange-500 animate-spin" />
                 <p className="text-sm text-gray-600">מייבא לקוחות...</p>
-                <Progress value={50} className="w-full" indicatorClassName="bg-blue-500" />
+                <Progress value={50} className="w-full" indicatorClassName="bg-orange-500" />
               </div>
             )}
 

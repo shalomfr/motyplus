@@ -55,8 +55,8 @@ interface UpdateVersion {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "טיוטה", className: "bg-gray-100 text-gray-800 border-gray-200" },
   PREPARING: { label: "בהכנה", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  READY: { label: "מוכן", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  SENDING: { label: "בשליחה", className: "bg-orange-100 text-orange-800 border-orange-200" },
+  READY: { label: "מוכן", className: "bg-orange-100 text-blue-800 border-blue-200" },
+  SENDING: { label: "בשליחה", className: "bg-orange-100 text-blue-800 border-blue-200" },
   COMPLETED: { label: "הושלם", className: "bg-green-100 text-green-800 border-green-200" },
 }
 
@@ -217,7 +217,7 @@ export default function UpdateDetailsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2 bg-orange-100 rounded-lg">
               <Users className="h-5 w-5 text-blue-600" />
             </div>
             <div>
@@ -229,7 +229,7 @@ export default function UpdateDetailsPage() {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <Send className="h-5 w-5 text-orange-600" />
+              <Send className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">נשלחו</p>
@@ -252,7 +252,7 @@ export default function UpdateDetailsPage() {
 
       {/* Send All Result */}
       {sendAllResult && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 bg-orange-50">
           <CardContent className="p-4">
             <p className="font-medium text-blue-800">
               תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות

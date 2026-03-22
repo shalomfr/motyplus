@@ -291,7 +291,7 @@ function OrgansTab() {
               <div className="flex items-center gap-2">
                 {infoFileName ? (
                   <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-white/10 rounded-lg bg-white/5 text-sm">
-                    <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                    <FileText className="h-4 w-4 text-orange-500 shrink-0" />
                     <span className="truncate">{infoFileName}</span>
                     <button
                       type="button"
@@ -306,7 +306,7 @@ function OrgansTab() {
                   </div>
                 ) : (
                   <label className={cn(
-                    "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1",
+                    "flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-blue-600 transition-colors flex-1",
                     isUploadingInfo && "opacity-50 cursor-not-allowed"
                   )}>
                     {isUploadingInfo ? (

@@ -33,17 +33,17 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; icon
   },
   orange: {
     bg: "bg-orange-50",
-    border: "border-orange-200",
-    text: "text-orange-800",
-    icon: "text-orange-600",
-    badge: "bg-orange-100 text-orange-700",
-  },
-  blue: {
-    bg: "bg-blue-50",
     border: "border-blue-200",
     text: "text-blue-800",
     icon: "text-blue-600",
-    badge: "bg-blue-100 text-blue-700",
+    badge: "bg-orange-100 text-blue-700",
+  },
+  blue: {
+    bg: "bg-orange-50",
+    border: "border-blue-200",
+    text: "text-blue-800",
+    icon: "text-blue-600",
+    badge: "bg-orange-100 text-blue-700",
   },
   red: {
     bg: "bg-red-50",

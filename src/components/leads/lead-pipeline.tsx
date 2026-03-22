@@ -24,9 +24,9 @@ interface LeadPipelineProps {
 }
 
 const STAGES = [
-  { key: "NEW", label: "ליד חדש", color: "bg-blue-50 border-blue-200", headerColor: "bg-blue-500" },
+  { key: "NEW", label: "ליד חדש", color: "bg-orange-50 border-blue-200", headerColor: "bg-orange-500" },
   { key: "CONTACTED", label: "שיחה", color: "bg-yellow-50 border-yellow-200", headerColor: "bg-yellow-500" },
-  { key: "PROPOSAL", label: "הצעה", color: "bg-purple-50 border-purple-200", headerColor: "bg-purple-500" },
+  { key: "PROPOSAL", label: "הצעה", color: "bg-orange-50 border-blue-200", headerColor: "bg-orange-500" },
   { key: "CLOSED_WON", label: "סגירה", color: "bg-green-50 border-green-200", headerColor: "bg-green-500" },
 ]
 

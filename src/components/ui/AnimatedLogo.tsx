@@ -24,7 +24,7 @@ export function AnimatedLogo({ size = 80, showText = false }: AnimatedLogoProps)
       >
         <div
           className="absolute inset-0 rounded-full blur-xl opacity-40"
-          style={{ background: '#1e40af' }}
+          style={{ background: '#0F508E' }}
         />
 
         <Image

@@ -217,7 +217,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
 
       {/* הודעה על עריכת טקסט בלבד */}
       {mode === "visual" && hasMarkers && (
-        <div className="bg-blue-50 border-b border-blue-100 px-3 py-1.5 text-xs text-blue-600">
+        <div className="bg-orange-50 border-b border-orange-100 px-3 py-1.5 text-xs text-blue-600">
           עורך את תוכן המייל בלבד — העיצוב נשמר אוטומטית
         </div>
       )}
@@ -314,7 +314,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
                 key={v.name}
                 type="button"
                 onClick={() => insertVariable(v.name, v.label)}
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors cursor-pointer border border-orange-200"
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer border border-blue-200"
               >
                 {v.label}
               </button>
@@ -336,7 +336,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
                 key={v.name}
                 type="button"
                 onClick={() => insertVariable(v.name, v.label)}
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors cursor-pointer border border-orange-200"
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer border border-blue-200"
               >
                 {v.label}
               </button>

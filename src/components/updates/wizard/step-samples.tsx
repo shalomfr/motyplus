@@ -18,14 +18,14 @@ export function StepSamples({ updateId, cpiReady, cpiTotal }: StepSamplesProps) 
   return (
     <div className="space-y-4">
       {/* CPI Coverage Summary */}
-      <Card className="border-blue-200 bg-blue-50/30">
+      <Card className="border-blue-200 bg-orange-50/30">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-sm font-medium text-blue-800">
               <Users className="h-4 w-4" />
               כיסוי דגימות CPI
             </div>
-            <Badge variant="outline" className="text-blue-700 border-blue-300">
+            <Badge variant="outline" className="text-blue-700 border-orange-300">
               {cpiReady}/{cpiTotal} לקוחות מוכנים
             </Badge>
           </div>

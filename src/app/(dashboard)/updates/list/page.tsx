@@ -39,8 +39,8 @@ interface UpdateVersion {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "טיוטה", className: "bg-gray-100 text-gray-800 border-gray-200" },
   PREPARING: { label: "בהכנה", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  READY: { label: "מוכן", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  SENDING: { label: "בשליחה", className: "bg-orange-100 text-orange-800 border-orange-200" },
+  READY: { label: "מוכן", className: "bg-orange-100 text-blue-800 border-blue-200" },
+  SENDING: { label: "בשליחה", className: "bg-orange-100 text-blue-800 border-blue-200" },
   COMPLETED: { label: "הושלם", className: "bg-green-100 text-green-800 border-green-200" },
 }
 

@@ -54,9 +54,9 @@ interface LeadDetail {
 }
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; step: number }> = {
-  NEW: { label: "ליד חדש", color: "bg-blue-500", step: 1 },
+  NEW: { label: "ליד חדש", color: "bg-orange-500", step: 1 },
   CONTACTED: { label: "שיחה", color: "bg-yellow-500", step: 2 },
-  PROPOSAL: { label: "הצעה", color: "bg-purple-500", step: 3 },
+  PROPOSAL: { label: "הצעה", color: "bg-orange-500", step: 3 },
   CLOSED_WON: { label: "נסגר בהצלחה", color: "bg-green-500", step: 4 },
   CLOSED_LOST: { label: "אבד", color: "bg-red-500", step: 0 },
 }

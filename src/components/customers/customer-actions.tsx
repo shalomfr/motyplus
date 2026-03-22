@@ -486,7 +486,7 @@ export function CustomerActions({
           </Button>
 
           {/* הנפקת קבלה ידנית */}
-          <Button variant="outline" className="w-full justify-start text-purple-700 border-purple-200 hover:bg-purple-50"
+          <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
             onClick={async () => {
               const amountStr = prompt("סכום הקבלה:")
               if (!amountStr) return
@@ -645,7 +645,7 @@ export function CustomerActions({
             {status === "BLOCKED" ? "שחרור חסימה" : "חסימה"}
           </Button>
 
-          <Button variant="outline" className={cn("w-full justify-start", status === "EXCEPTION" && "border-orange-300 text-orange-700")} onClick={handleToggleException} disabled={loadingAction === "toggleException"}>
+          <Button variant="outline" className={cn("w-full justify-start", status === "EXCEPTION" && "border-orange-300 text-blue-700")} onClick={handleToggleException} disabled={loadingAction === "toggleException"}>
             {loadingAction === "toggleException" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <AlertTriangle className="h-4 w-4 ml-2" />}
             {status === "EXCEPTION" ? "ביטול חריג" : "סימון חריג"}
           </Button>

@@ -93,7 +93,7 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
           <Badge
             key={v.name}
             variant="outline"
-            className="text-xs cursor-pointer bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200"
+            className="text-xs cursor-pointer bg-orange-100 text-blue-800 border-blue-200 hover:bg-blue-200"
             onClick={() => insertVariable(v.name)}
           >
             {v.label}

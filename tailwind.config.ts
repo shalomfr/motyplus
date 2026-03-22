@@ -50,13 +50,13 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        heebo: ["var(--font-heebo)", "sans-serif"],
+        heebo: ["'Heebo'", "sans-serif"],
       },
       boxShadow: {
-        glass: "0 8px 32px rgba(0, 0, 0, 0.2)",
-        "glow-sm": "0 0 10px rgba(59, 130, 246, 0.2)",
-        "glow-md": "0 0 20px rgba(59, 130, 246, 0.3)",
-        "glow-lg": "0 4px 30px rgba(59, 130, 246, 0.4)",
+        glass: "0 2px 8px rgba(0, 0, 0, 0.04)",
+        "glow-sm": "0 0 10px rgba(15, 80, 142, 0.15)",
+        "glow-md": "0 4px 14px rgba(15, 80, 142, 0.25)",
+        "glow-lg": "0 4px 30px rgba(15, 80, 142, 0.35)",
       },
     },
   },

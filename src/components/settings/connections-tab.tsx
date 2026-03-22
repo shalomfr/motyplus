@@ -194,7 +194,7 @@ function ProviderCard({
                     : "לא מחובר"}
               </Badge>
               {provider.isPrimary && (
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200">ראשי</Badge>
+                <Badge className="bg-orange-100 text-blue-800 border-blue-200">ראשי</Badge>
               )}
             </div>
           )}
@@ -386,7 +386,7 @@ export function ConnectionsTab() {
         label="iCount"
         description="סליקה, קבלות, וניהול לקוחות"
         icon={
-          <div className="p-2 bg-blue-100 rounded-lg">
+          <div className="p-2 bg-orange-100 rounded-lg">
             <Plug className="h-5 w-5 text-blue-600" />
           </div>
         }

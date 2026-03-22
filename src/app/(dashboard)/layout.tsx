@@ -18,6 +18,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
   const mountTime = useRef(Date.now());
 
@@ -60,6 +61,8 @@ export default function DashboardLayout({
         userEmail={session?.user?.email || ""}
         isMobileOpen={isMobileOpen}
         onMobileToggle={() => setIsMobileOpen((prev) => !prev)}
+        isCollapsed={isSidebarCollapsed}
+        onCollapseToggle={() => setIsSidebarCollapsed((prev) => !prev)}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">

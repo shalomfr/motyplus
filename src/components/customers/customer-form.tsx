@@ -71,11 +71,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   FROZEN: {
     label: "מוקפא",
-    className: "bg-blue-100 text-blue-800 border-blue-200",
+    className: "bg-orange-100 text-blue-800 border-blue-200",
   },
   EXCEPTION: {
     label: "חריג",
-    className: "bg-orange-100 text-orange-800 border-orange-200",
+    className: "bg-orange-100 text-blue-800 border-blue-200",
   },
 }
 
@@ -478,7 +478,7 @@ export function CustomerForm({
                   className={cn(
                     "text-sm",
                     initialData.status === "EXCEPTION"
-                      ? "bg-orange-100 text-orange-800 border-orange-200"
+                      ? "bg-orange-100 text-blue-800 border-blue-200"
                       : "bg-green-100 text-green-800 border-green-200"
                   )}
                 >
@@ -902,7 +902,7 @@ export function CustomerForm({
               <div className="flex items-center gap-2">
                 {infoFileName ? (
                   <div className="flex items-center gap-2 flex-1 px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                    <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                    <FileText className="h-4 w-4 text-orange-500 shrink-0" />
                     <span className="truncate">{infoFileName}</span>
                     <button
                       type="button"
@@ -917,7 +917,7 @@ export function CustomerForm({
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-blue-600 transition-colors flex-1">
                     <Upload className="h-4 w-4" />
                     <span>העלה קובץ אינפו (.n27)</span>
                     <input

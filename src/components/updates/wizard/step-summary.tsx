@@ -75,7 +75,7 @@ export function StepSummary({
   return (
     <div className="space-y-4">
       {/* Summary Header */}
-      <Card className="border-blue-200 bg-blue-50/30">
+      <Card className="border-blue-200 bg-orange-50/30">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-sm text-blue-800 mb-2">
             <Info className="h-4 w-4" />
@@ -133,7 +133,7 @@ export function StepSummary({
 
           {/* Eligible Customers */}
           <div className="flex items-center gap-3 p-3 rounded-lg border">
-            <div className="p-2 rounded-lg bg-blue-100">
+            <div className="p-2 rounded-lg bg-orange-100">
               <Users className="h-4 w-4 text-blue-600" />
             </div>
             <div className="flex-1">

@@ -98,7 +98,7 @@ export function StepSend({ updateId, version, segments, alreadySent, foldersRead
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <Card className="border-blue-200 bg-blue-50/30">
+      <Card className="border-blue-200 bg-orange-50/30">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-sm text-blue-800 mb-2">
             <Info className="h-4 w-4" />

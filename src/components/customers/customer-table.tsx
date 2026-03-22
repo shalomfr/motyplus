@@ -65,7 +65,7 @@ const statusConfig: Record<
   },
   FROZEN: {
     label: "מוקפא",
-    className: "bg-blue-100 text-blue-800 border-blue-200",
+    className: "bg-orange-100 text-blue-800 border-blue-200",
   },
   EXCEPTION: {
     label: "חריג",
@@ -199,7 +199,7 @@ export function CustomerTable({
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
                         latestVersion && customer.currentUpdateVersion !== latestVersion ? (
-                          <Badge variant="outline" className="font-normal bg-orange-100 text-orange-800 border-orange-200">
+                          <Badge variant="outline" className="font-normal bg-orange-100 text-blue-800 border-blue-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         ) : (

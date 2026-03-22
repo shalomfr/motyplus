@@ -141,7 +141,7 @@ function ButtonsEditor({
               <Badge
                 key={v.name}
                 variant="outline"
-                className="text-[10px] cursor-pointer bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200 py-0 px-1.5"
+                className="text-[10px] cursor-pointer bg-orange-100 text-blue-800 border-blue-200 hover:bg-blue-200 py-0 px-1.5"
                 onClick={() => updateButton(idx, "url", btn.url + `{{${v.name}}}`)}
               >
                 {v.label}
@@ -356,10 +356,10 @@ const TYPE_COLORS: Partial<Record<EmailBlock["type"], string>> = {
   heading: "border-l-amber-400",
   banner: "border-l-orange-400",
   folder: "border-l-yellow-600",
-  buttons: "border-l-blue-400",
+  buttons: "border-l-orange-400",
   promo: "border-l-yellow-400",
   warning: "border-l-red-400",
-  instructions: "border-l-blue-500",
+  instructions: "border-l-orange-500",
   bankTable: "border-l-gray-400",
   signature: "border-l-gray-300",
 }

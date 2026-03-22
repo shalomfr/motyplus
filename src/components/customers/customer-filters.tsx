@@ -125,7 +125,7 @@ export function CustomerFiltersPanel({
             variant="outline"
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
-            className={cn(advancedActive && "border-blue-400 text-blue-600")}
+            className={cn(advancedActive && "border-orange-400 text-blue-600")}
           >
             {isOpen ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
             סינון מתקדם
