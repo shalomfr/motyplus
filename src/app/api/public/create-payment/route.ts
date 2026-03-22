@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
       GREEN_INVOICE: process.env.GREENINVOICE_WEBHOOK_SECRET,
       CARDCOM: process.env.CARDCOM_WEBHOOK_SECRET,
       YESHINVOICE: process.env.YESHINVOICE_WEBHOOK_SECRET,
+      ICOUNT: process.env.ICOUNT_WEBHOOK_SECRET,
     };
     const webhookSecret = webhookSecretMap[billing.provider.provider] || null;
     if (webhookSecret) {

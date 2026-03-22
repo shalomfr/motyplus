@@ -11,27 +11,38 @@ import type { ICountIpnPayload } from "@/lib/icount";
 export async function POST(request: NextRequest) {
   try {
     // Webhook validation — בדיקת secret token
-    const authHeader = request.headers.get("X-iCount-Signature") || request.headers.get("Authorization");
     const webhookSecret = process.env.ICOUNT_WEBHOOK_SECRET;
 
-    if (!webhookSecret) {
-      console.error("iCount webhook: ICOUNT_WEBHOOK_SECRET not configured");
-      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
-    }
+    if (webhookSecret) {
+      // Check query param secret (sent by create-payment route)
+      const url = new URL(request.url);
+      const querySecret = url.searchParams.get("secret");
 
-    // Validate signature
-    // iCount can send either:
-    // 1. Authorization: Bearer <secret>, OR
-    // 2. X-iCount-Signature header
-    if (authHeader) {
-      const [scheme, token] = authHeader.split(" ");
-      if (scheme === "Bearer" && token !== webhookSecret) {
-        console.error("iCount webhook: invalid signature");
+      // Check header-based auth
+      const authHeader = request.headers.get("X-iCount-Signature") || request.headers.get("Authorization");
+
+      let authenticated = false;
+
+      // Option 1: query param match
+      if (querySecret && querySecret === webhookSecret) {
+        authenticated = true;
+      }
+      // Option 2: Bearer header match
+      if (authHeader) {
+        const [scheme, token] = authHeader.split(" ");
+        if (scheme === "Bearer" && token === webhookSecret) {
+          authenticated = true;
+        }
+      }
+      // Option 3: X-iCount-Signature header present (iCount's own auth)
+      if (request.headers.has("X-iCount-Signature")) {
+        authenticated = true;
+      }
+
+      if (!authenticated) {
+        console.error("iCount webhook: authentication failed");
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-    } else if (!request.headers.has("X-iCount-Signature")) {
-      console.error("iCount webhook: missing authentication");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = (await request.json()) as ICountIpnPayload;
