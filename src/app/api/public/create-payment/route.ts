@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
     const notes = formData.get("notes") as string | null;
     const infoFile = formData.get("infoFile") as File | null;
     const couponCode = formData.get("couponCode") as string | null;
+    const customAmountStr = formData.get("customAmount") as string | null;
+    const customDescription = formData.get("customDescription") as string | null;
 
     if (!fullName || !phone || !email || !organId) {
       return NextResponse.json({ error: "חסרים שדות חובה" }, { status: 400 });
@@ -35,7 +37,11 @@ export async function POST(request: NextRequest) {
     let amount = 0;
     let description = "";
 
-    if (isUpdateOnly && updateVersionId) {
+    if (customAmountStr && Number(customAmountStr) > 0) {
+      // Custom amount — user-specified price
+      amount = Number(customAmountStr);
+      description = customDescription?.trim() || "תשלום בסכום חופשי";
+    } else if (isUpdateOnly && updateVersionId) {
       const ver = await prisma.updateVersion.findUnique({ where: { id: updateVersionId } });
       if (!ver) return NextResponse.json({ error: "גרסת עדכון לא נמצאה" }, { status: 400 });
       amount = Number(ver.price);
