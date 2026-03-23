@@ -250,7 +250,7 @@ export class GreenInvoiceClient implements BillingClient {
       ];
     }
 
-    if (request.sendEmail !== false) {
+    if (request.sendEmail !== false && request.customer.email) {
       body.emailContent = { sendCopy: true };
     }
 
