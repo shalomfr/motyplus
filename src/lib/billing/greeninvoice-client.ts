@@ -254,9 +254,8 @@ export class GreenInvoiceClient implements BillingClient {
       ];
     }
 
-    if (request.sendEmail !== false && request.customer.email) {
-      body.emailContent = { sendCopy: true };
-    }
+    // Note: emailContent causes 400 error on Morning for type 320
+    // Morning sends email automatically when client has email
 
     const result = await this.request<{
       id: string;
