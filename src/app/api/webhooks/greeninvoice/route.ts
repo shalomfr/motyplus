@@ -174,7 +174,8 @@ export async function POST(request: NextRequest) {
 
     // Extract document info
     const docNumber = body.number ? String(body.number) : null;
-    const docUrl = body.url?.he || body.url?.origin || null;
+    const urlObj = body.url as { he?: string; origin?: string } | undefined;
+    const docUrl = urlObj?.he || urlObj?.origin || null;
     const totalAmount = body.amount || pendingOrder.amount;
 
     // Create payment record
