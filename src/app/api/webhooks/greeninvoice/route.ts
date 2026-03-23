@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         phone: pendingOrder.phone,
         email: pendingOrder.email,
         organId: pendingOrder.organId,
-        setTypeId: setTypeId!,
+        setTypeId: setTypeId || "",
         amountPaid: pendingOrder.amount,
         purchaseDate,
         updateExpiryDate,
