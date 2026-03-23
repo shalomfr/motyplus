@@ -150,11 +150,15 @@ export class GreenInvoiceClient implements BillingClient {
       const res = await fetch(`${BASE_URL}/${endpoint}`, options);
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        throw new Error(
-          (error as { errorMessage?: string }).errorMessage ||
-            `Green Invoice error: ${res.status}`
-        );
+        const errorBody = await res.text().catch(() => "");
+        let errorMessage = `Green Invoice error: ${res.status}`;
+        try {
+          const parsed = JSON.parse(errorBody);
+          errorMessage = parsed.errorMessage || `Green Invoice error: ${res.status} — ${errorBody}`;
+        } catch {
+          errorMessage = `Green Invoice error: ${res.status} — ${errorBody}`;
+        }
+        throw new Error(errorMessage);
       }
 
       return (await res.json()) as T;
