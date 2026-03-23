@@ -33,15 +33,16 @@ export class GreenInvoiceClient implements BillingClient {
   // ===== Mapping helpers =====
 
   private static mapDocType(dt: DocumentType): number {
-    // Green Invoice document types
+    // Green Invoice document types — 320 (receipt) used as default
+    // because types 300/305 are rejected for this business config
     const map: Record<DocumentType, number> = {
-      tax_invoice: 300,
-      invoice_receipt: 305,
+      tax_invoice: 320,
+      invoice_receipt: 320,
       receipt: 320,
       credit_note: 330,
       quote: 20,
     };
-    return map[dt] ?? 305;
+    return map[dt] ?? 320;
   }
 
   private static mapDocTypeReverse(code: number): string {
@@ -217,6 +218,7 @@ export class GreenInvoiceClient implements BillingClient {
       type: GreenInvoiceClient.mapDocType(request.docType),
       lang: request.lang === "en" ? "en" : "he",
       currency: GreenInvoiceClient.mapCurrency(request.currency),
+      amount: totalAmount,
       client: {
         name: request.customer.name,
         emails: request.customer.email ? [request.customer.email] : [],
@@ -224,32 +226,27 @@ export class GreenInvoiceClient implements BillingClient {
         address: request.customer.address || "",
         city: request.customer.city || "",
         taxId: request.customer.vatId || "",
-        add: true, // Auto-create client if doesn't exist
+        add: true,
       },
       income: request.items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
         price: item.unitPrice,
         currency: GreenInvoiceClient.mapCurrency(request.currency),
-        vatType: 1, // 1 = כולל מע"מ (עוסק מורשה)
+        vatType: 1,
       })),
     };
 
-    // Add payment info for receipt-type documents
-    if (
-      request.docType === "receipt" ||
-      request.docType === "invoice_receipt"
-    ) {
-      body.payment = [
-        {
-          type: request.paymentType
-            ? GreenInvoiceClient.mapPaymentType(request.paymentType)
-            : 4,
-          price: totalAmount,
-          date: new Date().toISOString().slice(0, 10),
-        },
-      ];
-    }
+    // Add payment info for receipt-type documents (type 320)
+    body.payment = [
+      {
+        type: request.paymentType
+          ? GreenInvoiceClient.mapPaymentType(request.paymentType)
+          : 4,
+        price: totalAmount,
+        date: new Date().toISOString().slice(0, 10),
+      },
+    ];
 
     if (request.sendEmail !== false) {
       body.emailContent = { sendCopy: true };
