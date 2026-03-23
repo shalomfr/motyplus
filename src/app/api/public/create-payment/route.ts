@@ -76,10 +76,6 @@ export async function POST(request: NextRequest) {
       promotionId = promotion.id;
     }
 
-    if (amount <= 0) {
-      return NextResponse.json({ error: "מחיר לא תקין" }, { status: 400 });
-    }
-
     // Read info file
     let infoFileData = Buffer.alloc(0);
     let infoFileName = "";
@@ -87,6 +83,78 @@ export async function POST(request: NextRequest) {
       const bytes = await infoFile.bytes();
       infoFileData = Buffer.from(bytes);
       infoFileName = infoFile.name;
+    }
+
+    // 100% discount — create customer directly without payment
+    if (amount <= 0 && promotionId) {
+      const purchaseDate = new Date();
+      const updateExpiryDate = new Date(purchaseDate);
+      updateExpiryDate.setFullYear(updateExpiryDate.getFullYear() + 1);
+
+      let currentUpdateVersion: string | null = null;
+      let resolvedSetTypeId = setTypeId;
+
+      if (isUpdateOnly) {
+        let updateOnlySet = await prisma.setType.findFirst({ where: { name: "עדכון בלבד" } });
+        if (!updateOnlySet) {
+          updateOnlySet = await prisma.setType.create({
+            data: { name: "עדכון בלבד", price: 0, includesUpdates: false, sortOrder: 99, isActive: false },
+          });
+        }
+        resolvedSetTypeId = updateOnlySet.id;
+        if (updateVersionId) {
+          const ver = await prisma.updateVersion.findUnique({ where: { id: updateVersionId }, select: { version: true } });
+          currentUpdateVersion = ver?.version || null;
+        }
+      } else if (resolvedSetTypeId) {
+        const st = await prisma.setType.findUnique({ where: { id: resolvedSetTypeId } });
+        if (st?.includesUpdates) {
+          const latest = await prisma.updateVersion.findFirst({ where: { status: { not: "DRAFT" } }, orderBy: { sortOrder: "desc" }, select: { version: true } });
+          currentUpdateVersion = latest?.version || null;
+        }
+      }
+
+      const customer = await prisma.customer.create({
+        data: {
+          fullName, phone, email, organId,
+          setTypeId: resolvedSetTypeId || undefined,
+          amountPaid: 0, purchaseDate, updateExpiryDate,
+          hasV3: true, sampleType: "CPI", currentUpdateVersion,
+          status: "ACTIVE", notes,
+        },
+      });
+
+      // Upload info file
+      try {
+        if (infoFileData.length > 0) {
+          const { uploadFile } = await import("@/lib/file-storage");
+          const fileName = `${customer.id}.n27`;
+          const url = await uploadFile(Buffer.from(infoFileData), fileName, "customers/info");
+          await prisma.customer.update({ where: { id: customer.id }, data: { infoFileUrl: url } });
+        }
+      } catch (e) {
+        console.error("Error uploading info file (free order):", e);
+      }
+
+      // Increment coupon usage
+      await prisma.promotion.update({ where: { id: promotionId }, data: { currentUses: { increment: 1 } } });
+
+      // Log activity
+      const { logActivity } = await import("@/lib/activity-logger");
+      await logActivity({
+        customerId: customer.id,
+        action: "CREATE",
+        entityType: "CUSTOMER",
+        entityId: String(customer.id),
+        details: { fullName, source: "free_coupon", couponCode },
+      });
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+      return NextResponse.json({ url: `${baseUrl}/order/success?free=1` });
+    }
+
+    if (amount <= 0) {
+      return NextResponse.json({ error: "מחיר לא תקין" }, { status: 400 });
     }
 
     const preferredProvider = parseBillingProviderPreference(formData.get("billingProvider"));
