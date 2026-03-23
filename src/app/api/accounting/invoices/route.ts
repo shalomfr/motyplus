@@ -228,7 +228,8 @@ export async function POST(request: NextRequest) {
       url: result.url,
     }, { status: 201 });
   } catch (error) {
-    console.error("Error creating invoice:", error);
-    return NextResponse.json({ error: "שגיאה ביצירת מסמך" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating invoice:", msg, error);
+    return NextResponse.json({ error: `שגיאה ביצירת מסמך: ${msg}` }, { status: 500 });
   }
 }

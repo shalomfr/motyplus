@@ -176,9 +176,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: paymentPage.url });
   } catch (error) {
-    console.error("Error creating payment:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating payment:", msg, error);
     return NextResponse.json(
-      { error: "שגיאה ביצירת דף תשלום — יתכן שהתוכנה לא זמינה כרגע" },
+      { error: `שגיאה ביצירת דף תשלום: ${msg}` },
       { status: 500 }
     );
   }
