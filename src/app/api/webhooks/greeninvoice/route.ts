@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         hasV3: true,
         sampleType: "CPI",
         currentUpdateVersion,
-        status: "ACTIVE",
+        status: "PENDING_APPROVAL",
         notes: pendingOrder.notes,
       },
     });

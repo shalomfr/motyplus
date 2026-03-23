@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
           setTypeId: resolvedSetTypeId || "",
           amountPaid: 0, purchaseDate, updateExpiryDate,
           hasV3: true, sampleType: "CPI", currentUpdateVersion,
-          status: "ACTIVE", notes,
+          status: "PENDING_APPROVAL", notes,
         },
       });
 
