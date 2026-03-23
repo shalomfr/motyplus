@@ -12,12 +12,33 @@ export async function POST(request: NextRequest) {
     if (webhookSecret) {
       const token = request.nextUrl.searchParams.get("secret");
       if (token !== webhookSecret) {
-        console.error("Green Invoice webhook: invalid secret token");
+        console.error("Green Invoice webhook: invalid secret token. Got:", token, "URL:", request.url);
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
 
-    const body = await request.json();
+    // Parse body — support both JSON and form-urlencoded
+    let body: Record<string, unknown>;
+    const contentType = request.headers.get("content-type") || "";
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const formData = await request.formData();
+      const raw: Record<string, unknown> = {};
+      formData.forEach((v, k) => { raw[k] = v; });
+      // Try to parse stringified JSON fields
+      if (typeof raw.data === "string") {
+        try { body = JSON.parse(raw.data); } catch { body = raw; }
+      } else {
+        body = raw;
+      }
+    } else {
+      const rawText = await request.text();
+      console.log("Green Invoice webhook raw body:", rawText.substring(0, 500));
+      try {
+        body = JSON.parse(rawText);
+      } catch {
+        body = { rawText };
+      }
+    }
 
     console.log("Green Invoice webhook received:", {
       id: body.id,
@@ -25,6 +46,7 @@ export async function POST(request: NextRequest) {
       number: body.number,
       status: body.status,
       custom: body.custom,
+      allKeys: Object.keys(body),
     });
 
     // Parse metadata from custom field
