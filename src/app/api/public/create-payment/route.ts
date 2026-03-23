@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       const customer = await prisma.customer.create({
         data: {
           fullName, phone, email, organId,
-          setTypeId: resolvedSetTypeId || undefined,
+          setTypeId: resolvedSetTypeId || "",
           amountPaid: 0, purchaseDate, updateExpiryDate,
           hasV3: true, sampleType: "CPI", currentUpdateVersion,
           status: "ACTIVE", notes,
