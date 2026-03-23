@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
     const docNumber = body.number ? String(body.number) : null;
     const urlObj = body.url as { he?: string; origin?: string } | undefined;
     const docUrl = urlObj?.he || urlObj?.origin || null;
-    const totalAmount = body.amount || pendingOrder.amount;
+    const totalAmount = Number(body.amount) || Number(pendingOrder.amount);
 
     // Create payment record
     await prisma.payment.create({
