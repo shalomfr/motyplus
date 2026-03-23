@@ -237,16 +237,18 @@ export class GreenInvoiceClient implements BillingClient {
       })),
     };
 
-    // Add payment info for receipt-type documents (type 320)
-    body.payment = [
-      {
-        type: request.paymentType
-          ? GreenInvoiceClient.mapPaymentType(request.paymentType)
-          : 4,
-        price: totalAmount,
-        date: new Date().toISOString().slice(0, 10),
-      },
-    ];
+    // Add payment info for receipt-type documents (not for quotes)
+    if (request.docType !== "quote") {
+      body.payment = [
+        {
+          type: request.paymentType
+            ? GreenInvoiceClient.mapPaymentType(request.paymentType)
+            : 4,
+          price: totalAmount,
+          date: new Date().toISOString().slice(0, 10),
+        },
+      ];
+    }
 
     if (request.sendEmail !== false) {
       body.emailContent = { sendCopy: true };
@@ -411,9 +413,16 @@ export class GreenInvoiceClient implements BillingClient {
     }
 
     const result = await this.request<{
-      id: string;
-      url: string;
+      success?: boolean;
+      errorCode?: number;
+      errorMessage?: string;
+      id?: string;
+      url?: string;
     }>("payments/form", body);
+
+    if (result.errorCode && result.errorCode !== 0) {
+      throw new Error(result.errorMessage || `Payment form error: ${result.errorCode}`);
+    }
 
     return {
       url: result.url || "",
