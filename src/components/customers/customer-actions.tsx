@@ -209,6 +209,12 @@ export function CustomerActions({
     }
   }
 
+  const handleApprove = () => {
+    handleAction("approve", `/api/customers/${customerId}`, "PUT", {
+      status: "ACTIVE",
+    })
+  }
+
   const handleToggleBlock = () => {
     const newStatus = status === "BLOCKED" ? "ACTIVE" : "BLOCKED"
     handleAction("toggleBlock", `/api/customers/${customerId}`, "PUT", {
@@ -637,6 +643,13 @@ export function CustomerActions({
             >
               {loadingAction === "replaceAdditionalInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Upload className="h-4 w-4 ml-2" />}
               החלף אינפו נוסף
+            </Button>
+          )}
+
+          {status === "PENDING_APPROVAL" && (
+            <Button variant="outline" className="w-full justify-start border-green-300 bg-green-50 text-green-700 hover:bg-green-100" onClick={handleApprove} disabled={loadingAction === "approve"}>
+              {loadingAction === "approve" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <CheckCircle className="h-4 w-4 ml-2" />}
+              אשר לקוח
             </Button>
           )}
 

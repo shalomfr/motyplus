@@ -48,7 +48,7 @@ interface CustomerData {
   setTypeName: string
   includesUpdates: boolean
   amountPaid: number
-  status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
+  status: "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   sampleType: "CPI" | "CPF"
   currentUpdateVersion: string | null
   hasV3: boolean

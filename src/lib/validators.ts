@@ -23,7 +23,7 @@ export const customerSchema = z.object({
 });
 
 export const customerUpdateSchema = customerSchema.partial().extend({
-  status: z.enum(["ACTIVE", "BLOCKED", "FROZEN", "EXCEPTION"]).optional(),
+  status: z.enum(["PENDING_APPROVAL", "ACTIVE", "BLOCKED", "FROZEN", "EXCEPTION"]).optional(),
   sampleType: z.enum(["CPI", "CPF"]).optional(),
   currentUpdateVersion: z.string().optional().nullable(),
   hasV3: z.boolean().optional(),
