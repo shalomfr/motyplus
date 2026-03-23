@@ -180,9 +180,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Green Invoice webhook error:", error);
+    console.error("Green Invoice webhook error:", error instanceof Error ? error.message : error);
+    console.error("Green Invoice webhook stack:", error instanceof Error ? error.stack : "no stack");
     return NextResponse.json(
-      { error: "Webhook processing failed" },
+      { error: "Webhook processing failed", detail: error instanceof Error ? error.message : String(error) },
       { status: 400 }
     );
   }
