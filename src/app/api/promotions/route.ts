@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
     const promotion = await prisma.promotion.create({
       data: {
         name: data.name,
-        discountPercent: data.discountPercent,
+        discountPercent: data.discountPercent ?? 0,
+        discountAmount: data.discountAmount ?? 0,
         couponCode: data.couponCode.toUpperCase(),
         validFrom: new Date(data.validFrom),
         validUntil: new Date(data.validUntil),

@@ -75,7 +75,8 @@ export const emailTemplateSchema = z.object({
 
 export const promotionSchema = z.object({
   name: z.string().min(1, "יש להזין שם מבצע"),
-  discountPercent: z.number().min(1).max(100, "אחוז הנחה חייב להיות בין 1 ל-100"),
+  discountPercent: z.number().min(0).max(100).default(0),
+  discountAmount: z.number().min(0).default(0),
   couponCode: z.string().min(3, "קוד קופון חייב להכיל לפחות 3 תווים"),
   validFrom: z.string(),
   validUntil: z.string(),

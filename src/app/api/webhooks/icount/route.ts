@@ -247,6 +247,17 @@ export async function processCompletedOrder(
   let currentUpdateVersion: string | null = null;
   let setTypeId = pendingOrder.setTypeId;
 
+  // If no setTypeId (custom amount), use or create fallback
+  if (!setTypeId && !pendingOrder.isUpdateOnly) {
+    let fallbackSet = await prisma.setType.findFirst({ where: { name: "סכום חופשי" } });
+    if (!fallbackSet) {
+      fallbackSet = await prisma.setType.create({
+        data: { name: "סכום חופשי", price: 0, includesUpdates: false, sortOrder: 100, isActive: false },
+      });
+    }
+    setTypeId = fallbackSet.id;
+  }
+
   if (pendingOrder.isUpdateOnly) {
     let updateOnlySet = await prisma.setType.findFirst({
       where: { name: "עדכון בלבד" },
@@ -290,7 +301,7 @@ export async function processCompletedOrder(
       phone: pendingOrder.phone,
       email: pendingOrder.email,
       organId: pendingOrder.organId,
-      setTypeId: setTypeId || "",
+      setTypeId: setTypeId!,
       amountPaid: Number(pendingOrder.amount),
       purchaseDate,
       updateExpiryDate,

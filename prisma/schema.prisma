@@ -380,7 +380,8 @@ model EmailLog {
 model Promotion {
   id              String    @id @default(cuid())
   name            String
-  discountPercent Int
+  discountPercent Int       @default(0)
+  discountAmount  Int       @default(0)
   couponCode      String    @unique
   validFrom       DateTime
   validUntil      DateTime

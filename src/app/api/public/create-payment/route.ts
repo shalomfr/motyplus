@@ -71,8 +71,13 @@ export async function POST(request: NextRequest) {
       if (promotion.maxUses && promotion.currentUses >= promotion.maxUses) {
         return NextResponse.json({ error: "קוד הקופון מוצה" }, { status: 400 });
       }
-      amount = Math.round(amount * (1 - promotion.discountPercent / 100));
-      description += ` (קופון ${couponCode} — ${promotion.discountPercent}% הנחה)`;
+      if (promotion.discountAmount > 0) {
+        amount = Math.max(0, amount - promotion.discountAmount);
+        description += ` (קופון ${couponCode} — ${promotion.discountAmount} ₪ הנחה)`;
+      } else if (promotion.discountPercent > 0) {
+        amount = Math.round(amount * (1 - promotion.discountPercent / 100));
+        description += ` (קופון ${couponCode} — ${promotion.discountPercent}% הנחה)`;
+      }
       promotionId = promotion.id;
     }
 
