@@ -348,6 +348,21 @@ export class GreenInvoiceClient implements BillingClient {
     }));
   }
 
+  // Get active payment terminal plugin ID
+  private async getPluginId(): Promise<string | null> {
+    try {
+      const plugins = await this.request<
+        Array<{ id: string; type: number; active: boolean; payments: boolean }>
+      >("plugins", undefined, "GET");
+      const terminal = plugins.find(
+        (p) => p.type === 12200 && p.active && p.payments
+      );
+      return terminal?.id || null;
+    } catch {
+      return null;
+    }
+  }
+
   async createPaymentPage(
     request: CreatePaymentPageRequest
   ): Promise<PaymentPageResponse> {
@@ -356,12 +371,16 @@ export class GreenInvoiceClient implements BillingClient {
       0
     );
 
+    const pluginId = await this.getPluginId();
+
     const body: Record<string, unknown> = {
       type: request.docType
         ? GreenInvoiceClient.mapDocType(request.docType)
-        : 305,
+        : 320,
       lang: request.lang === "en" ? "en" : "he",
       currency: GreenInvoiceClient.mapCurrency(request.currency),
+      amount: totalAmount,
+      description: request.items.map((i) => i.description).join(", "),
       client: {
         name: request.customer.name,
         emails: request.customer.email ? [request.customer.email] : [],
@@ -373,13 +392,21 @@ export class GreenInvoiceClient implements BillingClient {
         quantity: item.quantity,
         price: item.unitPrice,
         currency: GreenInvoiceClient.mapCurrency(request.currency),
-        vatType: 1, // 1 = כולל מע"מ (עוסק מורשה)
+        vatType: 1,
       })),
       successUrl: request.successUrl,
       failureUrl: request.cancelUrl,
-      notifyUrl: request.webhookUrl || "",
       maxPayments: 1,
     };
+
+    if (pluginId) {
+      body.pluginId = pluginId;
+    }
+
+    // Webhook URL — only include if provided (empty string causes validation error)
+    if (request.webhookUrl) {
+      body.notifyUrl = request.webhookUrl;
+    }
 
     // Pass metadata via custom field
     if (request.metadata) {

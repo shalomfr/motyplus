@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/crypto";
 import { createICountClient } from "@/lib/icount/client";
 import type { ICountSettings } from "@/lib/icount/types";
-import type { BillingProvider } from "@prisma/client";
+import type { BillingProvider, BillingProviderType } from "@prisma/client";
 import type { BillingClient } from "./client";
 import { ICountAdapter } from "./icount-adapter";
 import { YeshInvoiceClient } from "./yeshinvoice-client";
@@ -33,6 +33,20 @@ export async function getBillingClientById(
 ): Promise<BillingClientResult | null> {
   const provider = await prisma.billingProvider.findUnique({
     where: { id: providerId },
+  });
+  if (!provider) return null;
+  return buildClient(provider);
+}
+
+/**
+ * ספק חיוב לפי סוג (למשל GREEN_INVOICE למורנינג). מעדיף ראשי, אחרת האחרון שנוסף.
+ */
+export async function getBillingClientByProviderType(
+  providerType: BillingProviderType
+): Promise<BillingClientResult | null> {
+  const provider = await prisma.billingProvider.findFirst({
+    where: { isActive: true, provider: providerType },
+    orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
   });
   if (!provider) return null;
   return buildClient(provider);

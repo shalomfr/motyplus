@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { BillingProviderType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getBillingClient } from "@/lib/billing";
+import { getBillingClient, getBillingClientByProviderType } from "@/lib/billing";
+
+function parseBillingProviderPreference(raw: FormDataEntryValue | null): BillingProviderType | null {
+  if (raw == null || typeof raw !== "string") return null;
+  const trimmed = raw.trim().toUpperCase();
+  const values = Object.values(BillingProviderType) as string[];
+  if (!values.includes(trimmed)) return null;
+  return trimmed as BillingProviderType;
+}
 
 // POST /api/public/create-payment — יצירת דף תשלום
 export async function POST(request: NextRequest) {
@@ -74,8 +83,21 @@ export async function POST(request: NextRequest) {
       infoFileName = infoFile.name;
     }
 
-    // Get billing provider
-    const billing = await getBillingClient();
+    const preferredProvider = parseBillingProviderPreference(formData.get("billingProvider"));
+
+    let billing =
+      preferredProvider != null
+        ? await getBillingClientByProviderType(preferredProvider)
+        : null;
+    if (preferredProvider != null && !billing) {
+      return NextResponse.json(
+        { error: `ספק החיוב ${preferredProvider} לא מוגדר או לא פעיל` },
+        { status: 503 }
+      );
+    }
+    if (!billing) {
+      billing = await getBillingClient();
+    }
 
     if (!billing) {
       return NextResponse.json({ error: "לא הוגדר ספק חיוב — פנה למנהל" }, { status: 503 });
