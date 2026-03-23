@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ status: "processed" });
   } catch (error) {
-    console.error("Process iCount success error:", error);
-    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Process iCount success error:", msg, error);
+    return NextResponse.json({ error: `Processing failed: ${msg}` }, { status: 500 });
   }
 }

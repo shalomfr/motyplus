@@ -290,7 +290,7 @@ export async function processCompletedOrder(
       phone: pendingOrder.phone,
       email: pendingOrder.email,
       organId: pendingOrder.organId,
-      setTypeId: setTypeId!,
+      setTypeId: setTypeId || "",
       amountPaid: Number(pendingOrder.amount),
       purchaseDate,
       updateExpiryDate,
