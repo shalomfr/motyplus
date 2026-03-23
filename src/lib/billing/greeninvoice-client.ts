@@ -231,7 +231,7 @@ export class GreenInvoiceClient implements BillingClient {
         quantity: item.quantity,
         price: item.unitPrice,
         currency: GreenInvoiceClient.mapCurrency(request.currency),
-        vatType: 0, // Default VAT
+        vatType: 1, // 1 = כולל מע"מ (עוסק מורשה)
       })),
     };
 
@@ -373,7 +373,7 @@ export class GreenInvoiceClient implements BillingClient {
         quantity: item.quantity,
         price: item.unitPrice,
         currency: GreenInvoiceClient.mapCurrency(request.currency),
-        vatType: 0,
+        vatType: 1, // 1 = כולל מע"מ (עוסק מורשה)
       })),
       successUrl: request.successUrl,
       failureUrl: request.cancelUrl,
