@@ -94,6 +94,17 @@ export async function POST(request: NextRequest) {
       let currentUpdateVersion: string | null = null;
       let resolvedSetTypeId = setTypeId;
 
+      // If no setTypeId (custom amount), use or create fallback
+      if (!resolvedSetTypeId) {
+        let fallbackSet = await prisma.setType.findFirst({ where: { name: "סכום חופשי" } });
+        if (!fallbackSet) {
+          fallbackSet = await prisma.setType.create({
+            data: { name: "סכום חופשי", price: 0, includesUpdates: false, sortOrder: 100, isActive: false },
+          });
+        }
+        resolvedSetTypeId = fallbackSet.id;
+      }
+
       if (isUpdateOnly) {
         let updateOnlySet = await prisma.setType.findFirst({ where: { name: "עדכון בלבד" } });
         if (!updateOnlySet) {
@@ -117,7 +128,7 @@ export async function POST(request: NextRequest) {
       const customer = await prisma.customer.create({
         data: {
           fullName, phone, email, organId,
-          setTypeId: resolvedSetTypeId || "",
+          setTypeId: resolvedSetTypeId,
           amountPaid: 0, purchaseDate, updateExpiryDate,
           hasV3: true, sampleType: "CPI", currentUpdateVersion,
           status: "PENDING_APPROVAL", notes,
