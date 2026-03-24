@@ -114,6 +114,10 @@ export default function EmailsPage() {
   const [dupTemplate, setDupTemplate] = useState<EmailTemplate | null>(null)
   const [dupFolderId, setDupFolderId] = useState("")
 
+  // New template dialog
+  const [newTemplateDialogOpen, setNewTemplateDialogOpen] = useState(false)
+  const [newTemplateFolderId, setNewTemplateFolderId] = useState("")
+
   const handleBulkSend = async (type: "not_updated" | "half_set") => {
     const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
     if (!confirm(`לשלוח מיילים ${label}? פעולה זו תשלח מיילים לכל הלקוחות המתאימים.`)) return
@@ -527,6 +531,10 @@ export default function EmailsPage() {
           <Badge variant="outline">{templates.length} תבניות</Badge>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => { setNewTemplateFolderId(""); setNewTemplateDialogOpen(true) }} className="gap-1">
+            <Plus className="h-4 w-4" />
+            תבנית חדשה
+          </Button>
           <Button variant="outline" size="sm" onClick={openNewFolderDialog} className="gap-1">
             <FolderPlus className="h-4 w-4" />
             תיקייה חדשה
@@ -747,6 +755,38 @@ export default function EmailsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDupDialogOpen(false)}>ביטול</Button>
             <Button onClick={confirmDuplicate}>שכפל</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — תבנית חדשה עם בחירת תיקייה */}
+      <Dialog open={newTemplateDialogOpen} onOpenChange={setNewTemplateDialogOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>תבנית חדשה</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">בחר תיקייה לתבנית החדשה:</p>
+            <select
+              value={newTemplateFolderId}
+              onChange={(e) => setNewTemplateFolderId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+            >
+              <option value="">ללא תיקייה</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewTemplateDialogOpen(false)}>ביטול</Button>
+            <Button onClick={() => {
+              setNewTemplateDialogOpen(false)
+              const params = newTemplateFolderId ? `?folderId=${newTemplateFolderId}` : ""
+              router.push(`/emails/templates/new${params}`)
+            }}>
+              צור תבנית
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
