@@ -3,6 +3,54 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
+import { getBillingClient } from "@/lib/billing";
+
+// GET /api/emails/send-bulk — סטטיסטיקות: כמה לקוחות בכל קבוצה
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
+    }
+
+    const latestVersion = await prisma.updateVersion.findFirst({
+      where: { status: { not: "DRAFT" } },
+      orderBy: { sortOrder: "desc" },
+    });
+
+    const [notUpdatedCount, halfSetCount] = await Promise.all([
+      prisma.customer.count({
+        where: {
+          status: { in: ["ACTIVE"] },
+          setType: { includesUpdates: true },
+          isCasual: false,
+          OR: [
+            { currentUpdateVersion: null },
+            latestVersion
+              ? { currentUpdateVersion: { not: latestVersion.version } }
+              : {},
+          ],
+        },
+      }),
+      prisma.customer.count({
+        where: {
+          status: { in: ["ACTIVE"] },
+          setType: { includesUpdates: false },
+          isCasual: false,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      notUpdatedCount,
+      halfSetCount,
+      latestVersion: latestVersion?.version || null,
+    });
+  } catch (error) {
+    console.error("Error fetching bulk stats:", error);
+    return NextResponse.json({ error: "שגיאה בטעינת נתונים" }, { status: 500 });
+  }
+}
 
 // POST /api/emails/send-bulk — שליחה קבוצתית: למי שלא מעודכן / חצאי סטים
 export async function POST(request: NextRequest) {
@@ -13,38 +61,67 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type } = body as { type: "not_updated" | "half_set" };
+    const {
+      type,
+      notUpdatedTemplateId,
+      halfSetTemplateId,
+    } = body as {
+      type: "not_updated" | "half_set" | "both";
+      notUpdatedTemplateId?: string;
+      halfSetTemplateId?: string;
+    };
 
-    if (!type || !["not_updated", "half_set"].includes(type)) {
+    if (!type || !["not_updated", "half_set", "both"].includes(type)) {
       return NextResponse.json({ error: "סוג שליחה לא תקין" }, { status: 400 });
     }
 
-    // מצא את העדכון האחרון
     const latestVersion = await prisma.updateVersion.findFirst({
       where: { status: { not: "DRAFT" } },
       orderBy: { sortOrder: "desc" },
     });
 
-    // מצא תבנית מתאימה
-    const templateName = type === "not_updated"
-      ? "הצעת מחיר — למי שלא מעודכן"
-      : "הצעה לחצאי סטים";
+    const billing = await getBillingClient();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
 
-    const template = await prisma.emailTemplate.findFirst({
-      where: { name: templateName },
+    // Full set price for balance calculations
+    const fullSetPrice = await prisma.setType.findFirst({
+      where: { includesUpdates: true },
+      select: { price: true },
     });
 
-    if (!template) {
-      return NextResponse.json({
-        error: `לא נמצאה תבנית "${templateName}". טען את התבניות מחדש.`,
-      }, { status: 400 });
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    // Helper: find template by id or name
+    async function findTemplate(templateId?: string, fallbackName?: string) {
+      if (templateId) {
+        const t = await prisma.emailTemplate.findUnique({
+          where: { id: templateId },
+        });
+        if (t) return t;
+      }
+      if (fallbackName) {
+        return prisma.emailTemplate.findFirst({
+          where: { name: fallbackName },
+        });
+      }
+      return null;
     }
 
-    // שאילתת לקוחות לפי סוג
-    let customers;
-    if (type === "not_updated") {
-      // לקוחות עם סט שלם שלא מעודכנים
-      customers = await prisma.customer.findMany({
+    // Send to not_updated customers
+    if (type === "not_updated" || type === "both") {
+      const template = await findTemplate(
+        notUpdatedTemplateId,
+        "הצעת מחיר — למי שלא מעודכן"
+      );
+
+      if (!template) {
+        return NextResponse.json({
+          error: "לא נמצאה תבנית למי שלא מעודכן",
+        }, { status: 400 });
+      }
+
+      const customers = await prisma.customer.findMany({
         where: {
           status: { in: ["ACTIVE"] },
           setType: { includesUpdates: true },
@@ -58,9 +135,86 @@ export async function POST(request: NextRequest) {
         },
         include: { organ: true, setType: true },
       });
-    } else {
-      // לקוחות עם חצי סט
-      customers = await prisma.customer.findMany({
+
+      for (const customer of customers) {
+        const remainingForFullSet = fullSetPrice
+          ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
+          : 0;
+
+        // Create payment link if billing is available and there's a balance
+        let paymentLink = "";
+        if (billing && remainingForFullSet > 0) {
+          try {
+            const page = await billing.client.createPaymentPage({
+              customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+              items: [{ description: "עדכון תוכנה", quantity: 1, unitPrice: remainingForFullSet }],
+              successUrl: `${baseUrl}/order/success`,
+              cancelUrl: `${baseUrl}/order/cancel`,
+              autoCreateDoc: true,
+              docType: "invoice_receipt",
+              metadata: { customerId: String(customer.id), source: "bulk_quote" },
+            });
+            paymentLink = page.url;
+          } catch { /* continue without link */ }
+        }
+
+        const variables = {
+          fullName: customer.fullName,
+          firstName: customer.fullName.split(" ")[0],
+          organ: customer.organ.name,
+          setType: customer.setType.name,
+          currentVersion: customer.currentUpdateVersion || "—",
+          updateVersion: customer.currentUpdateVersion || "—",
+          remainingAmount: String(remainingForFullSet),
+          remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
+          paymentLink,
+          driveLink: "",
+          youtubeLink: "",
+          customLink: "",
+        };
+
+        const html = replaceTemplateVariables(template.body, variables);
+        const subject = replaceTemplateVariables(template.subject, variables);
+
+        try {
+          const result = await sendEmail({ to: customer.email, subject, html });
+          if (result.success) {
+            totalSent++;
+            await prisma.emailLog.create({
+              data: {
+                customerId: customer.id,
+                templateId: template.id,
+                toEmail: customer.email,
+                subject,
+                body: html,
+                status: "SENT",
+                sentAt: new Date(),
+                userId: session.user.id,
+              },
+            });
+          } else {
+            totalFailed++;
+          }
+        } catch {
+          totalFailed++;
+        }
+      }
+    }
+
+    // Send to half_set customers
+    if (type === "half_set" || type === "both") {
+      const template = await findTemplate(
+        halfSetTemplateId,
+        "הצעה לחצאי סטים"
+      );
+
+      if (!template) {
+        return NextResponse.json({
+          error: "לא נמצאה תבנית לחצאי סטים",
+        }, { status: 400 });
+      }
+
+      const customers = await prisma.customer.findMany({
         where: {
           status: { in: ["ACTIVE"] },
           setType: { includesUpdates: false },
@@ -68,80 +222,83 @@ export async function POST(request: NextRequest) {
         },
         include: { organ: true, setType: true },
       });
-    }
 
-    if (customers.length === 0) {
-      return NextResponse.json({ sent: 0, failed: 0, message: "אין לקוחות מתאימים" });
-    }
+      for (const customer of customers) {
+        const remainingForFullSet = fullSetPrice
+          ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
+          : 0;
 
-    let sent = 0;
-    let failed = 0;
-
-    // שליפת מחיר סט מלא פעם אחת מחוץ ללולאה
-    const fullSetPrice = await prisma.setType.findFirst({
-      where: { includesUpdates: true },
-      select: { price: true },
-    });
-
-    for (const customer of customers) {
-      const remainingForFullSet = fullSetPrice
-        ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
-        : 0;
-
-      const variables = {
-        fullName: customer.fullName,
-        firstName: customer.fullName.split(" ")[0],
-        organ: customer.organ.name,
-        setType: customer.setType.name,
-        currentVersion: customer.currentUpdateVersion || "—",
-        updateVersion: customer.currentUpdateVersion || "—",
-        remainingAmount: String(remainingForFullSet),
-        remainingForFullSet: `₪${remainingForFullSet}`,
-        driveLink: "",
-        youtubeLink: "",
-        customLink: "",
-      };
-
-      const html = replaceTemplateVariables(template.body, variables);
-      const subject = replaceTemplateVariables(template.subject, variables);
-
-      try {
-        const result = await sendEmail({ to: customer.email, subject, html });
-        if (result.success) {
-          sent++;
-          await prisma.emailLog.create({
-            data: {
-              customerId: customer.id,
-              templateId: template.id,
-              toEmail: customer.email,
-              subject,
-              body: html,
-              status: "SENT",
-              sentAt: new Date(),
-              userId: session.user.id,
-            },
-          });
-        } else {
-          failed++;
+        let paymentLink = "";
+        if (billing && remainingForFullSet > 0) {
+          try {
+            const page = await billing.client.createPaymentPage({
+              customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+              items: [{ description: "שדרוג לסט שלם", quantity: 1, unitPrice: remainingForFullSet }],
+              successUrl: `${baseUrl}/order/success`,
+              cancelUrl: `${baseUrl}/order/cancel`,
+              autoCreateDoc: true,
+              docType: "invoice_receipt",
+              metadata: { customerId: String(customer.id), source: "bulk_quote_half" },
+            });
+            paymentLink = page.url;
+          } catch { /* continue without link */ }
         }
-      } catch {
-        failed++;
+
+        const variables = {
+          fullName: customer.fullName,
+          firstName: customer.fullName.split(" ")[0],
+          organ: customer.organ.name,
+          setType: customer.setType.name,
+          currentVersion: customer.currentUpdateVersion || "—",
+          updateVersion: customer.currentUpdateVersion || "—",
+          remainingAmount: String(remainingForFullSet),
+          remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
+          paymentLink,
+          driveLink: "",
+          youtubeLink: "",
+          customLink: "",
+        };
+
+        const html = replaceTemplateVariables(template.body, variables);
+        const subject = replaceTemplateVariables(template.subject, variables);
+
+        try {
+          const result = await sendEmail({ to: customer.email, subject, html });
+          if (result.success) {
+            totalSent++;
+            await prisma.emailLog.create({
+              data: {
+                customerId: customer.id,
+                templateId: template.id,
+                toEmail: customer.email,
+                subject,
+                body: html,
+                status: "SENT",
+                sentAt: new Date(),
+                userId: session.user.id,
+              },
+            });
+          } else {
+            totalFailed++;
+          }
+        } catch {
+          totalFailed++;
+        }
       }
     }
 
     await logActivity({
       userId: session.user.id,
-      action: type === "not_updated" ? "BULK_EMAIL_NOT_UPDATED" : "BULK_EMAIL_HALF_SET",
+      action: type === "both" ? "BULK_EMAIL_QUOTES" : type === "not_updated" ? "BULK_EMAIL_NOT_UPDATED" : "BULK_EMAIL_HALF_SET",
       entityType: "EMAIL",
       entityId: "bulk",
-      details: { type, sent, failed, total: customers.length },
+      details: { type, sent: totalSent, failed: totalFailed },
     });
 
     return NextResponse.json({
-      sent,
-      failed,
-      total: customers.length,
-      message: `נשלחו ${sent} מיילים בהצלחה${failed > 0 ? `, ${failed} נכשלו` : ""}`,
+      sent: totalSent,
+      failed: totalFailed,
+      message: `נשלחו ${totalSent} מיילים בהצלחה${totalFailed > 0 ? `, ${totalFailed} נכשלו` : ""}`,
     });
   } catch (error) {
     console.error("Error sending bulk emails:", error);

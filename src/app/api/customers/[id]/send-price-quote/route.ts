@@ -7,7 +7,7 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -21,6 +21,12 @@ export async function POST(
     if (isNaN(customerId)) {
       return NextResponse.json({ error: "מזהה לקוח לא תקין" }, { status: 400 });
     }
+
+    const body = await request.json().catch(() => ({}));
+    const { templateId, paymentUrl: existingPaymentUrl } = body as {
+      templateId?: string;
+      paymentUrl?: string;
+    };
 
     const [customer, details] = await Promise.all([
       prisma.customer.findUnique({
@@ -43,26 +49,41 @@ export async function POST(
       return NextResponse.json({ error: "אין יתרה לתשלום" }, { status: 400 });
     }
 
-    const template = await findQuoteTemplate();
+    // Use chosen template or fallback to auto-find
+    let template: { id: string; name: string; subject: string; body: string } | null = null;
+    if (templateId) {
+      template = await prisma.emailTemplate.findUnique({
+        where: { id: templateId },
+        select: { id: true, name: true, subject: true, body: true },
+      });
+    }
+    if (!template) {
+      template = await findQuoteTemplate();
+    }
     if (!template) {
       return NextResponse.json({ error: "לא נמצאה תבנית הצעת מחיר" }, { status: 404 });
     }
 
-    const billing = await getBillingClient();
-    if (!billing) {
-      return NextResponse.json({ error: "לא הוגדר ספק חיוב" }, { status: 503 });
-    }
+    // Use existing payment URL or create new one
+    let paymentLink = existingPaymentUrl;
+    if (!paymentLink) {
+      const billing = await getBillingClient();
+      if (!billing) {
+        return NextResponse.json({ error: "לא הוגדר ספק חיוב" }, { status: 503 });
+      }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-    const page = await billing.client.createPaymentPage({
-      customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-      items: [{ description: details.description, quantity: 1, unitPrice: details.totalOwed }],
-      successUrl: `${baseUrl}/order/success`,
-      cancelUrl: `${baseUrl}/order/cancel`,
-      autoCreateDoc: true,
-      docType: "invoice_receipt",
-      metadata: { customerId: String(customerId), source: "price_quote" },
-    });
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+      const page = await billing.client.createPaymentPage({
+        customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+        items: [{ description: details.description, quantity: 1, unitPrice: details.totalOwed }],
+        successUrl: `${baseUrl}/order/success`,
+        cancelUrl: `${baseUrl}/order/cancel`,
+        autoCreateDoc: true,
+        docType: "invoice_receipt",
+        metadata: { customerId: String(customerId), source: "price_quote" },
+      });
+      paymentLink = page.url;
+    }
 
     const vars: Record<string, string> = {
       fullName: customer.fullName,
@@ -72,7 +93,7 @@ export async function POST(
       currentVersion: customer.currentUpdateVersion || "—",
       remainingAmount: String(details.totalOwed),
       remainingForFullSet: `₪${details.totalOwed.toLocaleString("he-IL")}`,
-      paymentLink: page.url,
+      paymentLink,
     };
 
     const html = replaceTemplateVariables(template.body, vars);
@@ -106,7 +127,7 @@ export async function POST(
 
     return NextResponse.json({
       success: result.success,
-      paymentUrl: page.url,
+      paymentUrl: paymentLink,
       amount: details.totalOwed,
     });
   } catch (error) {

@@ -259,14 +259,6 @@ export function CustomerActions({
     )
   }
 
-  const handleSendQuote = () => {
-    handleAction(
-      "priceQuote",
-      `/api/customers/${customerId}/send-price-quote`,
-      "POST"
-    )
-  }
-
   const handleSendWelcomeEmail = () => {
     handleAction(
       "welcomeEmail",
@@ -314,14 +306,14 @@ export function CustomerActions({
 
   return (
     <div className="space-y-4">
-      {/* #16: תפריט שליחות — 8 אפשרויות */}
+      {/* #16: תפריט שליחות — 7 אפשרויות */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base cursor-pointer flex items-center justify-between" onClick={() => setSendMenuOpen(!sendMenuOpen)}>
             <span>תפריט שליחות</span>
             {sendMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </CardTitle>
-          <CardDescription>8 אפשרויות שליחה ללקוח</CardDescription>
+          <CardDescription>7 אפשרויות שליחה ללקוח</CardDescription>
         </CardHeader>
         {sendMenuOpen && (
         <CardContent className="space-y-2">
@@ -386,11 +378,6 @@ export function CustomerActions({
           <Button variant="outline" className="w-full justify-start" onClick={handleSendDetailsForm} disabled={loadingAction === "detailsForm"}>
             {loadingAction === "detailsForm" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <FileText className="h-4 w-4 ml-2" />}
             7. שליחת טופס עדכון פרטים
-          </Button>
-          {/* 8. הצעת מחיר */}
-          <Button variant="outline" className="w-full justify-start" onClick={handleSendQuote} disabled={loadingAction === "priceQuote"}>
-            {loadingAction === "priceQuote" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
-            8. שליחת הצעת מחיר ליתרה
           </Button>
         </CardContent>
         )}
@@ -676,27 +663,14 @@ export function CustomerActions({
         </CardContent>
       </Card>
 
-      {/* Balance & Updates Status */}
-      <CustomerBalanceCard customerId={customerId} amountPaid={amountPaid} />
-
-      {/* Price Quote */}
-      <Card>
-        <CardContent className="pt-4">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleSendQuote}
-            disabled={loadingAction === "priceQuote"}
-          >
-            {loadingAction === "priceQuote" ? (
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-            ) : (
-              <Receipt className="h-4 w-4 ml-2" />
-            )}
-            שליחת הצעת מחיר
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Balance & Updates Status + Quote Wizard */}
+      <CustomerBalanceCard
+        customerId={customerId}
+        customerName={customerName}
+        customerEmail={customerEmail}
+        amountPaid={amountPaid}
+        onStatusChange={onStatusChange}
+      />
 
       {/* Linked Customer */}
       {linkedCustomer && (

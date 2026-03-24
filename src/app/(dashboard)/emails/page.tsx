@@ -30,6 +30,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { BulkQuoteWizardDialog } from "@/components/emails/bulk-quote-wizard-dialog"
 
 interface EmailTemplate {
   id: string
@@ -99,7 +100,8 @@ export default function EmailsPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [folders, setFolders] = useState<EmailFolder[]>([])
   const [loading, setLoading] = useState(true)
-  const [bulkSending, setBulkSending] = useState<string | null>(null)
+  const [bulkWizardOpen, setBulkWizardOpen] = useState(false)
+  const [bulkWizardType, setBulkWizardType] = useState<"not_updated" | "half_set" | undefined>(undefined)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
   // Dialog state
@@ -123,27 +125,9 @@ export default function EmailsPage() {
   const [moveTemplate, setMoveTemplate] = useState<EmailTemplate | null>(null)
   const [moveFolderId, setMoveFolderId] = useState("")
 
-  const handleBulkSend = async (type: "not_updated" | "half_set") => {
-    const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
-    if (!confirm(`לשלוח מיילים ${label}? פעולה זו תשלח מיילים לכל הלקוחות המתאימים.`)) return
-    setBulkSending(type)
-    try {
-      const res = await fetch("/api/emails/send-bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        toast({ title: data.message, variant: "success" as "default" })
-      } else {
-        toast({ title: "שגיאה", description: data.error, variant: "destructive" })
-      }
-    } catch {
-      toast({ title: "שגיאה בשליחה", variant: "destructive" })
-    } finally {
-      setBulkSending(null)
-    }
+  const openBulkWizard = (type: "not_updated" | "half_set") => {
+    setBulkWizardType(type)
+    setBulkWizardOpen(true)
   }
 
   useEffect(() => {
@@ -523,7 +507,7 @@ export default function EmailsPage() {
 
       {/* שליחה קבוצתית */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="border-r-4 border-r-red-400">
+        <Card className="border-r-4 border-r-red-400 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openBulkWizard("not_updated")}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
@@ -534,12 +518,10 @@ export default function EmailsPage() {
                 <p className="text-xs text-muted-foreground">מייל עם הצעת מחיר לעדכון</p>
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={() => handleBulkSend("not_updated")} disabled={!!bulkSending}>
-              {bulkSending === "not_updated" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+            <Send className="h-4 w-4 text-muted-foreground" />
           </CardContent>
         </Card>
-        <Card className="border-r-4 border-r-amber-400">
+        <Card className="border-r-4 border-r-amber-400 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openBulkWizard("half_set")}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-100 rounded-lg">
@@ -550,12 +532,16 @@ export default function EmailsPage() {
                 <p className="text-xs text-muted-foreground">הצעה לשדרוג לסט שלם</p>
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={() => handleBulkSend("half_set")} disabled={!!bulkSending}>
-              {bulkSending === "half_set" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+            <Send className="h-4 w-4 text-muted-foreground" />
           </CardContent>
         </Card>
       </div>
+
+      <BulkQuoteWizardDialog
+        open={bulkWizardOpen}
+        onOpenChange={setBulkWizardOpen}
+        initialType={bulkWizardType}
+      />
 
       {/* כותרת + הרחב/כווץ + הוסף תיקייה */}
       <div className="flex items-center justify-between">
