@@ -1,13 +1,17 @@
-"use client"
-
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ArrowRight } from "lucide-react"
+import { getDashboardStats, getMonthlyRevenue } from "@/lib/services/dashboard.service"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [stats, months] = await Promise.all([
+    getDashboardStats(),
+    getMonthlyRevenue(),
+  ])
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -19,11 +23,11 @@ export default function DashboardPage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">לוח בקרה</h2>
       </div>
 
-      <StatsCards />
+      <StatsCards stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart />
-        <RecentActivity />
+        <RevenueChart data={months} />
+        <RecentActivity activities={stats.recentActivity} />
       </div>
     </div>
   )

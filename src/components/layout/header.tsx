@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Menu, Bell, Mail, Search, Calendar, LogOut, User, Settings } from "lucide-react";
+import { Menu, Bell, Mail, Search, Calendar, LogOut, ScrollText, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { signOut } from "next-auth/react";
@@ -15,6 +15,10 @@ const ROUTE_TITLES: Record<string, string> = {
   "/leads": "לידים",
   "/data": "נתונים",
   "/promotions": "מבצעים",
+  "/dashboard": "לוח בקרה",
+  "/accounting": "חשבונות",
+  "/tasks": "משימות",
+  "/receipts": "קבלות",
   "/activity-log": "יומן פעילות",
   "/settings": "הגדרות",
 };
@@ -268,7 +272,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                   onClick={() => { setUserMenuOpen(false); router.push("/activity-log"); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                 >
-                  <User size={16} />
+                  <ScrollText size={16} />
                   <span>יומן פעילות</span>
                 </button>
                 <div className="border-t border-gray-100 my-1" />

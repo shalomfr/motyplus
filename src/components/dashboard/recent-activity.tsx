@@ -1,20 +1,8 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Activity, Loader2, User, Mail, RefreshCw, UserPlus, Edit } from "lucide-react"
+import { Activity, User, Mail, RefreshCw, UserPlus, Edit } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
-
-interface ActivityEntry {
-  id: string
-  action: string
-  entityType: string
-  entityId: string
-  details: Record<string, unknown> | null
-  createdAt: string
-  user: { name: string } | null
-}
+import type { ActivityEntry } from "@/lib/services/dashboard.service"
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   CREATE: UserPlus,
@@ -43,27 +31,11 @@ const ENTITY_LABELS: Record<string, string> = {
   PROMOTION: "מבצע",
 }
 
-export function RecentActivity() {
-  const [activities, setActivities] = useState<ActivityEntry[]>([])
-  const [loading, setLoading] = useState(true)
+interface RecentActivityProps {
+  activities: ActivityEntry[];
+}
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const res = await fetch("/api/activity-log?limit=10")
-        if (res.ok) {
-          const data = await res.json()
-          setActivities(data.logs || data.activityLogs || data || [])
-        }
-      } catch (err) {
-        console.error("Error fetching activities:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchActivities()
-  }, [])
-
+export function RecentActivity({ activities }: RecentActivityProps) {
   return (
     <Card>
       <CardHeader>
@@ -73,11 +45,7 @@ export function RecentActivity() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : activities.length === 0 ? (
+        {activities.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
             אין פעילות אחרונה
           </div>

@@ -1,13 +1,22 @@
+import Image from "next/image";
+
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white font-heebo">
       <header className="py-6 text-center border-b bg-white/80 backdrop-blur-sm">
-        <h1 className="text-3xl font-bold text-blue-600">Motty Beats</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <Image
+          src="/logo.png"
+          alt="Motty Beats"
+          width={140}
+          height={48}
+          className="mx-auto"
+          priority
+        />
+        <p className="text-sm text-muted-foreground mt-2">
           סטים, ריתמוסים ועדכוני תוכנה לקלידים
         </p>
       </header>

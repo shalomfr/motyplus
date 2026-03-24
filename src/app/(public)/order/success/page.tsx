@@ -29,7 +29,18 @@ export default function OrderSuccessPage() {
         </p>
       </div>
 
-      <p className="text-xs text-gray-400 mt-8">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+        <a
+          href="https://wa.me/972500000000"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          צרו קשר בוואטסאפ
+        </a>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-4">
         לשאלות ובירורים ניתן לפנות אלינו בכל עת
       </p>
 

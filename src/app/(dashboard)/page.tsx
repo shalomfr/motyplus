@@ -38,10 +38,17 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    fetch("/api/customers/missing-info").then((r) => r.ok ? r.json() : { customers: [] })
+    fetch("/api/customers/missing-info")
+      .then((r) => r.ok ? r.json() : { customers: [] })
       .then((data) => setMissingInfo(data.customers || []))
-      .catch(() => {})
-  }, [])
+      .catch(() => {
+        toast({
+          title: "שגיאה בטעינת לקוחות חסרי אינפו",
+          description: "לא ניתן לטעון את הרשימה כרגע",
+          variant: "destructive",
+        })
+      })
+  }, [toast])
 
   const handleUploadInfoFor = (customerId: number) => {
     const input = document.createElement("input")

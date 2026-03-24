@@ -1,24 +1,7 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, UserCheck, ShieldOff, TrendingUp, Wallet, AlertCircle, Loader2, Clock, RefreshCw } from "lucide-react"
+import { Users, UserCheck, ShieldOff, TrendingUp, Wallet, AlertCircle, Clock, RefreshCw } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-
-interface DashboardStats {
-  totalCustomers: number
-  totalRevenue: number
-  activeLeadsCount: number
-  customersByStatus: {
-    ACTIVE: number
-    BLOCKED: number
-    FROZEN: number
-    EXCEPTION: number
-  }
-  expiredUpdatesCount: number
-  notUpdatedCount: number
-  totalDebt: number
-}
+import type { DashboardStats } from "@/lib/services/dashboard.service"
 
 interface StatCardConfig {
   key: string
@@ -147,60 +130,11 @@ function StatCard({ config, stats }: { config: StatCardConfig; stats: DashboardS
   )
 }
 
-export function StatsCards() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalCustomers: 0,
-    totalRevenue: 0,
-    activeLeadsCount: 0,
-    customersByStatus: { ACTIVE: 0, BLOCKED: 0, FROZEN: 0, EXCEPTION: 0 },
-    expiredUpdatesCount: 0,
-    notUpdatedCount: 0,
-    totalDebt: 0,
-  })
-  const [loading, setLoading] = useState(true)
+interface StatsCardsProps {
+  stats: DashboardStats;
+}
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch("/api/dashboard/stats")
-        if (res.ok) {
-          const data = await res.json()
-          setStats(data)
-        }
-      } catch (err) {
-        console.error("Error fetching stats:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchStats()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="border-r-4 border-r-gray-200">
-              <CardContent className="p-4 sm:p-6 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="border-r-4 border-r-gray-200">
-              <CardContent className="p-4 sm:p-6 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
+export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="space-y-4">
       {/* שורה עליונה — לקוחות */}
