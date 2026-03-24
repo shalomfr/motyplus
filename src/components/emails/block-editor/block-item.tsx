@@ -31,6 +31,21 @@ interface BlockItemProps {
   onMoveDown: () => void
 }
 
+function toggleBoldSelection(input: HTMLInputElement): string {
+  const { selectionStart, selectionEnd, value } = input
+  if (selectionStart == null || selectionEnd == null || selectionStart === selectionEnd) {
+    return value
+  }
+  const before = value.slice(0, selectionStart)
+  const selected = value.slice(selectionStart, selectionEnd)
+  const after = value.slice(selectionEnd)
+
+  if (selected.startsWith("<b>") && selected.endsWith("</b>")) {
+    return before + selected.slice(3, -4) + after
+  }
+  return `${before}<b>${selected}</b>${after}`
+}
+
 function ListEditor({
   items,
   onChange,
@@ -38,10 +53,19 @@ function ListEditor({
   items: string[]
   onChange: (items: string[]) => void
 }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
   const updateItem = (idx: number, value: string) => {
     const next = [...items]
     next[idx] = value
     onChange(next)
+  }
+
+  const handleBold = (idx: number) => {
+    const input = inputRefs.current[idx]
+    if (!input) return
+    const updated = toggleBoldSelection(input)
+    updateItem(idx, updated)
   }
 
   const addItem = () => onChange([...items, ""])
@@ -52,12 +76,22 @@ function ListEditor({
       {items.map((item, idx) => (
         <div key={idx} className="flex gap-1">
           <Input
+            ref={(el) => { inputRefs.current[idx] = el }}
             value={item}
             onChange={(e) => updateItem(idx, e.target.value)}
             className="h-7 text-xs flex-1"
             placeholder={`פריט ${idx + 1}`}
             dir="rtl"
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            title="הדגשה (Bold)"
+            onClick={() => handleBold(idx)}
+          >
+            <Bold className="h-3 w-3" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
