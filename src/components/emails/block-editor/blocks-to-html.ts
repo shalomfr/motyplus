@@ -4,7 +4,11 @@ const BUTTON_COLORS: Record<ButtonConfig["color"], { bg: string; border: string 
   gold: { bg: "linear-gradient(145deg,#124F90,#0A3D6E)", border: "#0A3D6E" },
   green: { bg: "linear-gradient(145deg,#43a047,#2e7d32)", border: "#1b5e20" },
   red: { bg: "linear-gradient(145deg,#e53935,#c62828)", border: "#8e0000" },
-  blue: { bg: "linear-gradient(145deg,#124F90,#0A3D6E)", border: "#0A3D6E" },
+  blue: { bg: "linear-gradient(145deg,#1565c0,#0d47a1)", border: "#0d47a1" },
+  orange: { bg: "linear-gradient(145deg,#ef6c00,#e65100)", border: "#bf360c" },
+  purple: { bg: "linear-gradient(145deg,#7b1fa2,#6a1b9a)", border: "#4a148c" },
+  teal: { bg: "linear-gradient(145deg,#00897b,#00695c)", border: "#004d40" },
+  gray: { bg: "linear-gradient(145deg,#546e7a,#37474f)", border: "#263238" },
 }
 
 const BANNER_STYLES: Record<string, { bg: string; border: string; color: string }> = {

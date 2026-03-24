@@ -61,7 +61,7 @@ export interface ButtonsBlock {
 export interface ButtonConfig {
   label: string
   url: string
-  color: "gold" | "green" | "red" | "blue"
+  color: "gold" | "green" | "red" | "blue" | "orange" | "purple" | "teal" | "gray"
 }
 
 export interface PromoBlock {

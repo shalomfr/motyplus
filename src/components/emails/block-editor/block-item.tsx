@@ -180,10 +180,14 @@ function ButtonsEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gold">זהב</SelectItem>
+                <SelectItem value="gold">זהב/כהה</SelectItem>
+                <SelectItem value="blue">כחול</SelectItem>
                 <SelectItem value="green">ירוק</SelectItem>
                 <SelectItem value="red">אדום</SelectItem>
-                <SelectItem value="blue">כחול</SelectItem>
+                <SelectItem value="orange">כתום</SelectItem>
+                <SelectItem value="purple">סגול</SelectItem>
+                <SelectItem value="teal">טורקיז</SelectItem>
+                <SelectItem value="gray">אפור</SelectItem>
               </SelectContent>
             </Select>
             <Button
