@@ -52,7 +52,12 @@ export function ProcessPayment() {
 
     if (!pendingOrderId) return;
 
-    // Fire and forget — process the payment
+    // Skip iCount fallback if this is a Morning/GROW payment
+    // (has flow param from Meshulam, or success=true from GROW)
+    const isMorningPayment = params.has("flow") || params.has("requestId");
+    if (isMorningPayment) return;
+
+    // Fire and forget — process the payment (iCount fallback only)
     fetch("/api/public/process-icount-success", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
