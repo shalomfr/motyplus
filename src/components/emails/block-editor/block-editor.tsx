@@ -63,11 +63,16 @@ export function BlockEditor({ blocks, onChange, onHtmlChange }: BlockEditorProps
   const addBlock = useCallback(
     (type: EmailBlock["type"]) => {
       const newBlock = createDefaultBlock(type)
-      const updated = [...blocks, newBlock]
+      // Insert after selected block, or at end if none selected
+      const selectedIndex = selectedBlockId
+        ? blocks.findIndex((b) => b.id === selectedBlockId)
+        : -1
+      const insertAt = selectedIndex >= 0 ? selectedIndex + 1 : blocks.length
+      const updated = [...blocks.slice(0, insertAt), newBlock, ...blocks.slice(insertAt)]
       updateBlocks(updated)
       setSelectedBlockId(newBlock.id)
     },
-    [blocks, updateBlocks]
+    [blocks, selectedBlockId, updateBlocks]
   )
 
   const updateBlock = useCallback(
