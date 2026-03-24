@@ -15,7 +15,14 @@ import {
 } from "@/components/ui/select"
 import { EmailEditor } from "@/components/emails/email-editor"
 import type { EmailBlock } from "@/components/emails/block-editor/types"
-import { ArrowRight, Save, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { ArrowRight, Save, Loader2, Import } from "lucide-react"
 
 interface TemplateData {
   name: string
@@ -44,6 +51,9 @@ export default function EditTemplatePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [folders, setFolders] = useState<EmailFolder[]>([])
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [allTemplates, setAllTemplates] = useState<Array<{ id: string; name: string; folderId: string | null }>>([])
+  const [importLoading, setImportLoading] = useState(false)
 
   const [form, setForm] = useState<TemplateData>({
     name: "",
@@ -175,8 +185,28 @@ export default function EditTemplatePage() {
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">פרטי תבנית</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={async () => {
+              setImportDialogOpen(true)
+              if (allTemplates.length === 0) {
+                setImportLoading(true)
+                try {
+                  const res = await fetch("/api/emails/templates")
+                  const data = await res.json()
+                  setAllTemplates((data.templates || data || []).map((t: { id: string; name: string; folderId: string | null }) => ({ id: t.id, name: t.name, folderId: t.folderId })))
+                } catch { /* */ }
+                setImportLoading(false)
+              }
+            }}
+          >
+            <Import className="h-4 w-4" />
+            ייבא מתבנית
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -281,6 +311,49 @@ export default function EditTemplatePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog — ייבוא מתבנית קיימת */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>ייבוא תוכן מתבנית קיימת</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {importLoading ? (
+              <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            ) : allTemplates.filter(t => t.id !== id).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">אין תבניות זמינות</p>
+            ) : (
+              allTemplates.filter(t => t.id !== id).map((t) => (
+                <button
+                  key={t.id}
+                  className="w-full text-right p-3 rounded-md border hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/emails/templates/${t.id}`)
+                      if (res.ok) {
+                        const data = await res.json()
+                        setForm((prev) => ({
+                          ...prev,
+                          subject: data.subject || prev.subject,
+                          body: data.body || prev.body,
+                          blocks: data.blocks || prev.blocks,
+                        }))
+                        setImportDialogOpen(false)
+                      }
+                    } catch { /* */ }
+                  }}
+                >
+                  <span className="font-medium text-sm">{t.name}</span>
+                </button>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>ביטול</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

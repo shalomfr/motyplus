@@ -109,6 +109,11 @@ export default function EmailsPage() {
   const [folderColor, setFolderColor] = useState("gray")
   const [folderSaving, setFolderSaving] = useState(false)
 
+  // Duplicate to folder dialog
+  const [dupDialogOpen, setDupDialogOpen] = useState(false)
+  const [dupTemplate, setDupTemplate] = useState<EmailTemplate | null>(null)
+  const [dupFolderId, setDupFolderId] = useState("")
+
   const handleBulkSend = async (type: "not_updated" | "half_set") => {
     const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
     if (!confirm(`לשלוח מיילים ${label}? פעולה זו תשלח מיילים לכל הלקוחות המתאימים.`)) return
@@ -172,18 +177,25 @@ export default function EmailsPage() {
     }
   }
 
-  const handleDuplicateTemplate = async (template: EmailTemplate) => {
+  const handleDuplicateTemplate = (template: EmailTemplate) => {
+    setDupTemplate(template)
+    setDupFolderId(template.folderId || "")
+    setDupDialogOpen(true)
+  }
+
+  const confirmDuplicate = async () => {
+    if (!dupTemplate) return
     try {
       const res = await fetch("/api/emails/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `${template.name} (עותק)`,
-          subject: template.subject,
-          body: template.body,
-          category: template.category,
-          folderId: template.folderId,
-          blocks: template.blocks,
+          name: `${dupTemplate.name} (עותק)`,
+          subject: dupTemplate.subject,
+          body: dupTemplate.body,
+          category: dupTemplate.category,
+          folderId: dupFolderId || null,
+          blocks: dupTemplate.blocks,
         }),
       })
       if (res.ok) {
@@ -196,6 +208,8 @@ export default function EmailsPage() {
     } catch {
       toast({ title: "שגיאה בשכפול התבנית", variant: "destructive" })
     }
+    setDupDialogOpen(false)
+    setDupTemplate(null)
   }
 
   // Drag & drop for templates within a folder
@@ -705,6 +719,34 @@ export default function EmailsPage() {
               {folderSaving ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
               {editingFolder ? "שמור" : "צור תיקייה"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — שכפול תבנית לתיקייה */}
+      <Dialog open={dupDialogOpen} onOpenChange={setDupDialogOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>שכפול תבנית</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              שכפול &quot;{dupTemplate?.name}&quot; — בחר תיקיית יעד:
+            </p>
+            <select
+              value={dupFolderId}
+              onChange={(e) => setDupFolderId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+            >
+              <option value="">ללא תיקייה</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDupDialogOpen(false)}>ביטול</Button>
+            <Button onClick={confirmDuplicate}>שכפל</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
