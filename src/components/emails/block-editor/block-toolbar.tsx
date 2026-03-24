@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import {
-  Heading1, MessageSquare, Type, FolderOpen, List, MousePointer2,
+  Heading1, Heading2, MessageSquare, Type, FolderOpen, List, MousePointer2,
   Percent, Building2, AlertTriangle, PenLine, ImageIcon, Minus, BookOpen, Plus,
 } from "lucide-react"
 import type { EmailBlock } from "./types"
@@ -13,6 +13,7 @@ interface BlockToolbarProps {
 
 const BLOCK_OPTIONS: Array<{ type: EmailBlock["type"]; label: string; icon: typeof Heading1 }> = [
   { type: "heading", label: "כותרת", icon: Heading1 },
+  { type: "subheading", label: "כותרת משנה", icon: Heading2 },
   { type: "banner", label: "באנר", icon: MessageSquare },
   { type: "paragraph", label: "פסקה", icon: Type },
   { type: "folder", label: "תיקייה", icon: FolderOpen },

@@ -223,6 +223,35 @@ function RenderBlockFields({
         </div>
       )
 
+    case "subheading":
+      return (
+        <div className="space-y-2">
+          <VariableTextarea
+            ref={textareaRef}
+            value={block.text}
+            onChange={(text) => onChange({ ...block, text })}
+            placeholder="כותרת משנה"
+            singleLine
+          />
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">יישור:</Label>
+            <Select
+              value={block.align || "right"}
+              onValueChange={(v) => onChange({ ...block, align: v as "right" | "center" | "left" })}
+            >
+              <SelectTrigger className="h-7 text-xs w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="right">ימין</SelectItem>
+                <SelectItem value="center">מרכז</SelectItem>
+                <SelectItem value="left">שמאל</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )
+
     case "banner":
       return (
         <div className="space-y-1.5">

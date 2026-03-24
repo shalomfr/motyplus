@@ -42,6 +42,11 @@ function renderBlockToHtml(block: EmailBlock): string {
       }
       return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#124F90;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(block.text)}</div>`
 
+    case "subheading": {
+      const align = block.align || "right"
+      return `<div style="font-size:16px;font-weight:bold;text-align:${align};color:#2c5f8a;padding:8px 0;margin-bottom:6px;">${escapeHtml(block.text)}</div>`
+    }
+
     case "banner": {
       const style = BANNER_STYLES[block.color] || BANNER_STYLES.orange
       const isGradient = style.bg.includes("gradient")

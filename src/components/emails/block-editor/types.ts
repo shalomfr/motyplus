@@ -1,3 +1,5 @@
+export type TextAlign = "right" | "center" | "left" | "justify"
+
 export interface HeadingBlock {
   type: "heading"
   id: string
@@ -6,14 +8,19 @@ export interface HeadingBlock {
   textLeft?: string
 }
 
+export interface SubheadingBlock {
+  type: "subheading"
+  id: string
+  text: string
+  align?: TextAlign
+}
+
 export interface BannerBlock {
   type: "banner"
   id: string
   text: string
   color: "orange" | "blue" | "red"
 }
-
-export type TextAlign = "right" | "center" | "left" | "justify"
 
 export interface ParagraphBlock {
   type: "paragraph"
@@ -93,6 +100,7 @@ export interface InstructionsBlock {
 
 export type EmailBlock =
   | HeadingBlock
+  | SubheadingBlock
   | BannerBlock
   | ParagraphBlock
   | FolderBlock
@@ -108,6 +116,7 @@ export type EmailBlock =
 
 export const BLOCK_LABELS: Record<EmailBlock["type"], string> = {
   heading: "כותרת ראשית",
+  subheading: "כותרת משנה",
   banner: "באנר",
   paragraph: "פסקה",
   folder: "כותרת תיקייה + פריטים",
@@ -133,12 +142,14 @@ export function createDefaultBlock(type: EmailBlock["type"]): EmailBlock {
   switch (type) {
     case "heading":
       return { type, id, text: "" }
+    case "subheading":
+      return { type, id, text: "", align: "right" }
     case "banner":
       return { type, id, text: "מה חדש בעדכון?", color: "orange" }
     case "paragraph":
       return { type, id, text: "" }
     case "folder":
-      return { type, id, name: "שם תיקייה", items: ["פריט ראשון"] }
+      return { type, id, name: "שם תיקייה", items: ["פריט ראשון"], align: "right" }
     case "list":
       return { type, id, items: ["פריט ראשון"], ordered: false }
     case "buttons":
