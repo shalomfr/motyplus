@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2, CreditCard } from "lucide-react"
 import { WizardShell } from "@/components/updates/wizard/wizard-shell"
 import { StepDetails, type UpdateDetailsData } from "@/components/updates/wizard/step-details"
 import { StepRhythms } from "@/components/updates/wizard/step-rhythms"
@@ -11,6 +11,7 @@ import { StepSamples } from "@/components/updates/wizard/step-samples"
 import { StepEmailSelect } from "@/components/updates/wizard/step-email-select"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
+import { StepQuotes } from "@/components/updates/wizard/step-quotes"
 
 const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
@@ -18,6 +19,7 @@ const ALL_WIZARD_STEPS = [
   { key: "samples", label: "דגימות", icon: <Music className="h-4 w-4" /> },
   { key: "email_select", label: "בחירת תבנית", icon: <MailCheck className="h-4 w-4" /> },
   { key: "emails", label: "תצוגת מייל", icon: <Mail className="h-4 w-4" /> },
+  { key: "quotes", label: "הצעות מחיר", icon: <CreditCard className="h-4 w-4" /> },
   { key: "summary", label: "סיכום", icon: <CheckCircle2 className="h-4 w-4" /> },
 ]
 
@@ -43,6 +45,10 @@ interface WizardData {
     sampleCustomers: Array<{ id: number; fullName: string; email: string; organ: string; setType: string }>
     canSend: boolean
     color: string
+  }>
+  quoteCustomers: Array<{
+    id: number; fullName: string; email: string; organ: string; setType: string;
+    currentVersion: string | null; includesUpdates: boolean;
   }>
   cpiStatus: { ready: number; total: number }
   alreadySent: number
@@ -117,7 +123,7 @@ export default function UpdateWizardPage({
 
   const handleStepChange = (step: number) => {
     const stepKey = wizardSteps[step]?.key
-    if (stepKey === "emails" || stepKey === "summary") {
+    if (stepKey === "emails" || stepKey === "quotes" || stepKey === "summary") {
       fetchWizardData()
       fetchFolderStatus()
     }
@@ -206,6 +212,13 @@ export default function UpdateWizardPage({
 
         {activeStepKey === "emails" && (
           <StepEmailPreview segments={wizardData.segments} />
+        )}
+
+        {activeStepKey === "quotes" && (
+          <StepQuotes
+            updateId={id}
+            quoteCustomers={wizardData.quoteCustomers || []}
+          />
         )}
 
         {activeStepKey === "summary" && (
