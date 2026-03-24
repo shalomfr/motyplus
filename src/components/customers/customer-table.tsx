@@ -33,6 +33,7 @@ export interface CustomerRow {
   organName: string
   setTypeName: string
   setTypePrice: number
+  fullSetPrice: number
   amountPaid: number
   status: "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   updatedAt: string
@@ -83,17 +84,37 @@ const statusConfig: Record<
 function PaymentBadge({
   amountPaid,
   setTypePrice,
+  fullSetPrice,
   includesUpdates,
 }: {
   amountPaid: number
   setTypePrice: number
+  fullSetPrice: number
   includesUpdates: boolean
 }) {
   const paid = Number(amountPaid)
   const price = Number(setTypePrice)
-  const diff = price - paid
 
-  if (diff <= 0) {
+  if (includesUpdates) {
+    const diff = price - paid
+    if (diff <= 0) {
+      return (
+        <Badge variant="outline" className="font-normal bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
+          <CircleDollarSign className="h-3 w-3" />
+          שולם
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="font-normal bg-orange-50 text-orange-700 border-orange-200 text-[10px] gap-0.5" title={`חוב ₪${diff.toLocaleString("he-IL")}`}>
+        <CircleDollarSign className="h-3 w-3" />
+        ₪{diff.toLocaleString("he-IL")}
+      </Badge>
+    )
+  }
+
+  const completionCost = Math.max(0, Number(fullSetPrice) - paid)
+  if (completionCost <= 0) {
     return (
       <Badge variant="outline" className="font-normal bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
         <CircleDollarSign className="h-3 w-3" />
@@ -102,19 +123,10 @@ function PaymentBadge({
     )
   }
 
-  if (!includesUpdates) {
-    return (
-      <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 text-[10px] gap-0.5" title={`חסר ₪${diff.toLocaleString("he-IL")} להשלמת סט`}>
-        <CircleDollarSign className="h-3 w-3" />
-        ₪{diff.toLocaleString("he-IL")}
-      </Badge>
-    )
-  }
-
   return (
-    <Badge variant="outline" className="font-normal bg-orange-50 text-orange-700 border-orange-200 text-[10px] gap-0.5" title={`חוב ₪${diff.toLocaleString("he-IL")}`}>
+    <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 text-[10px] gap-0.5" title={`שולם ₪${paid.toLocaleString("he-IL")} — חסר ₪${completionCost.toLocaleString("he-IL")} להשלמת סט שלם`}>
       <CircleDollarSign className="h-3 w-3" />
-      ₪{diff.toLocaleString("he-IL")}
+      חסר ₪{completionCost.toLocaleString("he-IL")}
     </Badge>
   )
 }
@@ -270,6 +282,7 @@ export function CustomerTable({
                     <PaymentBadge
                       amountPaid={customer.amountPaid}
                       setTypePrice={customer.setTypePrice}
+                      fullSetPrice={customer.fullSetPrice}
                       includesUpdates={customer.includesUpdates}
                     />
                   </TableCell>

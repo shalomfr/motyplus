@@ -90,6 +90,7 @@ export default function CustomersListPage() {
           organName: c.organ?.name || "",
           setTypeName: c.setType?.name || "",
           setTypePrice: Number(c.setType?.price || 0),
+          fullSetPrice: Number(data.fullSetPrice || 0),
           amountPaid: Number(c.amountPaid || 0),
           currentUpdateVersion: c.currentUpdateVersion || null,
           includesUpdates: c.setType?.includesUpdates ?? false,

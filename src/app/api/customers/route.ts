@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       (orderBy as Record<string, string>)[sortBy] = sortOrder;
     }
 
-    const [customers, total, latestUpdate] = await Promise.all([
+    const [customers, total, latestUpdate, fullSet] = await Promise.all([
       prisma.customer.findMany({
         where,
         include: {
@@ -99,10 +99,15 @@ export async function GET(request: NextRequest) {
         orderBy: { sortOrder: "desc" },
         select: { version: true },
       }),
+      prisma.setType.findFirst({
+        where: { includesUpdates: true },
+        select: { price: true },
+      }),
     ]);
 
     return NextResponse.json({
       customers,
+      fullSetPrice: Number(fullSet?.price || 0),
       latestVersion: latestUpdate?.version || null,
       pagination: {
         page,
