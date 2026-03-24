@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import {
   Home, Users, RefreshCw, Mail, Target, Database, Percent,
   ScrollText, LayoutDashboard, ClipboardList, Receipt, Settings,
-  LogOut, X, ChevronRight, ChevronLeft, type LucideIcon,
+  LogOut, X, ChevronRight, ChevronLeft, PackageCheck, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "נתונים", icon: Database, path: "/data" },
   { label: "מבצעים", icon: Percent, path: "/promotions" },
   { label: "לוח בקרה", icon: LayoutDashboard, path: "/dashboard" },
+  { label: "רשימת עבודה", icon: PackageCheck, path: "/work-orders" },
   { label: "חשבונות", icon: Receipt, path: "/accounting" },
   { label: "יומן פעילות", icon: ScrollText, path: "/activity-log" },
   { label: "משימות", icon: ClipboardList, path: "/tasks" },

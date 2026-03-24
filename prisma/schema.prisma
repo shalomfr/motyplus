@@ -112,6 +112,7 @@ model Customer {
   notes                String?        @db.Text
   icountClientId       String?        // מזהה לקוח ב-iCount (מונע כפילויות)
   promotionId          String?        // קופון הנחה ששימש ברכישה
+  orderSentAt          DateTime?      // מתי נשלחה ההזמנה הסופית ללקוח (קבצים + הוראות)
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 

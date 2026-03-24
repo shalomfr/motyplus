@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CustomerBalanceCard } from "./customer-balance-card"
+import { SendOrderWizardDialog } from "./send-order-wizard-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -62,6 +63,7 @@ import {
   Headphones,
   BookOpen,
   Upload,
+  Package,
 } from "lucide-react"
 
 interface CustomerUpdate {
@@ -127,6 +129,7 @@ export function CustomerActions({
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [sendMenuOpen, setSendMenuOpen] = useState(false)
+  const [sendOrderOpen, setSendOrderOpen] = useState(false)
 
   const handleAction = async (
     action: string,
@@ -306,6 +309,22 @@ export function CustomerActions({
 
   return (
     <div className="space-y-4">
+      {/* שליחת הזמנה סופית ללקוח */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <Button
+            className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setSendOrderOpen(true)}
+          >
+            <Package className="h-4 w-4" />
+            שלח הזמנה ללקוח
+          </Button>
+          <p className="text-[11px] text-muted-foreground text-center mt-2">
+            שליחת הזמנה סופית עם תבנית מתיקיית לקוח חדש
+          </p>
+        </CardContent>
+      </Card>
+
       {/* #16: תפריט שליחות — 7 אפשרויות */}
       <Card>
         <CardHeader className="pb-3">
@@ -455,15 +474,15 @@ export function CustomerActions({
             </Button>
           )}
 
-          {/* סנכרון ל-iCount */}
+          {/* סנכרון לספק חיוב */}
           <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
             onClick={async () => {
-              setLoadingAction("syncIcount")
+              setLoadingAction("syncBilling")
               try {
-                const res = await fetch(`/api/customers/${customerId}/sync-icount`, { method: "POST" })
+                const res = await fetch(`/api/customers/${customerId}/sync-billing`, { method: "POST" })
                 const data = await res.json()
                 if (data.success) {
-                  toast({ title: "סונכרן ל-iCount!", description: `מזהה: ${data.icountClientId}` })
+                  toast({ title: "סונכרן לספק חיוב!", description: `מזהה: ${data.billingClientId}` })
                 } else {
                   toast({ title: "שגיאה", description: data.error, variant: "destructive" })
                 }
@@ -473,10 +492,10 @@ export function CustomerActions({
                 setLoadingAction(null)
               }
             }}
-            disabled={loadingAction === "syncIcount"}
+            disabled={loadingAction === "syncBilling"}
           >
-            {loadingAction === "syncIcount" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
-            סנכרן ל-iCount
+            {loadingAction === "syncBilling" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Receipt className="h-4 w-4 ml-2" />}
+            סנכרן לספק חיוב
           </Button>
 
           {/* הנפקת קבלה ידנית */}
@@ -800,6 +819,16 @@ export function CustomerActions({
           )}
         </CardContent>
       </Card>
+
+      {/* Send Order Wizard Dialog */}
+      <SendOrderWizardDialog
+        open={sendOrderOpen}
+        onOpenChange={setSendOrderOpen}
+        customerId={customerId}
+        customerName={customerName}
+        customerEmail={customerEmail}
+        onSuccess={onStatusChange}
+      />
     </div>
   )
 }
