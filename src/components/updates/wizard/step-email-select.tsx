@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Check, Mail, ChevronDown, ChevronUp, Users } from "lucide-react"
+import { Loader2, Check, Mail, ChevronDown, ChevronUp, Users, FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface EmailTemplate {
@@ -12,7 +12,14 @@ interface EmailTemplate {
   subject: string
   body: string
   category: string | null
+  folderId: string | null
   isActive: boolean
+}
+
+interface EmailFolder {
+  id: string
+  name: string
+  order: number
 }
 
 interface OrganGroup {
@@ -29,7 +36,6 @@ interface Segment {
   color: string
 }
 
-// Shape of the template map stored in DB
 interface TemplateEntry {
   templateId: string
   templateName: string
@@ -59,19 +65,22 @@ export function StepEmailSelect({
   onTemplateApplied,
 }: StepEmailSelectProps) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [folders, setFolders] = useState<EmailFolder[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [templateMap, setTemplateMap] = useState<EmailTemplateMap>(emailTemplateMap || {})
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["eligible", "not_updated", "half_set"]))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set<string>())
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set<string>())
 
   const [allOrgans, setAllOrgans] = useState<OrganGroup[]>([])
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [templatesRes, organsRes] = await Promise.all([
+        const [templatesRes, organsRes, foldersRes] = await Promise.all([
           fetch("/api/emails/templates"),
           fetch("/api/public/organs"),
+          fetch("/api/emails/folders"),
         ])
         if (templatesRes.ok) {
           const data = await templatesRes.json()
@@ -84,6 +93,13 @@ export function StepEmailSelect({
             organName: o.name,
             count: 0,
           })))
+        }
+        if (foldersRes.ok) {
+          const foldersData = await foldersRes.json()
+          setFolders(
+            (foldersData as { id: string; name: string; order: number }[])
+              .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+          )
         }
       } catch (err) {
         console.error("Failed to fetch data:", err)
@@ -106,6 +122,44 @@ export function StepEmailSelect({
       return next
     })
   }
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev)
+      if (next.has(folderId)) next.delete(folderId)
+      else next.add(folderId)
+      return next
+    })
+  }
+
+  const groupedTemplates = useMemo(() => {
+    const groups: { folderId: string | null; folderName: string; templates: EmailTemplate[] }[] = []
+    const folderMap = new Map<string, EmailTemplate[]>()
+    const unfiled: EmailTemplate[] = []
+
+    for (const t of templates) {
+      if (t.folderId) {
+        const arr = folderMap.get(t.folderId) || []
+        arr.push(t)
+        folderMap.set(t.folderId, arr)
+      } else {
+        unfiled.push(t)
+      }
+    }
+
+    for (const folder of folders) {
+      const folderTemplates = folderMap.get(folder.id)
+      if (folderTemplates && folderTemplates.length > 0) {
+        groups.push({ folderId: folder.id, folderName: folder.name, templates: folderTemplates })
+      }
+    }
+
+    if (unfiled.length > 0) {
+      groups.push({ folderId: null, folderName: "כללי", templates: unfiled })
+    }
+
+    return groups
+  }, [templates, folders])
 
   const saveMap = useCallback(
     async (newMap: EmailTemplateMap) => {
@@ -138,7 +192,6 @@ export function StepEmailSelect({
         },
       },
     }
-    // Also update legacy emailSubject/emailBody with first organ's template
     await fetch(`/api/updates/${updateId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -190,6 +243,61 @@ export function StepEmailSelect({
     )
   }
 
+  const renderFolderedTemplates = (
+    selectedId: string | undefined,
+    isSavingKey: string,
+    onSelect: (t: EmailTemplate) => void,
+  ) => (
+    <div className="space-y-2">
+      {groupedTemplates.map((group) => {
+        const folderKey = group.folderId || "_unfiled"
+        const isOpen = expandedFolders.has(folderKey)
+        const hasSelected = group.templates.some((t) => t.id === selectedId)
+
+        return (
+          <div key={folderKey} className="border rounded-md bg-white/60">
+            <button
+              type="button"
+              onClick={() => toggleFolder(folderKey)}
+              className="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-3.5 w-3.5 text-gray-400" />
+                <span className="font-medium text-gray-700">{group.folderName}</span>
+                <Badge variant="secondary" className="text-[10px]">{group.templates.length}</Badge>
+                {hasSelected && <Check className="h-3.5 w-3.5 text-green-600" />}
+              </div>
+              {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
+            </button>
+            {isOpen && (
+              <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {group.templates.map((t) => (
+                  <TemplateCard
+                    key={t.id}
+                    template={t}
+                    isSelected={selectedId === t.id}
+                    isSaving={saving === isSavingKey}
+                    onClick={() => onSelect(t)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  const mergedOrgans = allOrgans.map((o) => {
+    const fromApi = organGroups.find((g) => g.organId === o.organId)
+    return { ...o, count: fromApi?.count || 0 }
+  })
+  for (const g of organGroups) {
+    if (!mergedOrgans.find((o) => o.organId === g.organId)) {
+      mergedOrgans.push(g)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -200,19 +308,7 @@ export function StepEmailSelect({
       </div>
 
       {/* Eligible — per organ */}
-      {(() => {
-        // Merge allOrgans with organGroups counts
-        const mergedOrgans = allOrgans.map((o) => {
-          const fromApi = organGroups.find((g) => g.organId === o.organId)
-          return { ...o, count: fromApi?.count || 0 }
-        })
-        // Add any organs from API that aren't in allOrgans list
-        for (const g of organGroups) {
-          if (!mergedOrgans.find((o) => o.organId === g.organId)) {
-            mergedOrgans.push(g)
-          }
-        }
-        return mergedOrgans.length > 0 && (
+      {mergedOrgans.length > 0 && (
         <SegmentSection
           title="זכאי לעדכון"
           count={eligibleSegment?.count || 0}
@@ -220,6 +316,7 @@ export function StepEmailSelect({
           expanded={expandedSections.has("eligible")}
           onToggle={() => toggleSection("eligible")}
           allSelected={mergedOrgans.every((g) => templateMap.eligible?.[g.organId])}
+          selectedSummary={getEligibleSummary(mergedOrgans, templateMap)}
         >
           {mergedOrgans.map((group) => {
             const selected = templateMap.eligible?.[group.organId]
@@ -229,25 +326,25 @@ export function StepEmailSelect({
                   <Users className="h-4 w-4" />
                   <span>{group.organName}</span>
                   <Badge variant="secondary" className="text-xs">{group.count}</Badge>
-                  {selected && <Check className="h-4 w-4 text-green-600" />}
+                  {selected && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      {selected.templateName}
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mr-6">
-                  {templates.map((t) => (
-                    <TemplateCard
-                      key={t.id}
-                      template={t}
-                      isSelected={selected?.templateId === t.id}
-                      isSaving={saving === `eligible:${group.organId}`}
-                      onClick={() => selectForOrgan(group.organId, t)}
-                    />
-                  ))}
+                <div className="mr-6">
+                  {renderFolderedTemplates(
+                    selected?.templateId,
+                    `eligible:${group.organId}`,
+                    (t) => selectForOrgan(group.organId, t),
+                  )}
                 </div>
               </div>
             )
           })}
         </SegmentSection>
-        )
-      })()}
+      )}
 
       {/* Not Updated */}
       {notUpdatedSegment && (
@@ -258,18 +355,13 @@ export function StepEmailSelect({
           expanded={expandedSections.has("not_updated")}
           onToggle={() => toggleSection("not_updated")}
           allSelected={!!templateMap.not_updated}
+          selectedSummary={templateMap.not_updated?.templateName}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {templates.map((t) => (
-              <TemplateCard
-                key={t.id}
-                template={t}
-                isSelected={templateMap.not_updated?.templateId === t.id}
-                isSaving={saving === "not_updated"}
-                onClick={() => selectForSegment("not_updated", t)}
-              />
-            ))}
-          </div>
+          {renderFolderedTemplates(
+            templateMap.not_updated?.templateId,
+            "not_updated",
+            (t) => selectForSegment("not_updated", t),
+          )}
         </SegmentSection>
       )}
 
@@ -282,22 +374,26 @@ export function StepEmailSelect({
           expanded={expandedSections.has("half_set")}
           onToggle={() => toggleSection("half_set")}
           allSelected={!!templateMap.half_set}
+          selectedSummary={templateMap.half_set?.templateName}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {templates.map((t) => (
-              <TemplateCard
-                key={t.id}
-                template={t}
-                isSelected={templateMap.half_set?.templateId === t.id}
-                isSaving={saving === "half_set"}
-                onClick={() => selectForSegment("half_set", t)}
-              />
-            ))}
-          </div>
+          {renderFolderedTemplates(
+            templateMap.half_set?.templateId,
+            "half_set",
+            (t) => selectForSegment("half_set", t),
+          )}
         </SegmentSection>
       )}
     </div>
   )
+}
+
+// ===== Helpers =====
+
+function getEligibleSummary(organs: OrganGroup[], templateMap: EmailTemplateMap): string | undefined {
+  const selected = organs.filter((o) => templateMap.eligible?.[o.organId])
+  if (selected.length === 0) return undefined
+  if (selected.length === organs.length) return `כל ${organs.length} האורגנים מוגדרים`
+  return `${selected.length}/${organs.length} אורגנים מוגדרים`
 }
 
 // ===== Sub-components =====
@@ -309,6 +405,7 @@ function SegmentSection({
   expanded,
   onToggle,
   allSelected,
+  selectedSummary,
   children,
 }: {
   title: string
@@ -317,6 +414,7 @@ function SegmentSection({
   expanded: boolean
   onToggle: () => void
   allSelected: boolean
+  selectedSummary?: string
   children: React.ReactNode
 }) {
   const colorMap: Record<string, string> = {
@@ -332,7 +430,7 @@ function SegmentSection({
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-gray-800">{title}</span>
           <Badge variant="secondary">{count}</Badge>
           {allSelected && (
@@ -340,6 +438,9 @@ function SegmentSection({
               <Check className="h-3 w-3 ml-1" />
               תבניות נבחרו
             </Badge>
+          )}
+          {!expanded && selectedSummary && !allSelected && (
+            <span className="text-xs text-gray-500">{selectedSummary}</span>
           )}
         </div>
         {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -370,17 +471,14 @@ function TemplateCard({
           : "border-gray-200 hover:border-blue-300"
       )}
     >
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="p-3 space-y-1">
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate flex-1">{template.name}</span>
           {isSelected && <Check className="h-4 w-4 text-blue-600 shrink-0" />}
           {isSaving && <Loader2 className="h-4 w-4 animate-spin text-blue-500 shrink-0" />}
         </div>
-        {template.category && (
-          <Badge variant="secondary" className="text-[10px]">{template.category}</Badge>
-        )}
-        <p className="text-xs text-muted-foreground line-clamp-2" dir="rtl">
-          נושא: {template.subject}
+        <p className="text-xs text-muted-foreground line-clamp-1" dir="rtl">
+          {template.subject}
         </p>
       </CardContent>
     </Card>
