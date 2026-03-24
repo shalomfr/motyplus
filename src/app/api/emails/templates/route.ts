@@ -17,28 +17,10 @@ export async function GET() {
       );
     }
 
-    for (const t of DEFAULT_EMAIL_TEMPLATES) {
-      const existing = await prisma.emailTemplate.findFirst({
-        where: { name: t.name },
-      });
-      const body = blocksToHtml(t.blocks);
-      if (existing) {
-        const needsUpdate = !existing.blocks
-          || existing.body.includes("{{תאריך}}")
-          || existing.body.includes("תוכן העדכון ישתנה")
-          || existing.body.includes("{{downloadLink}}")
-          || existing.category !== t.category;
-        if (needsUpdate) {
-          await prisma.emailTemplate.update({
-            where: { id: existing.id },
-            data: {
-              body, subject: t.subject, variables: t.variables,
-              category: t.category,
-              blocks: JSON.parse(JSON.stringify(t.blocks)),
-            },
-          });
-        }
-      } else {
+    const existingCount = await prisma.emailTemplate.count();
+    if (existingCount === 0) {
+      for (const t of DEFAULT_EMAIL_TEMPLATES) {
+        const body = blocksToHtml(t.blocks);
         await prisma.emailTemplate.create({
           data: {
             name: t.name, subject: t.subject, body,
