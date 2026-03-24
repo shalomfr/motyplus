@@ -97,6 +97,7 @@ export interface InstructionsBlock {
   type: "instructions"
   id: string
   text: string
+  align?: TextAlign
 }
 
 export type EmailBlock =

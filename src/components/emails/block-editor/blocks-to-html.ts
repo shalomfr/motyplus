@@ -126,8 +126,10 @@ function renderBlockToHtml(block: EmailBlock): string {
     case "divider":
       return `<hr style="border:none;border-top:1px solid #C5D5EA;margin:20px 0;" />`
 
-    case "instructions":
-      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#124F90;border:2px solid #124F90;border-radius:10px;padding:12px;background-color:#EBF1F9;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;">${escapeHtmlKeepFormatting(block.text)}</div>`
+    case "instructions": {
+      const instAlign = block.align || "right"
+      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#124F90;border:2px solid #124F90;border-radius:10px;padding:12px;background-color:#EBF1F9;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;text-align:${instAlign};">${escapeHtmlKeepFormatting(block.text)}</div>`
+    }
   }
 }
 
