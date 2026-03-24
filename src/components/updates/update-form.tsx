@@ -239,7 +239,18 @@ export function UpdateForm({ initialData, updateId, mode }: UpdateFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">תיאור</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">תיאור</Label>
+              {form.description && (
+                <button
+                  type="button"
+                  onClick={() => handleChange("description", "")}
+                  className="text-xs text-red-500 hover:text-red-700"
+                >
+                  נקה תיאור
+                </button>
+              )}
+            </div>
             <Textarea
               id="description"
               value={form.description}

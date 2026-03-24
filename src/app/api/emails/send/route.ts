@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
           driveLink: "",
           youtubeLink: "",
           customLink: "",
+          customerId: String(customer.id),
         };
 
         const personalizedSubject = replaceTemplateVariables(finalSubject, variables);
