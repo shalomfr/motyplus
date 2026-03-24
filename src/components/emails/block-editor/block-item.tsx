@@ -656,6 +656,22 @@ function RenderBlockFields({
     case "instructions":
       return (
         <div className="space-y-2">
+          <div className="flex items-center gap-1 mb-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+              title="הדגשה (Bold) — סמן טקסט ולחץ"
+              onClick={() => {
+                document.execCommand("bold")
+                const el = textareaRef.current
+                if (el && "focus" in el) (el as unknown as HTMLElement).focus()
+              }}
+            >
+              <Bold className="h-3.5 w-3.5" />
+            </Button>
+            <span className="text-[10px] text-muted-foreground">סמן טקסט ולחץ B להדגשה</span>
+          </div>
           <VariableTextarea
             ref={textareaRef}
             value={block.text}
