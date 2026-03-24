@@ -22,14 +22,11 @@ const VAR_LABEL_MAP: Record<string, string> = Object.fromEntries(
 )
 
 // Allowed HTML tags that should pass through without escaping
-const ALLOWED_TAGS = /(<\/?(?:b|strong|i|em|u)>)/gi
+const ALLOWED_TAGS = /(<\/?(?:b|strong|i|em|u)>|<span style="color:[^"]*">|<\/span>)/gi
 
 function escapeChunk(chunk: string): string {
-  // Split by allowed tags, escape everything else
   return chunk.split(ALLOWED_TAGS).map((part, i) => {
-    // Odd indices are the matched tags — keep as-is
     if (i % 2 === 1) return part
-    // Even indices are text — escape
     return part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")
   }).join("")
 }
@@ -65,6 +62,12 @@ const INLINE_TAGS: Record<string, { open: string; close: string }> = {
   U: { open: "<u>", close: "</u>" },
 }
 
+function getSpanColorTag(el: HTMLElement): { open: string; close: string } | null {
+  const color = el.style?.color
+  if (!color) return null
+  return { open: `<span style="color:${color}">`, close: "</span>" }
+}
+
 function domToValue(el: HTMLElement): string {
   let result = ""
   el.childNodes.forEach((node, idx) => {
@@ -85,8 +88,15 @@ function domToValue(el: HTMLElement): string {
         const tag = INLINE_TAGS[element.tagName]
         const inner = domToValue(element)
         if (inner) result += tag.open + inner + tag.close
+      } else if (element.tagName === "SPAN" || element.tagName === "FONT") {
+        const colorTag = getSpanColorTag(element)
+        const inner = domToValue(element)
+        if (colorTag && inner) {
+          result += colorTag.open + inner + colorTag.close
+        } else {
+          result += inner
+        }
       } else {
-        // Unknown element — recurse into children to preserve structure
         result += domToValue(element)
       }
     }

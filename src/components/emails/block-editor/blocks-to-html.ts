@@ -34,16 +34,31 @@ function escapeHtml(text: string): string {
     .replace(/\n/g, "<br>")
 }
 
-/** Escape HTML but preserve <b>, <i>, <u> formatting tags */
+/** Escape HTML but preserve <b>, <i>, <u> and <span style="color:..."> formatting tags */
 function escapeHtmlKeepFormatting(text: string): string {
-  const preserved = text
+  const colorSpans: string[] = []
+  let preserved = text
     .replace(/<b>/gi, "%%B_O%%").replace(/<\/b>/gi, "%%B_C%%")
     .replace(/<i>/gi, "%%I_O%%").replace(/<\/i>/gi, "%%I_C%%")
     .replace(/<u>/gi, "%%U_O%%").replace(/<\/u>/gi, "%%U_C%%")
-  return escapeHtml(preserved)
+    .replace(/<span style="color:([^"]+)">/gi, (_m, color) => {
+      const idx = colorSpans.length
+      colorSpans.push(color as string)
+      return `%%SPAN_O_${idx}%%`
+    })
+    .replace(/<\/span>/gi, "%%SPAN_C%%")
+
+  preserved = escapeHtml(preserved)
     .replace(/%%B_O%%/g, "<b>").replace(/%%B_C%%/g, "</b>")
     .replace(/%%I_O%%/g, "<i>").replace(/%%I_C%%/g, "</i>")
     .replace(/%%U_O%%/g, "<u>").replace(/%%U_C%%/g, "</u>")
+    .replace(/%%SPAN_C%%/g, "</span>")
+
+  for (let i = 0; i < colorSpans.length; i++) {
+    preserved = preserved.replace(`%%SPAN_O_${i}%%`, `<span style="color:${colorSpans[i]}">`)
+  }
+
+  return preserved
 }
 
 function renderBlockToHtml(block: EmailBlock): string {

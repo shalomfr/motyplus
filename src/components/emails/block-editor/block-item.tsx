@@ -12,12 +12,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold, AlignRight, AlignCenter, AlignLeft, AlignJustify } from "lucide-react"
+import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold, AlignRight, AlignCenter, AlignLeft, AlignJustify, Palette } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { BLOCK_LABELS } from "./types"
 import type { EmailBlock, ButtonConfig, TextAlign } from "./types"
 import { cn } from "@/lib/utils"
 import { EMAIL_VARIABLES } from "../variable-badge-extension"
+
+const TEXT_COLORS = [
+  { value: "#c62828", label: "אדום" },
+  { value: "#1565c0", label: "כחול" },
+  { value: "#2e7d32", label: "ירוק" },
+  { value: "#e65100", label: "כתום" },
+  { value: "#6a1b9a", label: "סגול" },
+  { value: "#000000", label: "שחור (רגיל)" },
+]
+
+function ColorPickerButtons() {
+  const applyColor = (color: string) => {
+    document.execCommand("foreColor", false, color)
+  }
+
+  return (
+    <>
+      {TEXT_COLORS.map((c) => (
+        <button
+          key={c.value}
+          type="button"
+          title={c.label}
+          className="h-5 w-5 rounded-full border border-gray-300 shrink-0 hover:scale-110 transition-transform"
+          style={{ backgroundColor: c.value }}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => applyColor(c.value)}
+        />
+      ))}
+    </>
+  )
+}
 
 interface BlockItemProps {
   block: EmailBlock
@@ -370,6 +401,9 @@ function RenderBlockFields({
               <Bold className="h-3 w-3" />
             </Button>
             <div className="border-r mx-1" />
+            <Palette className="h-3 w-3 text-muted-foreground" />
+            <ColorPickerButtons />
+            <div className="border-r mx-1" />
             {alignOptions.map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
@@ -550,21 +584,21 @@ function RenderBlockFields({
     case "warning":
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-1 mb-1">
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
             <Button
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
-              title="הדגשה (Bold) — סמן טקסט ולחץ"
-              onClick={() => {
-                document.execCommand("bold")
-                const el = textareaRef.current
-                if (el && "focus" in el) (el as unknown as HTMLElement).focus()
-              }}
+              title="הדגשה (Bold)"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => document.execCommand("bold")}
             >
               <Bold className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-[10px] text-muted-foreground">סמן טקסט ולחץ B להדגשה</span>
+            <div className="border-r mx-0.5 h-5" />
+            <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+            <ColorPickerButtons />
+            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע</span>
           </div>
           <VariableTextarea
             ref={textareaRef}
@@ -656,21 +690,21 @@ function RenderBlockFields({
     case "instructions":
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-1 mb-1">
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
             <Button
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
-              title="הדגשה (Bold) — סמן טקסט ולחץ"
-              onClick={() => {
-                document.execCommand("bold")
-                const el = textareaRef.current
-                if (el && "focus" in el) (el as unknown as HTMLElement).focus()
-              }}
+              title="הדגשה (Bold)"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => document.execCommand("bold")}
             >
               <Bold className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-[10px] text-muted-foreground">סמן טקסט ולחץ B להדגשה</span>
+            <div className="border-r mx-0.5 h-5" />
+            <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+            <ColorPickerButtons />
+            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע</span>
           </div>
           <VariableTextarea
             ref={textareaRef}
