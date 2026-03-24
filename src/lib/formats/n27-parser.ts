@@ -8,8 +8,8 @@ export interface InstrumentInfo {
   fileName: string;
   serial: string;
   fullId: string;
-  waveCapacity: number;
-  paramCapacity: number;
+  waveUnits: number;
+  paramUnits: number;
 }
 
 function readNullTerminatedString(buf: Uint8Array, offset: number, maxLen: number): string {
@@ -27,15 +27,13 @@ export function parseN27(buf: Uint8Array, fileName: string): InstrumentInfo {
   const serial = buf.length >= 88 ? readNullTerminatedString(buf, 64, 24) : '';
   const fullId = buf.length >= 120 ? readNullTerminatedString(buf, 88, 32) : '';
 
-  let waveCapacity = 0;
-  let paramCapacity = 0;
+  let waveUnits = 0;
+  let paramUnits = 0;
 
   if (buf.length >= 0x84) {
-    const waveUnits = readUint32BE(buf, 0x78);
-    const paramUnits = readUint32BE(buf, 0x80);
-    waveCapacity = waveUnits * 1024;
-    paramCapacity = paramUnits * 1024;
+    waveUnits = readUint32BE(buf, 0x78);
+    paramUnits = readUint32BE(buf, 0x80);
   }
 
-  return { name, fileName, serial, fullId, waveCapacity, paramCapacity };
+  return { name, fileName, serial, fullId, waveUnits, paramUnits };
 }

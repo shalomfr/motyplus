@@ -222,11 +222,10 @@ export function CustomerForm({
         return
       }
 
-      // קריאת waveCapacity מ-N27 לזיהוי 1G/2G
-      let waveCapacity = 0
+      // קריאת waveUnits מ-N27 לזיהוי 1G/2G
+      let waveUnits = 0
       if (bytes.length >= 0x7C) {
-        const waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
-        waveCapacity = waveUnits * 1024
+        waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
       }
 
       // חיפוש אורגן תואם (case-insensitive, גם חלקי)
@@ -236,18 +235,17 @@ export function CustomerForm({
       // קודם ניסיון התאמה מדויקת
       let match = organs.find(o => normalize(o.name) === normalizedName)
 
-      // אם אין התאמה מדויקת — התאמה חלקית עם זיהוי 1G/2G לפי waveCapacity
+      // אם אין התאמה מדויקת — התאמה חלקית עם זיהוי 1G/2G לפי waveUnits
       if (!match) {
         const candidates = organs.filter(o =>
           normalizedName.includes(normalize(o.name)) ||
           normalize(o.name).includes(normalizedName)
         )
 
-        if (candidates.length > 1 && normalizedName.includes("tyros5") && waveCapacity > 0) {
-          // Tyros5-1G vs Tyros5-2G: הבדלה לפי נפח wave memory
-          // מעל 1.5GB = 2G, מתחת = 1G
-          const threshold = 1.5 * 1024 * 1024 * 1024
-          const suffix = waveCapacity > threshold ? "2g" : "1g"
+        if (candidates.length > 1 && normalizedName.includes("tyros5") && waveUnits > 0) {
+          // Tyros5-1G vs Tyros5-2G: זיהוי לפי waveUnits (offset 122)
+          // 0x03FF = 1G, 0x07FF = 2G
+          const suffix = waveUnits === 0x07FF ? "2g" : "1g"
           match = candidates.find(c => normalize(c.name).includes(suffix)) || candidates[0]
         } else {
           match = candidates[0]
@@ -337,10 +335,9 @@ export function CustomerForm({
     organName = organName.trim()
     if (!organName) return null
 
-    let waveCapacity = 0
+    let waveUnits = 0
     if (bytes.length >= 0x7C) {
-      const waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
-      waveCapacity = waveUnits * 1024
+      waveUnits = ((bytes[0x78] << 24) | (bytes[0x79] << 16) | (bytes[0x7A] << 8) | bytes[0x7B]) >>> 0
     }
 
     const normalize = (s: string) => s.toLowerCase().replace(/[-_ ]/g, "")
@@ -352,9 +349,9 @@ export function CustomerForm({
         normalizedName.includes(normalize(o.name)) ||
         normalize(o.name).includes(normalizedName)
       )
-      if (candidates.length > 1 && normalizedName.includes("tyros5") && waveCapacity > 0) {
-        const threshold = 1.5 * 1024 * 1024 * 1024
-        const suffix = waveCapacity > threshold ? "2g" : "1g"
+      if (candidates.length > 1 && normalizedName.includes("tyros5") && waveUnits > 0) {
+        // 0x03FF = 1G, 0x07FF = 2G
+        const suffix = waveUnits === 0x07FF ? "2g" : "1g"
         match = candidates.find(c => normalize(c.name).includes(suffix)) || candidates[0]
       } else {
         match = candidates[0]

@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 // Wave capacity units per organ model
 const ORGAN_WAVE_UNITS: Record<string, number> = {
-  "Tyros5-1G": 0x07FF,   // ~2MB units → 1G range
-  "Tyros5-2G": 0x0FFF,   // ~4MB units → 2G range
+  "Tyros5-1G": 0x03FF,
+  "Tyros5-2G": 0x07FF,
   "Genos":     0x1FFF,    // larger
   "Genos 2":   0x3FFF,    // largest
   "PSR-SX920": 0x07FF,
