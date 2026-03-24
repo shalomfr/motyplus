@@ -59,6 +59,7 @@ export const updateVersionSchema = z.object({
   masterZipUrl: z.string().optional().nullable(),
   emailSubject: z.string().optional().nullable(),
   emailBody: z.string().optional().nullable(),
+  emailTemplateMap: z.record(z.unknown()).optional().nullable(),
 });
 
 // ===== תבניות מייל =====

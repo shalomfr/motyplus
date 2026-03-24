@@ -41,7 +41,7 @@ function buildCpiMap(sampleFiles: { path: string }[]): Map<number, { main?: stri
 
 async function sendToEligible(
   customers: SendableCustomer[],
-  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; rhythmsFileUrl: string | null; releaseDate: Date | null },
+  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; emailTemplateMap: unknown; rhythmsFileUrl: string | null; releaseDate: Date | null },
   cpiMap: Map<number, { main?: string; additional?: string }>,
   userId: string,
   rhythmsLinkMap: Map<string, string>
@@ -75,7 +75,13 @@ async function sendToEligible(
         data: { currentUpdateVersion: updateVersion.version },
       });
 
-      if (updateVersion.emailSubject && updateVersion.emailBody) {
+      // Look up per-organ template from emailTemplateMap, fallback to legacy emailSubject/emailBody
+      const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { subject?: string; body?: string }>> | null;
+      const organTemplate = tMap?.eligible?.[customer.organId];
+      const emailSubject = organTemplate?.subject || updateVersion.emailSubject;
+      const emailBody = organTemplate?.body || updateVersion.emailBody;
+
+      if (emailSubject && emailBody) {
         const additionalOrganName = customer.additionalOrgan?.name || "";
         const additionalOrganLine = additionalOrganName && downloadLink2
           ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>` : "";
@@ -93,8 +99,8 @@ async function sendToEligible(
           downloadLink, downloadLink2,
           customLink: "",
         };
-        const html = replaceTemplateVariables(updateVersion.emailBody, vars);
-        const subject = replaceTemplateVariables(updateVersion.emailSubject, vars);
+        const html = replaceTemplateVariables(emailBody, vars);
+        const subject = replaceTemplateVariables(emailSubject, vars);
         try { await sendEmail({ to: customer.email, subject, html }); } catch { /* logged below */ }
       }
 
@@ -272,9 +278,10 @@ export async function POST(
         include: customerInclude,
       });
 
+      const notUpdatedTemplate = (updateVersion.emailTemplateMap as Record<string, { templateName?: string }> | null)?.not_updated;
       results.not_updated = await sendBulkTemplate(
         customers as unknown as SendableCustomer[],
-        "הצעת מחיר — למי שלא מעודכן",
+        notUpdatedTemplate?.templateName || "הצעת מחיר — למי שלא מעודכן",
         session.user.id
       );
     }
@@ -289,9 +296,10 @@ export async function POST(
         include: customerInclude,
       });
 
+      const halfSetTemplate = (updateVersion.emailTemplateMap as Record<string, { templateName?: string }> | null)?.half_set;
       results.half_set = await sendBulkTemplate(
         customers as unknown as SendableCustomer[],
-        "הצעה לחצאי סטים",
+        halfSetTemplate?.templateName || "הצעה לחצאי סטים",
         session.user.id
       );
     }

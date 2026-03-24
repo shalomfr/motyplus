@@ -145,6 +145,7 @@ export async function GET(
       isCasual: true,
       updateExpiryDate: true,
       currentUpdateVersion: true,
+      organId: true,
       organ: { select: { name: true, supportsUpdates: true } },
       setType: { select: { name: true, includesUpdates: true } },
     } as const;
@@ -210,6 +211,19 @@ export async function GET(
         buildPreview("הצעת מחיר — למי שלא מעודכן", version),
         buildPreview("הצעה לחצאי סטים", version),
       ]);
+
+    // Build organ groups for eligible segment
+    const organGroupMap = new Map<string, { organId: string; organName: string; count: number }>();
+    for (const c of eligible) {
+      const key = c.organId;
+      const existing = organGroupMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        organGroupMap.set(key, { organId: key, organName: c.organ?.name || "לא ידוע", count: 1 });
+      }
+    }
+    const organGroups = Array.from(organGroupMap.values()).sort((a, b) => b.count - a.count);
 
     const segments: WizardSegment[] = [
       {
@@ -280,8 +294,10 @@ export async function GET(
         description: updateVersion.description,
         updateType: updateVersion.updateType,
         emailSubject: updateVersion.emailSubject,
+        emailTemplateMap: updateVersion.emailTemplateMap,
       },
       segments,
+      organGroups,
       cpiStatus: {
         ready: eligible.length,
         total: totalEligibleForCpi,

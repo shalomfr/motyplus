@@ -202,6 +202,7 @@ model UpdateVersion {
   masterZipUrl       String?
   emailSubject       String?
   emailBody          String?             @db.Text
+  emailTemplateMap   Json?               // { eligible: { [organId]: {templateId, subject, body} }, not_updated: {...}, half_set: {...} }
   sortOrder          Int                 @default(0)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt

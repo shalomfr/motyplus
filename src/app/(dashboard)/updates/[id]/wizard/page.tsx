@@ -30,7 +30,9 @@ interface WizardData {
     description: string | null
     updateType: "FULL" | "PARTIAL"
     emailSubject: string | null
+    emailTemplateMap: Record<string, unknown> | null
   }
+  organGroups: Array<{ organId: string; organName: string; count: number }>
   segments: Array<{
     key: string
     label: string
@@ -195,7 +197,9 @@ export default function UpdateWizardPage({
         {activeStepKey === "email_select" && (
           <StepEmailSelect
             updateId={id}
-            currentSubject={wizardData.updateVersion.emailSubject}
+            segments={wizardData.segments}
+            organGroups={wizardData.organGroups}
+            emailTemplateMap={wizardData.updateVersion.emailTemplateMap as Record<string, unknown> | null}
             onTemplateApplied={fetchWizardData}
           />
         )}

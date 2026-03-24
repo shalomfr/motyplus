@@ -109,17 +109,23 @@ export async function PUT(
 
     const data = validation.data;
 
+    const { emailTemplateMap, ...rest } = data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      ...rest,
+      price: rest.price !== undefined ? rest.price : undefined,
+      releaseDate: rest.releaseDate !== undefined
+        ? rest.releaseDate
+          ? new Date(rest.releaseDate)
+          : null
+        : undefined,
+    };
+    if (emailTemplateMap !== undefined) {
+      updateData.emailTemplateMap = emailTemplateMap;
+    }
     const update = await prisma.updateVersion.update({
       where: { id },
-      data: {
-        ...data,
-        price: data.price !== undefined ? data.price : undefined,
-        releaseDate: data.releaseDate !== undefined
-          ? data.releaseDate
-            ? new Date(data.releaseDate)
-            : null
-          : undefined,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(update);
