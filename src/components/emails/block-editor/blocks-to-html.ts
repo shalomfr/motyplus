@@ -111,8 +111,10 @@ function renderBlockToHtml(block: EmailBlock): string {
     case "bankTable":
       return `<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;"><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">בנק</td><td style="border:1px solid #D6E3F5;padding:8px;">הפועלים</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">סניף</td><td style="border:1px solid #D6E3F5;padding:8px;">446</td></tr><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5;padding:8px;">113689</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5;padding:8px;">חוה גפנר</td></tr></table>`
 
-    case "warning":
-      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:center;border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtmlKeepFormatting(block.text)}</div>`
+    case "warning": {
+      const warnAlign = block.align || "center"
+      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:${warnAlign};border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtmlKeepFormatting(block.text)}</div>`
+    }
 
     case "signature":
       return `<p style="margin-top:24px;">בברכה,<br>מוטי רוזנפלד<br>עדכוני סאונדים ומקצבים לאורגנים | Yamaha</p>`

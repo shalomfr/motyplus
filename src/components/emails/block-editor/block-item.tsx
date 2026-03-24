@@ -474,13 +474,32 @@ function RenderBlockFields({
 
     case "warning":
       return (
-        <VariableTextarea
-          ref={textareaRef}
-          value={block.text}
-          onChange={(text) => onChange({ ...block, text })}
-          placeholder="טקסט אזהרה..."
-          rows={2}
-        />
+        <div className="space-y-2">
+          <VariableTextarea
+            ref={textareaRef}
+            value={block.text}
+            onChange={(text) => onChange({ ...block, text })}
+            placeholder="טקסט אזהרה..."
+            rows={2}
+          />
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">יישור:</Label>
+            <Select
+              value={block.align || "center"}
+              onValueChange={(v) => onChange({ ...block, align: v as "right" | "center" | "left" | "justify" })}
+            >
+              <SelectTrigger className="h-7 text-xs w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="right">ימין</SelectItem>
+                <SelectItem value="center">מרכז</SelectItem>
+                <SelectItem value="left">שמאל</SelectItem>
+                <SelectItem value="justify">מלא</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       )
 
     case "signature":

@@ -73,6 +73,7 @@ export interface WarningBlock {
   type: "warning"
   id: string
   text: string
+  align?: TextAlign
 }
 
 export interface SignatureBlock {
