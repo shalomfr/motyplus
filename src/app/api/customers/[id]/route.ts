@@ -326,6 +326,12 @@ export async function DELETE(
       );
     }
 
+    // Delete related records first to avoid FK constraint errors
+    await prisma.payment.deleteMany({ where: { customerId } });
+    await prisma.emailLog.deleteMany({ where: { customerId } });
+    await prisma.activityLog.deleteMany({ where: { customerId } });
+    await prisma.customerUpdate.deleteMany({ where: { customerId } });
+
     await prisma.customer.delete({
       where: { id: customerId },
     });
