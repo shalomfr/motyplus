@@ -589,6 +589,18 @@ export default function CustomersListPage() {
         isLoading={isLoading}
         onToggleSuspend={handleToggleSuspend}
         onDelete={handleDelete}
+        onApprove={async (id) => {
+          try {
+            const res = await fetch(`/api/customers/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "ACTIVE" }),
+            })
+            if (res.ok) {
+              fetchCustomers()
+            }
+          } catch { /* */ }
+        }}
         totalCount={totalCount}
         page={page}
         pageSize={PAGE_SIZE}

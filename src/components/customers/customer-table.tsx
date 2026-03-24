@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2 } from "lucide-react"
+import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/utils"
 
@@ -49,6 +49,7 @@ interface CustomerTableProps {
   onPageChange: (page: number) => void
   onToggleSuspend?: (id: number, currentStatus: string) => Promise<void>
   onDelete?: (id: number, fullName: string) => Promise<void>
+  onApprove?: (id: number) => Promise<void>
 }
 
 const statusConfig: Record<
@@ -107,6 +108,7 @@ export function CustomerTable({
   onPageChange,
   onToggleSuspend,
   onDelete,
+  onApprove,
 }: CustomerTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize)
   const [loadingId, setLoadingId] = useState<number | null>(null)
@@ -233,6 +235,26 @@ export function CustomerTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      {onApprove && customer.status === "PENDING_APPROVAL" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="אשר לקוח"
+                          disabled={loadingId === customer.id}
+                          onClick={async () => {
+                            setLoadingId(customer.id)
+                            await onApprove(customer.id)
+                            setLoadingId(null)
+                          }}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          {loadingId === customer.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <Link href={`/customers/${customer.id}`} className={buttonVariants({ variant: "ghost", size: "icon" })} title="צפייה">
                         <Eye className="h-4 w-4" />
                       </Link>
