@@ -62,23 +62,36 @@ export function StepEmailSelect({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [templateMap, setTemplateMap] = useState<EmailTemplateMap>(emailTemplateMap || {})
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["eligible"]))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["eligible", "not_updated", "half_set"]))
+
+  const [allOrgans, setAllOrgans] = useState<OrganGroup[]>([])
 
   useEffect(() => {
-    async function fetchTemplates() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/emails/templates")
-        if (res.ok) {
-          const data = await res.json()
+        const [templatesRes, organsRes] = await Promise.all([
+          fetch("/api/emails/templates"),
+          fetch("/api/public/organs"),
+        ])
+        if (templatesRes.ok) {
+          const data = await templatesRes.json()
           setTemplates(data.filter((t: EmailTemplate) => t.isActive))
         }
+        if (organsRes.ok) {
+          const organs = await organsRes.json()
+          setAllOrgans(organs.map((o: { id: string; name: string }) => ({
+            organId: o.id,
+            organName: o.name,
+            count: 0,
+          })))
+        }
       } catch (err) {
-        console.error("Failed to fetch templates:", err)
+        console.error("Failed to fetch data:", err)
       } finally {
         setLoading(false)
       }
     }
-    fetchTemplates()
+    fetchData()
   }, [])
 
   useEffect(() => {
@@ -187,16 +200,28 @@ export function StepEmailSelect({
       </div>
 
       {/* Eligible — per organ */}
-      {eligibleSegment && eligibleSegment.count > 0 && (
+      {(() => {
+        // Merge allOrgans with organGroups counts
+        const mergedOrgans = allOrgans.map((o) => {
+          const fromApi = organGroups.find((g) => g.organId === o.organId)
+          return { ...o, count: fromApi?.count || 0 }
+        })
+        // Add any organs from API that aren't in allOrgans list
+        for (const g of organGroups) {
+          if (!mergedOrgans.find((o) => o.organId === g.organId)) {
+            mergedOrgans.push(g)
+          }
+        }
+        return mergedOrgans.length > 0 && (
         <SegmentSection
           title="זכאי לעדכון"
-          count={eligibleSegment.count}
+          count={eligibleSegment?.count || 0}
           color="green"
           expanded={expandedSections.has("eligible")}
           onToggle={() => toggleSection("eligible")}
-          allSelected={organGroups.every((g) => templateMap.eligible?.[g.organId])}
+          allSelected={mergedOrgans.every((g) => templateMap.eligible?.[g.organId])}
         >
-          {organGroups.map((group) => {
+          {mergedOrgans.map((group) => {
             const selected = templateMap.eligible?.[group.organId]
             return (
               <div key={group.organId} className="space-y-2">
@@ -221,10 +246,11 @@ export function StepEmailSelect({
             )
           })}
         </SegmentSection>
-      )}
+        )
+      })()}
 
       {/* Not Updated */}
-      {notUpdatedSegment && notUpdatedSegment.count > 0 && (
+      {notUpdatedSegment && (
         <SegmentSection
           title="לא מעודכן (סט שלם)"
           count={notUpdatedSegment.count}
@@ -248,7 +274,7 @@ export function StepEmailSelect({
       )}
 
       {/* Half Set */}
-      {halfSetSegment && halfSetSegment.count > 0 && (
+      {halfSetSegment && (
         <SegmentSection
           title="חצי סט"
           count={halfSetSegment.count}
