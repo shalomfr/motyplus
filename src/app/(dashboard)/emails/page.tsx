@@ -25,7 +25,7 @@ import {
   Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
   ChevronDown, ChevronUp, FolderOpen, FolderPlus, Trash2, Pencil,
-  Copy, GripVertical,
+  Copy, GripVertical, FolderInput,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
@@ -117,6 +117,11 @@ export default function EmailsPage() {
   // New template dialog
   const [newTemplateDialogOpen, setNewTemplateDialogOpen] = useState(false)
   const [newTemplateFolderId, setNewTemplateFolderId] = useState("")
+
+  // Move to folder dialog
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false)
+  const [moveTemplate, setMoveTemplate] = useState<EmailTemplate | null>(null)
+  const [moveFolderId, setMoveFolderId] = useState("")
 
   const handleBulkSend = async (type: "not_updated" | "half_set") => {
     const label = type === "not_updated" ? "למי שלא מעודכן" : "לחצאי סטים"
@@ -214,6 +219,27 @@ export default function EmailsPage() {
     }
     setDupDialogOpen(false)
     setDupTemplate(null)
+  }
+
+  const confirmMove = async () => {
+    if (!moveTemplate) return
+    try {
+      const res = await fetch(`/api/emails/templates/${moveTemplate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId: moveFolderId || null }),
+      })
+      if (res.ok) {
+        setTemplates((prev) => prev.map((t) => t.id === moveTemplate.id ? { ...t, folderId: moveFolderId || null } : t))
+        toast({ title: "התבנית הועברה בהצלחה" })
+      } else {
+        toast({ title: "שגיאה בהעברה", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה בהעברת התבנית", variant: "destructive" })
+    }
+    setMoveDialogOpen(false)
+    setMoveTemplate(null)
   }
 
   // Drag & drop for templates within a folder
@@ -433,6 +459,14 @@ export default function EmailsPage() {
                   title="שכפל"
                 >
                   <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setMoveTemplate(template); setMoveFolderId(template.folderId || ""); setMoveDialogOpen(true) }}
+                  title="העבר לתיקייה"
+                >
+                  <FolderInput className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -787,6 +821,34 @@ export default function EmailsPage() {
             }}>
               צור תבנית
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — העברת תבנית לתיקייה */}
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>העברת תבנית לתיקייה</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              העברת &quot;{moveTemplate?.name}&quot; — בחר תיקיית יעד:
+            </p>
+            <select
+              value={moveFolderId}
+              onChange={(e) => setMoveFolderId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+            >
+              <option value="">ללא תיקייה</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveDialogOpen(false)}>ביטול</Button>
+            <Button onClick={confirmMove}>העבר</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
