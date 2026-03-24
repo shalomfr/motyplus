@@ -13,7 +13,7 @@ import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { HeroMusicSpiral3D } from "@/components/ui/HeroMusicSpiral3D"
-import { InviteCustomerDialog } from "@/components/customers/invite-customer-dialog"
+import { NewOrderWizardDialog } from "@/components/customers/new-order-wizard-dialog"
 
 interface MissingInfoCustomer {
   id: number
@@ -233,7 +233,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <InviteCustomerDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <NewOrderWizardDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }

@@ -22,7 +22,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Plus, FileSpreadsheet, Loader2, Upload, Trash2, CheckCircle, AlertCircle, XCircle, RefreshCw, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { InviteCustomerDialog } from "@/components/customers/invite-customer-dialog"
+import { NewOrderWizardDialog } from "@/components/customers/new-order-wizard-dialog"
 
 const PAGE_SIZE = 20
 
@@ -614,7 +614,7 @@ export default function CustomersListPage() {
         onPageChange={setPage}
       />
 
-      <InviteCustomerDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen} />
+      <NewOrderWizardDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen} />
     </div>
   )
 }
