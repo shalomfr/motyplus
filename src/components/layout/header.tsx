@@ -44,6 +44,26 @@ interface SearchResult {
   organName?: string;
 }
 
+interface PendingCustomer {
+  id: number;
+  fullName: string;
+  organName: string;
+  createdAt: string;
+}
+
+const POLL_INTERVAL_MS = 30_000;
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "עכשיו";
+  if (minutes < 60) return `לפני ${minutes} דק׳`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `לפני ${hours} שע׳`;
+  const days = Math.floor(hours / 24);
+  return `לפני ${days} ימים`;
+}
+
 interface HeaderProps {
   onMobileMenuToggle: () => void;
 }
@@ -68,6 +88,12 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // Bell / notifications state
+  const [bellOpen, setBellOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCustomers, setPendingCustomers] = useState<PendingCustomer[]>([]);
+  const bellRef = useRef<HTMLDivElement>(null);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -76,6 +102,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
       }
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
@@ -105,12 +134,31 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
     }, 300);
   }, []);
 
-  // Close search on navigate
+  // Close dropdowns on navigate
   useEffect(() => {
     setSearchOpen(false);
     setSearchQuery("");
     setUserMenuOpen(false);
+    setBellOpen(false);
   }, [pathname]);
+
+  // Poll pending customers
+  const fetchPending = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications/pending");
+      if (res.ok) {
+        const data = await res.json();
+        setPendingCount(data.count ?? 0);
+        setPendingCustomers(data.customers ?? []);
+      }
+    } catch { /* silent — header stays usable */ }
+  }, []);
+
+  useEffect(() => {
+    fetchPending();
+    const interval = setInterval(fetchPending, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [fetchPending]);
 
   return (
     <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 py-3 min-h-[64px]">
@@ -220,14 +268,73 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           <Mail size={18} />
         </button>
 
-        {/* Bell — navigate to activity log */}
-        <button
-          onClick={() => router.push("/activity-log")}
-          className="relative w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
-          title="יומן פעילות"
-        >
-          <Bell size={18} />
-        </button>
+        {/* Bell — pending approvals */}
+        <div className="relative" ref={bellRef}>
+          <button
+            onClick={() => setBellOpen((prev) => !prev)}
+            className="relative w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+            title="לקוחות ממתינים לאישור"
+          >
+            <Bell size={18} />
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 shadow-sm">
+                {pendingCount > 9 ? "9+" : pendingCount}
+              </span>
+            )}
+          </button>
+
+          {bellOpen && (
+            <div className="absolute top-full mt-2 left-0 w-80 bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+              <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-700">ממתינים לאישור</span>
+                {pendingCount > 0 && (
+                  <span className="text-xs bg-red-100 text-red-600 font-bold px-2 py-0.5 rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
+              </div>
+
+              {pendingCustomers.length === 0 ? (
+                <div className="p-6 text-center text-sm text-gray-400">
+                  אין לקוחות ממתינים
+                </div>
+              ) : (
+                <>
+                  {pendingCustomers.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        router.push(`/customers/${c.id}`);
+                        setBellOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-50 transition-colors text-right border-b border-gray-50 last:border-b-0"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm shrink-0">
+                        {c.fullName.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-gray-800 truncate">{c.fullName}</div>
+                        <div className="text-xs text-gray-400 truncate">{c.organName}</div>
+                      </div>
+                      <span className="text-[10px] text-gray-300 whitespace-nowrap">{timeAgo(c.createdAt)}</span>
+                    </button>
+                  ))}
+                  {pendingCount > pendingCustomers.length && (
+                    <button
+                      onClick={() => {
+                        router.push("/customers?status=PENDING_APPROVAL");
+                        setBellOpen(false);
+                      }}
+                      className="w-full py-2.5 text-center text-xs font-semibold text-blue-600 hover:bg-blue-50 border-t border-gray-100"
+                    >
+                      הצג את כולם ({pendingCount}) →
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* User avatar + dropdown menu */}
         <div className="relative" ref={userMenuRef}>
