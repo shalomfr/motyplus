@@ -81,6 +81,17 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `${wrapper}\n<ul dir="rtl" style="text-align:right;padding-right:20px;margin:0;">\n${items}\n</ul>`
     }
 
+    case "subfolder": {
+      const align = block.align || "right"
+      const marginMap = { right: "0 0 8px auto", center: "0 auto 8px auto", left: "0 auto 8px 0" }
+      const textAlignMap = { right: "right", center: "center", left: "left" }
+      const header = `<div style="margin:10px ${marginMap[align]};padding:5px 12px;border-radius:6px;background-color:#F3F6FB;border:1px solid #D6DEE8;font-weight:600;font-size:13px;color:#2D6BBF;text-align:${textAlignMap[align]};display:inline-block;">${escapeHtml(block.name)}</div>`
+      const wrapper = `<div style="text-align:${textAlignMap[align]};">${header}</div>`
+      if (block.items.length === 0) return wrapper
+      const items = block.items.map((item) => `<li style="text-align:right;font-size:13px;">${escapeHtmlKeepFormatting(item)}</li>`).join("\n")
+      return `${wrapper}\n<ul dir="rtl" style="text-align:right;padding-right:28px;margin:0;">\n${items}\n</ul>`
+    }
+
     case "list": {
       const tag = block.ordered ? "ol" : "ul"
       const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtmlKeepFormatting(item)}</li>`).join("\n")

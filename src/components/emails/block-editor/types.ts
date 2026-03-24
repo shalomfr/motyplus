@@ -37,6 +37,14 @@ export interface FolderBlock {
   align?: "right" | "center" | "left"
 }
 
+export interface SubfolderBlock {
+  type: "subfolder"
+  id: string
+  name: string
+  items: string[]
+  align?: "right" | "center" | "left"
+}
+
 export interface ListBlock {
   type: "list"
   id: string
@@ -106,6 +114,7 @@ export type EmailBlock =
   | BannerBlock
   | ParagraphBlock
   | FolderBlock
+  | SubfolderBlock
   | ListBlock
   | ButtonsBlock
   | PromoBlock
@@ -122,6 +131,7 @@ export const BLOCK_LABELS: Record<EmailBlock["type"], string> = {
   banner: "באנר",
   paragraph: "פסקה",
   folder: "כותרת תיקייה + פריטים",
+  subfolder: "תיקייה משנית + פריטים",
   list: "רשימה",
   buttons: "כפתורים",
   promo: "בלוק מבצע",
@@ -152,6 +162,8 @@ export function createDefaultBlock(type: EmailBlock["type"]): EmailBlock {
       return { type, id, text: "" }
     case "folder":
       return { type, id, name: "שם תיקייה", items: ["פריט ראשון"], align: "right" }
+    case "subfolder":
+      return { type, id, name: "תיקייה משנית", items: ["פריט ראשון"], align: "right" }
     case "list":
       return { type, id, items: ["פריט ראשון"], ordered: false }
     case "buttons":

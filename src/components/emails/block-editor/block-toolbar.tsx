@@ -17,6 +17,7 @@ const BLOCK_OPTIONS: Array<{ type: EmailBlock["type"]; label: string; icon: type
   { type: "banner", label: "באנר", icon: MessageSquare },
   { type: "paragraph", label: "פסקה", icon: Type },
   { type: "folder", label: "תיקייה", icon: FolderOpen },
+  { type: "subfolder", label: "תיקייה משנית", icon: FolderOpen },
   { type: "list", label: "רשימה", icon: List },
   { type: "instructions", label: "הוראות", icon: BookOpen },
   { type: "buttons", label: "כפתורים", icon: MousePointer2 },
