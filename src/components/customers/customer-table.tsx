@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2, CheckCircle2 } from "lucide-react"
+import { Pencil, Eye, ChevronRight, ChevronLeft, PauseCircle, PlayCircle, Trash2, Loader2, CheckCircle2, CircleDollarSign } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/utils"
 
@@ -32,6 +32,8 @@ export interface CustomerRow {
   email: string
   organName: string
   setTypeName: string
+  setTypePrice: number
+  amountPaid: number
   status: "PENDING_APPROVAL" | "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"
   updatedAt: string
   currentUpdateVersion: string | null
@@ -76,6 +78,45 @@ const statusConfig: Record<
     label: "חריג",
     className: "bg-amber-100 text-amber-800 border-amber-200",
   },
+}
+
+function PaymentBadge({
+  amountPaid,
+  setTypePrice,
+  includesUpdates,
+}: {
+  amountPaid: number
+  setTypePrice: number
+  includesUpdates: boolean
+}) {
+  const paid = Number(amountPaid)
+  const price = Number(setTypePrice)
+  const diff = price - paid
+
+  if (diff <= 0) {
+    return (
+      <Badge variant="outline" className="font-normal bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
+        <CircleDollarSign className="h-3 w-3" />
+        שולם
+      </Badge>
+    )
+  }
+
+  if (!includesUpdates) {
+    return (
+      <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 text-[10px] gap-0.5" title={`חסר ₪${diff.toLocaleString("he-IL")} להשלמת סט`}>
+        <CircleDollarSign className="h-3 w-3" />
+        ₪{diff.toLocaleString("he-IL")}
+      </Badge>
+    )
+  }
+
+  return (
+    <Badge variant="outline" className="font-normal bg-orange-50 text-orange-700 border-orange-200 text-[10px] gap-0.5" title={`חוב ₪${diff.toLocaleString("he-IL")}`}>
+      <CircleDollarSign className="h-3 w-3" />
+      ₪{diff.toLocaleString("he-IL")}
+    </Badge>
+  )
 }
 
 function CustomerTableSkeleton() {
@@ -165,6 +206,7 @@ export function CustomerTable({
               <TableHead>סט</TableHead>
               <TableHead className="w-[100px]">מצב</TableHead>
               <TableHead className="w-[90px]">עדכון</TableHead>
+              <TableHead className="w-[100px]">תשלום</TableHead>
               <TableHead className="w-[40px] text-center">אינפו</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
@@ -223,6 +265,13 @@ export function CustomerTable({
                         ללא עדכונים
                       </Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <PaymentBadge
+                      amountPaid={customer.amountPaid}
+                      setTypePrice={customer.setTypePrice}
+                      includesUpdates={customer.includesUpdates}
+                    />
                   </TableCell>
                   <TableCell className="text-center">
                     <span

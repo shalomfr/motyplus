@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           organ: { select: { id: true, name: true } },
-          setType: { select: { id: true, name: true, includesUpdates: true } },
+          setType: { select: { id: true, name: true, price: true, includesUpdates: true } },
         },
         orderBy,
         skip,
