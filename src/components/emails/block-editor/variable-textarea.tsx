@@ -15,6 +15,7 @@ interface VariableTextareaProps {
   rows?: number
   className?: string
   singleLine?: boolean
+  defaultAlign?: string
 }
 
 const VAR_LABEL_MAP: Record<string, string> = Object.fromEntries(
@@ -68,7 +69,7 @@ function getSpanColorTag(el: HTMLElement): { open: string; close: string } | nul
   return { open: `<span style="color:${color}">`, close: "</span>" }
 }
 
-function domToValue(el: HTMLElement): string {
+function domToValue(el: HTMLElement, defaultAlign?: string): string {
   let result = ""
   el.childNodes.forEach((node, idx) => {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -83,26 +84,27 @@ function domToValue(el: HTMLElement): string {
       } else if (element.tagName === "DIV" || element.tagName === "P") {
         const lineAlign = element.style?.textAlign
         if (idx > 0) result += "\n"
-        const inner = domToValue(element)
-        if (lineAlign && lineAlign !== "start" && inner) {
+        const inner = domToValue(element, defaultAlign)
+        const isDifferentFromBlock = lineAlign && lineAlign !== "start" && lineAlign !== (defaultAlign || "")
+        if (isDifferentFromBlock && inner) {
           result += `<p style="text-align:${lineAlign}">${inner}</p>`
         } else {
           result += inner
         }
       } else if (INLINE_TAGS[element.tagName]) {
         const tag = INLINE_TAGS[element.tagName]
-        const inner = domToValue(element)
+        const inner = domToValue(element, defaultAlign)
         if (inner) result += tag.open + inner + tag.close
       } else if (element.tagName === "SPAN" || element.tagName === "FONT") {
         const colorTag = getSpanColorTag(element)
-        const inner = domToValue(element)
+        const inner = domToValue(element, defaultAlign)
         if (colorTag && inner) {
           result += colorTag.open + inner + colorTag.close
         } else {
           result += inner
         }
       } else {
-        result += domToValue(element)
+        result += domToValue(element, defaultAlign)
       }
     }
   })
@@ -116,6 +118,7 @@ export const VariableTextarea = forwardRef<VariableTextareaHandle, VariableTexta
   rows = 2,
   className,
   singleLine = false,
+  defaultAlign,
 }, ref) {
   const editableRef = useRef<HTMLDivElement>(null)
   const lastValueRef = useRef<string>("")
@@ -191,12 +194,12 @@ export const VariableTextarea = forwardRef<VariableTextareaHandle, VariableTexta
 
       // Sync value
       isTypingRef.current = true
-      const extracted = domToValue(el)
+      const extracted = domToValue(el, defaultAlign)
       lastValueRef.current = extracted
       onChange(extracted)
       requestAnimationFrame(() => { isTypingRef.current = false })
     }
-  }), [onChange])
+  }), [onChange, defaultAlign])
 
   // Sync DOM from value — only when value changes externally
   useEffect(() => {
@@ -221,7 +224,7 @@ export const VariableTextarea = forwardRef<VariableTextareaHandle, VariableTexta
     const el = editableRef.current
     if (!el) return
     isTypingRef.current = true
-    const extracted = domToValue(el)
+    const extracted = domToValue(el, defaultAlign)
     lastValueRef.current = extracted
     onChange(extracted)
     // Reset typing flag after React processes the update

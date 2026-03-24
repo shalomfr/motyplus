@@ -455,6 +455,7 @@ function RenderBlockFields({
             onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט פסקה..."
             rows={2}
+            defaultAlign={block.align || "right"}
           />
         </div>
       )
@@ -640,6 +641,7 @@ function RenderBlockFields({
             onChange={(text) => onChange({ ...block, text })}
             placeholder="טקסט אזהרה..."
             rows={2}
+            defaultAlign={block.align || "center"}
           />
           <div className="flex items-center gap-2">
             <Label className="text-xs">יישור כל הבלוק:</Label>
@@ -748,6 +750,7 @@ function RenderBlockFields({
             onChange={(text) => onChange({ ...block, text })}
             placeholder="הוראות הורדה והתקנה..."
             rows={3}
+            defaultAlign={block.align || "right"}
           />
           <div className="flex items-center gap-2">
             <Label className="text-xs">יישור כל הבלוק:</Label>
