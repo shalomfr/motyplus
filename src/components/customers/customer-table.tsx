@@ -203,7 +203,7 @@ export function CustomerTable({
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
                         latestVersion && customer.currentUpdateVersion !== latestVersion ? (
-                          <Badge variant="outline" className="font-normal bg-orange-100 text-blue-800 border-blue-200">
+                          <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         ) : (
@@ -217,7 +217,9 @@ export function CustomerTable({
                         </Badge>
                       )
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <Badge variant="outline" className="font-normal bg-gray-100 text-gray-500 border-gray-200">
+                        ללא עדכונים
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
