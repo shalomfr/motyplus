@@ -259,6 +259,25 @@ export async function PATCH(
       return NextResponse.json(customer);
     }
 
+    if (action === "approve" || body.status === "ACTIVE") {
+      const customer = await prisma.customer.update({
+        where: { id: customerId },
+        data: { status: "ACTIVE" },
+        include: { organ: true, setType: true },
+      });
+
+      await logActivity({
+        userId: session.user.id,
+        customerId: customer.id,
+        action: "UPDATE",
+        entityType: "CUSTOMER",
+        entityId: String(customer.id),
+        details: { action: "approve", previousStatus: existing.status },
+      });
+
+      return NextResponse.json(customer);
+    }
+
     return NextResponse.json(
       { error: "פעולה לא מוכרת" },
       { status: 400 }
