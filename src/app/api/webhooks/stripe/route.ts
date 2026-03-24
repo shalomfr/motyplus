@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Extract promotionId from Stripe metadata
+      const promoId = session.metadata?.promotionId || null;
+
       // Create customer
       const customer = await prisma.customer.create({
         data: {
@@ -106,6 +109,7 @@ export async function POST(request: NextRequest) {
           currentUpdateVersion,
           status: "ACTIVE",
           notes: order.notes,
+          promotionId: promoId || undefined,
         },
       });
 

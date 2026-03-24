@@ -15,6 +15,7 @@ export interface BalanceDetails {
   amountPaid: number;
   setPrice: number;
   description: string;
+  discountPercent: number | null;
 }
 
 export async function getCustomerBalanceDetails(
@@ -22,7 +23,7 @@ export async function getCustomerBalanceDetails(
 ): Promise<BalanceDetails | null> {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
-    include: { setType: true },
+    include: { setType: true, promotion: true },
   });
   if (!customer) return null;
 
@@ -38,12 +39,13 @@ export async function getCustomerBalanceDetails(
 
   const amountPaid = Number(customer.amountPaid);
   const setPrice = Number(customer.setType.price);
+  const discountPercent = customer.promotion?.discountPercent || null;
 
   if (customer.setType.includesUpdates) {
-    return buildFullSetBalance(customer, allUpdates, latestVersion, amountPaid, setPrice);
+    return buildFullSetBalance(customer, allUpdates, latestVersion, amountPaid, setPrice, discountPercent);
   }
 
-  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion);
+  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion, discountPercent);
 }
 
 // ===== Helpers =====
@@ -54,6 +56,7 @@ function buildFullSetBalance(
   latestVersion: string | null,
   amountPaid: number,
   setPrice: number,
+  discountPercent: number | null,
 ): BalanceDetails {
   const isInPeriod = new Date() <= customer.updateExpiryDate;
   const isException = customer.status === "EXCEPTION";
@@ -69,6 +72,7 @@ function buildFullSetBalance(
       amountPaid,
       setPrice,
       description: "מעודכן — אין יתרה",
+      discountPercent,
     };
   }
 
@@ -90,14 +94,16 @@ function buildFullSetBalance(
     amountPaid,
     setPrice,
     description,
+    discountPercent,
   };
 }
 
 async function buildHalfSetBalance(
-  customer: { currentUpdateVersion: string | null; amountPaid: unknown },
+  customer: { currentUpdateVersion: string | null; amountPaid: unknown; promotionId?: string | null },
   amountPaid: number,
   setPrice: number,
   latestVersion: string | null,
+  discountPercent: number | null,
 ): Promise<BalanceDetails> {
   const fullSet = await prisma.setType.findFirst({
     where: { includesUpdates: true },
@@ -105,7 +111,14 @@ async function buildHalfSetBalance(
   });
 
   const fullSetPrice = fullSet ? Number(fullSet.price) : 0;
-  const completionCost = Math.max(0, fullSetPrice - amountPaid);
+
+  // If customer paid with a discount, treat their amountPaid as the full set-type price
+  // so the discount doesn't cause them to owe more for completion than other customers
+  const effectiveAmountPaid = discountPercent && discountPercent > 0
+    ? Math.max(amountPaid, setPrice)
+    : amountPaid;
+
+  const completionCost = Math.max(0, fullSetPrice - effectiveAmountPaid);
 
   return {
     type: "half_set",
@@ -119,6 +132,7 @@ async function buildHalfSetBalance(
     description: completionCost > 0
       ? `השלמת סט שלם — חסר ₪${completionCost.toLocaleString("he-IL")}`
       : "שולם במלואו",
+    discountPercent,
   };
 }
 

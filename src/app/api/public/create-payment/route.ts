@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
           amountPaid: 0, purchaseDate, updateExpiryDate,
           hasV3: true, sampleType: "CPI", currentUpdateVersion,
           status: "PENDING_APPROVAL", notes,
+          promotionId,
         },
       });
 

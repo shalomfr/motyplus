@@ -202,7 +202,7 @@ async function handlePaymentPageWebhook(body: Record<string, unknown>) {
       paymentId: payment_id ? String(payment_id) : null,
       clientId: client_id ? String(client_id) : null,
       cp: cp ? String(cp) : null,
-    });
+    }, customFields?.promotionId || null);
 
     return NextResponse.json({ received: true });
   } catch (error) {
@@ -236,7 +236,8 @@ export async function processCompletedOrder(
     paymentId: string | null;
     clientId: string | null;
     cp: string | null;
-  }
+  },
+  promotionId?: string | null,
 ) {
   // Calculate dates
   const purchaseDate = new Date();
@@ -311,6 +312,7 @@ export async function processCompletedOrder(
       status: "PENDING_APPROVAL",
       notes: pendingOrder.notes,
       icountClientId: payment.clientId,
+      promotionId: promotionId || undefined,
     },
   });
 

@@ -8,7 +8,7 @@ import { processCompletedOrder } from "@/app/api/webhooks/icount/route";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { pendingOrderId, docnum, doc_url, total, confirmation_code, customer_id, cp } = body;
+    const { pendingOrderId, docnum, doc_url, total, confirmation_code, customer_id, cp, promotionId } = body;
 
     if (!pendingOrderId) {
       return NextResponse.json({ error: "Missing pendingOrderId" }, { status: 400 });
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       paymentId: confirmation_code ? String(confirmation_code) : null,
       clientId: customer_id ? String(customer_id) : null,
       cp: cp ? String(cp) : null,
-    });
+    }, promotionId ? String(promotionId) : null);
 
     return NextResponse.json({ status: "processed" });
   } catch (error) {

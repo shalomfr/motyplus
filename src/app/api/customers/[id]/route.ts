@@ -33,6 +33,7 @@ export async function GET(
       include: {
         organ: true,
         setType: true,
+        promotion: { select: { id: true, name: true, discountPercent: true, couponCode: true } },
         customerUpdates: {
           include: {
             updateVersion: true,

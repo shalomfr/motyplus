@@ -111,6 +111,7 @@ model Customer {
   additionalInfoFileUrl String?
   notes                String?        @db.Text
   icountClientId       String?        // מזהה לקוח ב-iCount (מונע כפילויות)
+  promotionId          String?        // קופון הנחה ששימש ברכישה
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 
@@ -123,6 +124,7 @@ model Customer {
   organ            Organ            @relation(fields: [organId], references: [id])
   additionalOrgan  Organ?           @relation("AdditionalOrgan", fields: [additionalOrganId], references: [id])
   setType          SetType          @relation(fields: [setTypeId], references: [id])
+  promotion        Promotion?       @relation(fields: [promotionId], references: [id])
   customerUpdates  CustomerUpdate[]
   payments         Payment[]
   emailLogs        EmailLog[]
@@ -135,6 +137,7 @@ model Customer {
   @@index([status])
   @@index([email])
   @@index([fullName])
+  @@index([promotionId])
 }
 
 // ===== נתוני בסיס =====
@@ -393,7 +396,8 @@ model Promotion {
   updatedAt       DateTime  @updatedAt
 
   // Relations
-  payments Payment[]
+  payments  Payment[]
+  customers Customer[]
 }
 
 // ===== ספקי חיוב =====

@@ -60,6 +60,8 @@ interface CustomerData {
   createdAt: string
   updatedAt: string
   balance: number | null
+  discountPercent: number | null
+  couponCode: string | null
   linkedCustomer: LinkedCustomer | null
   updates: CustomerUpdate[]
   activityLog: ActivityLogEntry[]
@@ -174,6 +176,8 @@ export default function EditCustomerPage() {
         balance: raw.setType?.includesUpdates
           ? 0
           : Math.max(0, Number(raw.setType?.price || 0) - Number(raw.amountPaid)),
+        discountPercent: raw.promotion?.discountPercent || null,
+        couponCode: raw.promotion?.couponCode || null,
         linkedCustomer: raw.linkedCustomer
           ? {
               id: raw.linkedCustomer.id,
@@ -340,6 +344,12 @@ export default function EditCustomerPage() {
               {customer.additionalOrganName && ` + ${customer.additionalOrganName}`}
               {" | "}{customer.setTypeName}
             </span>
+            {customer.discountPercent != null && customer.discountPercent > 0 && (
+              <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                {customer.discountPercent}% הנחה
+                {customer.couponCode && ` (${customer.couponCode})`}
+              </Badge>
+            )}
             {!customer.includesUpdates && (
               <>
                 <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">

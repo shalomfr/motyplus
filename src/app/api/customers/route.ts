@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
         include: {
           organ: { select: { id: true, name: true } },
           setType: { select: { id: true, name: true, price: true, includesUpdates: true } },
+          promotion: { select: { discountPercent: true, couponCode: true } },
         },
         orderBy,
         skip,

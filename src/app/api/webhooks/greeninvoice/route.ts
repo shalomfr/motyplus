@@ -137,6 +137,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Extract promotionId from metadata
+    const promoId = metadata.promotionId || null;
+
     // Create customer
     const customer = await prisma.customer.create({
       data: {
@@ -153,6 +156,7 @@ export async function POST(request: NextRequest) {
         currentUpdateVersion,
         status: "PENDING_APPROVAL",
         notes: pendingOrder.notes,
+        promotionId: promoId || undefined,
       },
     });
 

@@ -40,6 +40,7 @@ export interface CustomerRow {
   currentUpdateVersion: string | null
   includesUpdates: boolean
   infoFileUrl: string | null
+  discountPercent: number | null
 }
 
 interface CustomerTableProps {
@@ -99,14 +100,14 @@ function PaymentBadge({
     const diff = price - paid
     if (diff <= 0) {
       return (
-        <Badge variant="outline" className="font-normal bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
+        <Badge variant="outline" className="font-normal whitespace-nowrap bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
           <CircleDollarSign className="h-3 w-3" />
           שולם
         </Badge>
       )
     }
     return (
-      <Badge variant="outline" className="font-normal bg-orange-50 text-orange-700 border-orange-200 text-[10px] gap-0.5" title={`חוב ₪${diff.toLocaleString("he-IL")}`}>
+      <Badge variant="outline" className="font-normal whitespace-nowrap bg-orange-50 text-orange-700 border-orange-200 text-[10px] gap-0.5" title={`חוב ₪${diff.toLocaleString("he-IL")}`}>
         <CircleDollarSign className="h-3 w-3" />
         ₪{diff.toLocaleString("he-IL")}
       </Badge>
@@ -116,7 +117,7 @@ function PaymentBadge({
   const completionCost = Math.max(0, Number(fullSetPrice) - paid)
   if (completionCost <= 0) {
     return (
-      <Badge variant="outline" className="font-normal bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
+      <Badge variant="outline" className="font-normal whitespace-nowrap bg-green-50 text-green-700 border-green-200 text-[10px] gap-0.5">
         <CircleDollarSign className="h-3 w-3" />
         שולם
       </Badge>
@@ -124,7 +125,7 @@ function PaymentBadge({
   }
 
   return (
-    <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 text-[10px] gap-0.5" title={`שולם ₪${paid.toLocaleString("he-IL")} — חסר ₪${completionCost.toLocaleString("he-IL")} להשלמת סט שלם`}>
+    <Badge variant="outline" className="font-normal whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200 text-[10px] gap-0.5" title={`שולם ₪${paid.toLocaleString("he-IL")} — חסר ₪${completionCost.toLocaleString("he-IL")} להשלמת סט שלם`}>
       <CircleDollarSign className="h-3 w-3" />
       חסר ₪{completionCost.toLocaleString("he-IL")}
     </Badge>
@@ -215,10 +216,10 @@ export function CustomerTable({
               <TableHead>טלפון</TableHead>
               <TableHead>מייל</TableHead>
               <TableHead>אורגן</TableHead>
-              <TableHead>סט</TableHead>
-              <TableHead className="w-[100px]">מצב</TableHead>
-              <TableHead className="w-[90px]">עדכון</TableHead>
-              <TableHead className="w-[100px]">תשלום</TableHead>
+              <TableHead className="w-[80px]">סט</TableHead>
+              <TableHead className="w-[90px]">מצב</TableHead>
+              <TableHead className="w-[110px]">עדכון</TableHead>
+              <TableHead className="w-[140px]">תשלום</TableHead>
               <TableHead className="w-[40px] text-center">אינפו</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
@@ -232,12 +233,19 @@ export function CustomerTable({
                     {customer.id}
                   </TableCell>
                   <TableCell className="font-medium">
-                    <Link
-                      href={`/customers/${customer.id}`}
-                      className="hover:text-primary hover:underline"
-                    >
-                      {customer.fullName}
-                    </Link>
+                    <div className="flex items-center gap-1.5">
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="hover:text-primary hover:underline"
+                      >
+                        {customer.fullName}
+                      </Link>
+                      {customer.discountPercent != null && customer.discountPercent > 0 && (
+                        <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200 shrink-0">
+                          {customer.discountPercent}% הנחה
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell dir="ltr" className="text-right">
                     {customer.phone}
@@ -259,21 +267,21 @@ export function CustomerTable({
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
                         latestVersion && customer.currentUpdateVersion !== latestVersion ? (
-                          <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
+                          <Badge variant="outline" className="font-normal whitespace-nowrap bg-red-100 text-red-800 border-red-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="font-normal bg-green-100 text-green-800 border-green-200">
+                          <Badge variant="outline" className="font-normal whitespace-nowrap bg-green-100 text-green-800 border-green-200">
                             {customer.currentUpdateVersion}
                           </Badge>
                         )
                       ) : (
-                        <Badge variant="outline" className="font-normal bg-red-100 text-red-800 border-red-200">
+                        <Badge variant="outline" className="font-normal whitespace-nowrap bg-red-100 text-red-800 border-red-200">
                           לא עודכן
                         </Badge>
                       )
                     ) : (
-                      <Badge variant="outline" className="font-normal bg-gray-100 text-gray-500 border-gray-200">
+                      <Badge variant="outline" className="font-normal whitespace-nowrap bg-gray-100 text-gray-500 border-gray-200">
                         ללא עדכונים
                       </Badge>
                     )}

@@ -83,6 +83,7 @@ export default function CustomersListPage() {
           id: number; fullName: string; phone: string; email: string;
           amountPaid?: number;
           organ?: { name: string }; setType?: { name: string; price?: number; includesUpdates?: boolean };
+          promotion?: { discountPercent: number; couponCode: string } | null;
           status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"; updatedAt: string;
           currentUpdateVersion?: string | null; infoFileUrl?: string | null;
         }) => ({
@@ -95,6 +96,7 @@ export default function CustomersListPage() {
           currentUpdateVersion: c.currentUpdateVersion || null,
           includesUpdates: c.setType?.includesUpdates ?? false,
           infoFileUrl: c.infoFileUrl || null,
+          discountPercent: c.promotion?.discountPercent || null,
         }))
       )
       setLatestVersion(data.latestVersion || null)
