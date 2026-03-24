@@ -80,14 +80,14 @@ function renderBlockToHtml(block: EmailBlock): string {
       const header = `<div style="margin:16px ${marginMap[align]};padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:${textAlignMap[align]};display:inline-block;">${escapeHtml(block.name)}</div>`
       const wrapper = `<div style="text-align:${textAlignMap[align]};">${header}</div>`
       if (block.items.length === 0) return wrapper
-      const items = block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")
-      return `${wrapper}\n<ul>\n${items}\n</ul>`
+      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtml(item)}</li>`).join("\n")
+      return `${wrapper}\n<ul dir="rtl" style="text-align:right;padding-right:20px;margin:0;">\n${items}\n</ul>`
     }
 
     case "list": {
       const tag = block.ordered ? "ol" : "ul"
-      const items = block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")
-      return `<${tag}>\n${items}\n</${tag}>`
+      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtml(item)}</li>`).join("\n")
+      return `<${tag} dir="rtl" style="text-align:right;padding-right:20px;margin:0 0 12px 0;">\n${items}\n</${tag}>`
     }
 
     case "buttons": {
