@@ -285,15 +285,22 @@ export async function GET(
 
     const totalEligibleForCpi = eligible.length + missingCpi.length;
 
-    const quoteCustomers = [...notUpdatedFiltered, ...halfSet].map((c) => ({
-      id: c.id,
-      fullName: c.fullName,
-      email: c.email,
-      organ: c.organ?.name || "",
-      setType: c.setType?.name || "",
-      currentVersion: c.currentUpdateVersion || null,
-      includesUpdates: c.setType?.includesUpdates ?? false,
-    }));
+    const eligibleIds = new Set([
+      ...eligible.map((c) => c.id),
+      ...missingCpi.map((c) => c.id),
+    ]);
+
+    const quoteCustomers = [...notUpdatedFiltered, ...halfSet]
+      .filter((c) => !eligibleIds.has(c.id))
+      .map((c) => ({
+        id: c.id,
+        fullName: c.fullName,
+        email: c.email,
+        organ: c.organ?.name || "",
+        setType: c.setType?.name || "",
+        currentVersion: c.currentUpdateVersion || null,
+        includesUpdates: c.setType?.includesUpdates ?? false,
+      }));
 
     return NextResponse.json({
       updateVersion: {

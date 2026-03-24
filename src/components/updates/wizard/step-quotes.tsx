@@ -60,6 +60,10 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
       const res = await fetch(`/api/customers/${customerId}/payment-link`, { method: "POST" })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
+        if (err.error === "אין יתרה לתשלום") {
+          updateState(customerId, { status: "sent", amount: 0 })
+          return
+        }
         throw new Error(err.error || "שגיאה")
       }
       const data = await res.json()
