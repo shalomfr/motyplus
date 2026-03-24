@@ -124,7 +124,7 @@ function renderBlockToHtml(block: EmailBlock): string {
 
     case "warning": {
       const warnAlign = block.align || "center"
-      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:${warnAlign};border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtmlKeepFormatting(block.text)}</div>`
+      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:${warnAlign};border:1px solid #f0b5b5;color:#c62828;" dir="rtl">${escapeHtmlKeepFormatting(block.text)}</div>`
     }
 
     case "signature":
