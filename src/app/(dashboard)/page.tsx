@@ -85,7 +85,7 @@ export default function HomePage() {
     { label: "עדכונים", icon: RefreshCw, href: "/updates", bg: "bg-orange-50 hover:bg-orange-100", color: "text-orange-600", border: "border-orange-200/60" },
     { label: "מבצעים", icon: Tags, href: "/promotions", bg: "bg-red-50 hover:bg-red-100", color: "text-red-500", border: "border-red-200/60" },
     { label: "לוח בקרה", icon: LayoutDashboard, href: "/dashboard", bg: "bg-cyan-50 hover:bg-cyan-100", color: "text-cyan-600", border: "border-cyan-200/60" },
-    { label: "משימות", icon: ClipboardList, href: "/tasks", bg: "bg-amber-50 hover:bg-amber-100", color: "text-amber-600", border: "border-amber-200/60" },
+    { label: "רשימת עבודה", icon: ClipboardList, href: "/tasks", bg: "bg-amber-50 hover:bg-amber-100", color: "text-amber-600", border: "border-amber-200/60" },
     { label: "הגדרות", icon: Settings, href: "/settings", bg: "bg-gray-50 hover:bg-gray-100", color: "text-gray-500", border: "border-gray-200/60" },
     { label: "צור עדכון", icon: Plus, href: "/updates/wizard", bg: "bg-orange-50 hover:bg-orange-100", color: "text-orange-500", border: "border-orange-200/60" },
   ]

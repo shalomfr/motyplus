@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { syncCustomerToICount } from "@/lib/payments/receipt-service";
+import { syncCustomerToBilling } from "@/lib/payments/receipt-service";
 
-// POST /api/customers/[id]/sync-icount — סנכרון לקוח ל-iCount
+// POST /api/customers/[id]/sync-billing — סנכרון לקוח לספק חיוב ראשי
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +19,7 @@ export async function POST(
       return NextResponse.json({ error: "מזהה לקוח לא תקין" }, { status: 400 });
     }
 
-    const clientId = await syncCustomerToICount(customerId);
+    const clientId = await syncCustomerToBilling(customerId);
     if (!clientId) {
       return NextResponse.json(
         { error: "לא ניתן לסנכרן — בדוק חיבור ספק חיוב" },
@@ -27,7 +27,7 @@ export async function POST(
       );
     }
 
-    return NextResponse.json({ success: true, icountClientId: clientId });
+    return NextResponse.json({ success: true, billingClientId: clientId });
   } catch (error) {
     console.error("Error syncing customer:", error);
     return NextResponse.json({ error: "שגיאה בסנכרון" }, { status: 500 });

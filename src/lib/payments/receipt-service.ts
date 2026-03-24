@@ -91,7 +91,7 @@ export async function issueReceipt(
   }
 }
 
-export async function syncCustomerToICount(customerId: number): Promise<string | null> {
+export async function syncCustomerToBilling(customerId: number): Promise<string | null> {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
     include: { organ: true },
@@ -99,7 +99,7 @@ export async function syncCustomerToICount(customerId: number): Promise<string |
 
   if (!customer) return null;
 
-  // If already synced, return existing iCount client ID
+  // If already synced, return existing billing client ID
   if (customer.icountClientId) return customer.icountClientId;
 
   const billing = await getBillingClient();
