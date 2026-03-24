@@ -5,6 +5,7 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
+import { getBillingClient } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -143,9 +144,31 @@ async function sendBulkTemplate(
   let sent = 0;
   let failed = 0;
 
+  const billing = await getBillingClient();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+  const needsPaymentLink = template.body.includes("{{paymentLink}}") || template.subject.includes("{{paymentLink}}");
+
   for (const customer of customers) {
     const remainingForFullSet = fullSetPrice
       ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid)) : 0;
+
+    let paymentLink = "";
+    if (needsPaymentLink && billing && remainingForFullSet > 0) {
+      try {
+        const page = await billing.client.createPaymentPage({
+          customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+          items: [{ description: `השלמת תשלום — ${customer.setType.name}`, quantity: 1, unitPrice: remainingForFullSet }],
+          successUrl: `${baseUrl}/order/success`,
+          cancelUrl: `${baseUrl}/order/cancel`,
+          autoCreateDoc: true,
+          docType: "invoice_receipt",
+          metadata: { customerId: String(customer.id), source: "email_bulk" },
+        });
+        paymentLink = page.url;
+      } catch (err) {
+        console.error(`Failed to create payment link for customer ${customer.id}:`, err);
+      }
+    }
 
     const vars = {
       fullName: customer.fullName, firstName: customer.fullName.split(" ")[0],
@@ -153,6 +176,7 @@ async function sendBulkTemplate(
       currentVersion: customer.currentUpdateVersion || "—",
       remainingAmount: String(remainingForFullSet),
       remainingForFullSet: `₪${remainingForFullSet}`,
+      paymentLink,
     };
 
     const html = replaceTemplateVariables(template.body, vars);

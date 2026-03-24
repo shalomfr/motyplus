@@ -23,6 +23,7 @@ export const EMAIL_VARIABLES = [
   { name: "youtubeLink", label: "קישור יוטיוב" },
   { name: "customLink", label: "קישור חריג" },
   { name: "customerId", label: "מזהה לקוח" },
+  { name: "paymentLink", label: "לינק תשלום אישי" },
 ]
 
 export const VariableBadge = Node.create({

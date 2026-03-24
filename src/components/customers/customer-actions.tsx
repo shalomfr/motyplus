@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { CustomerBalanceCard } from "./customer-balance-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -675,37 +676,15 @@ export function CustomerActions({
         </CardContent>
       </Card>
 
-      {/* Financial Info */}
+      {/* Balance & Updates Status */}
+      <CustomerBalanceCard customerId={customerId} amountPaid={amountPaid} />
+
+      {/* Price Quote */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">מידע כספי</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">סכום ששולם</span>
-            <span className="font-semibold">
-              {formatCurrency(amountPaid)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">נותר לתשלום</span>
-            <span
-              className={cn(
-                "font-semibold",
-                balance !== null && balance > 0 && "text-red-600",
-                balance !== null && balance <= 0 && "text-green-600"
-              )}
-            >
-              {balance !== null && balance > 0
-                ? formatCurrency(balance)
-                : balance !== null && balance <= 0
-                  ? "שולם במלואו"
-                  : "-"}
-            </span>
-          </div>
+        <CardContent className="pt-4">
           <Button
             variant="outline"
-            className="w-full justify-start mt-2"
+            className="w-full justify-start"
             onClick={handleSendQuote}
             disabled={loadingAction === "priceQuote"}
           >

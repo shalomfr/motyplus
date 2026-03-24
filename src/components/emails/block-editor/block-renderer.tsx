@@ -28,6 +28,7 @@ const SAMPLE_VARS: Record<string, string> = {
   youtubeLink: "https://youtube.com/preview",
   customLink: "#",
   customerId: "12345",
+  paymentLink: "https://pay.example.com/link/demo",
   additionalOrganName: "",
   additionalOrganLine: "",
 }

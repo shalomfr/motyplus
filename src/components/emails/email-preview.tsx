@@ -34,6 +34,7 @@ export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
     customLink: "",
     remainingAmount: "350",
     remainingForFullSet: "₪350",
+    paymentLink: "https://pay.example.com/link/demo",
   }
 
   const FSI = "\u2068" // First Strong Isolate
