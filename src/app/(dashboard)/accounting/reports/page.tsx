@@ -30,7 +30,7 @@ interface ReportRow {
 
 interface ReportData {
   rows: ReportRow[]
-  summary: { totalRevenue: number; totalPayments: number; average: number }
+  summary: { total: number; count: number; average: number }
 }
 
 const reportTypes = [
@@ -151,7 +151,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(summary.totalRevenue)}
+                {formatCurrency(summary.total)}
               </div>
             </CardContent>
           </Card>
@@ -161,7 +161,7 @@ export default function ReportsPage() {
               <Hash className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.totalPayments}</div>
+              <div className="text-2xl font-bold">{summary.count}</div>
             </CardContent>
           </Card>
           <Card>

@@ -33,7 +33,7 @@ interface MonthlySummary {
 
 interface ReportData {
   rows: MonthlySummary[]
-  summary?: { totalRevenue: number; totalPayments: number; average: number }
+  summary?: { total: number; count: number; average: number }
 }
 
 interface PaymentRow {
@@ -83,7 +83,7 @@ export default function AccountingDashboardPage() {
     report?.rows?.find((r) => r.month === currentMonth)?.total || 0
   const lastMonthTotal =
     report?.rows?.find((r) => r.month === currentMonth - 1)?.total || 0
-  const yearTotal = report?.summary?.totalRevenue || 0
+  const yearTotal = report?.summary?.total || 0
   const openDebts = 0 // Will be populated from API if available
 
   const methodLabel: Record<string, string> = {
