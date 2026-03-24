@@ -34,43 +34,40 @@ function escapeHtml(text: string): string {
     .replace(/\n/g, "<br>")
 }
 
+/** Escape HTML but preserve <b>, <i>, <u> formatting tags */
+function escapeHtmlKeepFormatting(text: string): string {
+  const preserved = text
+    .replace(/<b>/gi, "%%B_O%%").replace(/<\/b>/gi, "%%B_C%%")
+    .replace(/<i>/gi, "%%I_O%%").replace(/<\/i>/gi, "%%I_C%%")
+    .replace(/<u>/gi, "%%U_O%%").replace(/<\/u>/gi, "%%U_C%%")
+  return escapeHtml(preserved)
+    .replace(/%%B_O%%/g, "<b>").replace(/%%B_C%%/g, "</b>")
+    .replace(/%%I_O%%/g, "<i>").replace(/%%I_C%%/g, "</i>")
+    .replace(/%%U_O%%/g, "<u>").replace(/%%U_C%%/g, "</u>")
+}
+
 function renderBlockToHtml(block: EmailBlock): string {
   switch (block.type) {
     case "heading":
       if (block.layout === "split" && block.textLeft) {
-        return `<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;"><tr><td align="right" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;">${escapeHtml(block.text)}</td><td align="left" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;font-family:Arial;" dir="ltr">${escapeHtml(block.textLeft)}</td></tr></table>`
+        return `<table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-bottom:15px;"><tr><td align="right" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;">${escapeHtmlKeepFormatting(block.text)}</td><td align="left" style="font-size:24px;font-weight:bold;color:#124F90;width:50%;font-family:Arial;" dir="ltr">${escapeHtmlKeepFormatting(block.textLeft)}</td></tr></table>`
       }
-      return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#124F90;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(block.text)}</div>`
+      return `<div style="font-size:18px;font-weight:bold;text-align:center;color:#124F90;padding:14px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtmlKeepFormatting(block.text)}</div>`
 
     case "subheading": {
       const align = block.align || "right"
-      return `<div style="font-size:16px;font-weight:bold;text-align:${align};color:#2c5f8a;padding:8px 0;margin-bottom:6px;">${escapeHtml(block.text)}</div>`
+      return `<div style="font-size:16px;font-weight:bold;text-align:${align};color:#2c5f8a;padding:8px 0;margin-bottom:6px;">${escapeHtmlKeepFormatting(block.text)}</div>`
     }
 
     case "banner": {
       const style = BANNER_STYLES[block.color] || BANNER_STYLES.orange
       const isGradient = style.bg.includes("gradient")
-      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:${style.color};border:2px solid ${style.border};border-radius:10px;padding:12px;${isGradient ? `background:${style.bg}` : `background-color:${style.bg}`};box-shadow:0 3px 10px rgba(0,0,0,0.12);">${escapeHtml(block.text)}</div>`
+      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:${style.color};border:2px solid ${style.border};border-radius:10px;padding:12px;${isGradient ? `background:${style.bg}` : `background-color:${style.bg}`};box-shadow:0 3px 10px rgba(0,0,0,0.12);">${escapeHtmlKeepFormatting(block.text)}</div>`
     }
 
     case "paragraph": {
-      // Allow <b>, <i>, <u> tags in paragraphs
-      const safeText = block.text
-        .replace(/<b>/gi, "%%BOLD_OPEN%%")
-        .replace(/<\/b>/gi, "%%BOLD_CLOSE%%")
-        .replace(/<i>/gi, "%%ITALIC_OPEN%%")
-        .replace(/<\/i>/gi, "%%ITALIC_CLOSE%%")
-        .replace(/<u>/gi, "%%UNDER_OPEN%%")
-        .replace(/<\/u>/gi, "%%UNDER_CLOSE%%")
-      const escaped = escapeHtml(safeText)
-        .replace(/%%BOLD_OPEN%%/g, "<b>")
-        .replace(/%%BOLD_CLOSE%%/g, "</b>")
-        .replace(/%%ITALIC_OPEN%%/g, "<i>")
-        .replace(/%%ITALIC_CLOSE%%/g, "</i>")
-        .replace(/%%UNDER_OPEN%%/g, "<u>")
-        .replace(/%%UNDER_CLOSE%%/g, "</u>")
       const align = block.align || "right"
-      return `<p style="margin:0 0 12px 0;text-align:${align};">${escaped}</p>`
+      return `<p style="margin:0 0 12px 0;text-align:${align};">${escapeHtmlKeepFormatting(block.text)}</p>`
     }
 
     case "folder": {
@@ -80,13 +77,13 @@ function renderBlockToHtml(block: EmailBlock): string {
       const header = `<div style="margin:16px ${marginMap[align]};padding:8px 16px;border-radius:8px;background-color:#EBF1F9;border:1px solid #C5D5EA;font-weight:bold;color:#124F90;text-align:${textAlignMap[align]};display:inline-block;">${escapeHtml(block.name)}</div>`
       const wrapper = `<div style="text-align:${textAlignMap[align]};">${header}</div>`
       if (block.items.length === 0) return wrapper
-      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtml(item)}</li>`).join("\n")
+      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtmlKeepFormatting(item)}</li>`).join("\n")
       return `${wrapper}\n<ul dir="rtl" style="text-align:right;padding-right:20px;margin:0;">\n${items}\n</ul>`
     }
 
     case "list": {
       const tag = block.ordered ? "ol" : "ul"
-      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtml(item)}</li>`).join("\n")
+      const items = block.items.map((item) => `<li style="text-align:right;">${escapeHtmlKeepFormatting(item)}</li>`).join("\n")
       return `<${tag} dir="rtl" style="text-align:right;padding-right:20px;margin:0 0 12px 0;">\n${items}\n</${tag}>`
     }
 
@@ -115,7 +112,7 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;"><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">בנק</td><td style="border:1px solid #D6E3F5;padding:8px;">הפועלים</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">סניף</td><td style="border:1px solid #D6E3F5;padding:8px;">446</td></tr><tr style="background-color:#F6F9FE;"><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">חשבון</td><td style="border:1px solid #D6E3F5;padding:8px;">113689</td></tr><tr><td style="border:1px solid #D6E3F5;padding:8px;font-weight:bold;">שם</td><td style="border:1px solid #D6E3F5;padding:8px;">חוה גפנר</td></tr></table>`
 
     case "warning":
-      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:center;border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtml(block.text)}</div>`
+      return `<div style="margin:12px 0;padding:12px 14px;border-radius:8px;background-color:#fff8f8;text-align:center;border:1px solid #f0b5b5;color:#c62828;font-weight:bold;" dir="rtl">${escapeHtmlKeepFormatting(block.text)}</div>`
 
     case "signature":
       return `<p style="margin-top:24px;">בברכה,<br>מוטי רוזנפלד<br>עדכוני סאונדים ומקצבים לאורגנים | Yamaha</p>`
@@ -128,7 +125,7 @@ function renderBlockToHtml(block: EmailBlock): string {
       return `<hr style="border:none;border-top:1px solid #C5D5EA;margin:20px 0;" />`
 
     case "instructions":
-      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#124F90;border:2px solid #124F90;border-radius:10px;padding:12px;background-color:#EBF1F9;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;">${escapeHtml(block.text)}</div>`
+      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:#124F90;border:2px solid #124F90;border-radius:10px;padding:12px;background-color:#EBF1F9;">הוראות הורדה והתקנה</div>\n<div style="margin:0 0 12px 0;">${escapeHtmlKeepFormatting(block.text)}</div>`
   }
 }
 
