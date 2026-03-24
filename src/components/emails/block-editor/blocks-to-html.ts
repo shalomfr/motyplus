@@ -41,6 +41,7 @@ function escapeHtml(text: string): string {
 /** Escape HTML but preserve <b>, <i>, <u> and <span style="color:..."> formatting tags */
 function escapeHtmlKeepFormatting(text: string): string {
   const colorSpans: string[] = []
+  const alignPs: string[] = []
   let preserved = text
     .replace(/<b>/gi, "%%B_O%%").replace(/<\/b>/gi, "%%B_C%%")
     .replace(/<i>/gi, "%%I_O%%").replace(/<\/i>/gi, "%%I_C%%")
@@ -51,15 +52,25 @@ function escapeHtmlKeepFormatting(text: string): string {
       return `%%SPAN_O_${idx}%%`
     })
     .replace(/<\/span>/gi, "%%SPAN_C%%")
+    .replace(/<p style="text-align:([^"]+)">/gi, (_m, align) => {
+      const idx = alignPs.length
+      alignPs.push(align as string)
+      return `%%P_O_${idx}%%`
+    })
+    .replace(/<\/p>/gi, "%%P_C%%")
 
   preserved = escapeHtml(preserved)
     .replace(/%%B_O%%/g, "<b>").replace(/%%B_C%%/g, "</b>")
     .replace(/%%I_O%%/g, "<i>").replace(/%%I_C%%/g, "</i>")
     .replace(/%%U_O%%/g, "<u>").replace(/%%U_C%%/g, "</u>")
     .replace(/%%SPAN_C%%/g, "</span>")
+    .replace(/%%P_C%%/g, "</p>")
 
   for (let i = 0; i < colorSpans.length; i++) {
     preserved = preserved.replace(`%%SPAN_O_${i}%%`, `<span style="color:${colorSpans[i]}">`)
+  }
+  for (let i = 0; i < alignPs.length; i++) {
+    preserved = preserved.replace(`%%P_O_${i}%%`, `<p style="text-align:${alignPs[i]};margin:0;">`)
   }
 
   return preserved

@@ -22,7 +22,7 @@ const VAR_LABEL_MAP: Record<string, string> = Object.fromEntries(
 )
 
 // Allowed HTML tags that should pass through without escaping
-const ALLOWED_TAGS = /(<\/?(?:b|strong|i|em|u)>|<span style="color:[^"]*">|<\/span>)/gi
+const ALLOWED_TAGS = /(<\/?(?:b|strong|i|em|u)>|<span style="color:[^"]*">|<\/span>|<p style="text-align:[^"]*">|<\/p>)/gi
 
 function escapeChunk(chunk: string): string {
   return chunk.split(ALLOWED_TAGS).map((part, i) => {
@@ -81,9 +81,14 @@ function domToValue(el: HTMLElement): string {
       } else if (element.tagName === "BR") {
         result += "\n"
       } else if (element.tagName === "DIV" || element.tagName === "P") {
-        // contentEditable wraps new lines in <div> or <p>
+        const lineAlign = element.style?.textAlign
         if (idx > 0) result += "\n"
-        result += domToValue(element)
+        const inner = domToValue(element)
+        if (lineAlign && lineAlign !== "start" && inner) {
+          result += `<p style="text-align:${lineAlign}">${inner}</p>`
+        } else {
+          result += inner
+        }
       } else if (INLINE_TAGS[element.tagName]) {
         const tag = INLINE_TAGS[element.tagName]
         const inner = domToValue(element)

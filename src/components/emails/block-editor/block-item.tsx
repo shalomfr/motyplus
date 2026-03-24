@@ -28,6 +28,32 @@ const TEXT_COLORS = [
   { value: "#000000", label: "שחור (רגיל)" },
 ]
 
+function LineAlignButtons() {
+  const options: { cmd: string; icon: typeof AlignRight; label: string }[] = [
+    { cmd: "justifyRight", icon: AlignRight, label: "ימין" },
+    { cmd: "justifyCenter", icon: AlignCenter, label: "מרכז" },
+    { cmd: "justifyLeft", icon: AlignLeft, label: "שמאל" },
+  ]
+
+  return (
+    <>
+      {options.map(({ cmd, icon: Icon, label }) => (
+        <Button
+          key={cmd}
+          variant="outline"
+          size="sm"
+          className="h-6 w-6 p-0"
+          title={`יישור שורה — ${label}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => document.execCommand(cmd)}
+        >
+          <Icon className="h-3 w-3" />
+        </Button>
+      ))}
+    </>
+  )
+}
+
 function ColorPickerButtons() {
   const applyColor = (color: string) => {
     document.execCommand("foreColor", false, color)
@@ -408,13 +434,15 @@ function RenderBlockFields({
             <Palette className="h-3 w-3 text-muted-foreground" />
             <ColorPickerButtons />
             <div className="border-r mx-1" />
+            <LineAlignButtons />
+            <div className="border-r mx-1" />
             {alignOptions.map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
                 variant={currentAlign === value ? "default" : "outline"}
                 size="sm"
                 className="h-6 w-6 p-0"
-                title={`יישור ${label}`}
+                title={`יישור כל הבלוק — ${label}`}
                 onClick={() => onChange({ ...block, align: value })}
               >
                 <Icon className="h-3 w-3" />
@@ -602,7 +630,9 @@ function RenderBlockFields({
             <div className="border-r mx-0.5 h-5" />
             <Palette className="h-3.5 w-3.5 text-muted-foreground" />
             <ColorPickerButtons />
-            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע</span>
+            <div className="border-r mx-0.5 h-5" />
+            <LineAlignButtons />
+            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע / יישור שורה</span>
           </div>
           <VariableTextarea
             ref={textareaRef}
@@ -612,7 +642,7 @@ function RenderBlockFields({
             rows={2}
           />
           <div className="flex items-center gap-2">
-            <Label className="text-xs">יישור:</Label>
+            <Label className="text-xs">יישור כל הבלוק:</Label>
             <Select
               value={block.align || "center"}
               onValueChange={(v) => onChange({ ...block, align: v as "right" | "center" | "left" | "justify" })}
@@ -708,7 +738,9 @@ function RenderBlockFields({
             <div className="border-r mx-0.5 h-5" />
             <Palette className="h-3.5 w-3.5 text-muted-foreground" />
             <ColorPickerButtons />
-            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע</span>
+            <div className="border-r mx-0.5 h-5" />
+            <LineAlignButtons />
+            <span className="text-[10px] text-muted-foreground mr-1">סמן טקסט → B / צבע / יישור שורה</span>
           </div>
           <VariableTextarea
             ref={textareaRef}
@@ -718,7 +750,7 @@ function RenderBlockFields({
             rows={3}
           />
           <div className="flex items-center gap-2">
-            <Label className="text-xs">יישור:</Label>
+            <Label className="text-xs">יישור כל הבלוק:</Label>
             <Select
               value={block.align || "right"}
               onValueChange={(v) => onChange({ ...block, align: v as "right" | "center" | "left" | "justify" })}
