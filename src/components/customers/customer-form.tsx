@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -572,24 +573,16 @@ export function CustomerForm({
               />
             </div>
 
-            {/* Email — auto-append @gmail.com */}
+            {/* Email — autocomplete with domain suggestions */}
             <div className="space-y-2">
               <Label htmlFor="email">
                 מייל <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <EmailInput
                 id="email"
-                type="email"
                 {...register("email")}
                 placeholder="email@example.com"
-                dir="ltr"
                 className="text-right"
-                onBlur={(e) => {
-                  const val = e.target.value.trim()
-                  if (val && !val.includes("@")) {
-                    setValue("email", val + "@gmail.com")
-                  }
-                }}
               />
               {errors.email && (
                 <p className="text-sm text-destructive">

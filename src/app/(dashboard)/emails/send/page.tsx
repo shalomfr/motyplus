@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { VariableTextarea } from "@/components/emails/block-editor/variable-textarea"
 import { EMAIL_VARIABLES } from "@/components/emails/variable-badge-extension"
 import { Badge } from "@/components/ui/badge"
@@ -342,13 +343,11 @@ export default function SendEmailPage() {
               {recipientType === "single" && (
                 <div className="space-y-2">
                   <Label htmlFor="email">כתובת מייל</Label>
-                  <Input
+                  <EmailInput
                     id="email"
-                    type="email"
                     value={singleEmail}
-                    onChange={(e) => setSingleEmail(e.target.value)}
+                    onValueChange={(val) => setSingleEmail(val)}
                     placeholder="email@example.com"
-                    dir="ltr"
                     className="text-left"
                   />
                 </div>

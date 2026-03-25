@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -763,12 +764,10 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>מייל</Label>
-              <Input
-                type="email"
+              <EmailInput
                 value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
+                onValueChange={(val) => setNewUserEmail(val)}
                 placeholder="email@example.com"
-                dir="ltr"
                 className="text-left"
               />
             </div>

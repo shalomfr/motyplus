@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -268,13 +269,11 @@ export function NewOrderWizardDialog({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newCustEmail">כתובת מייל</Label>
-                <Input
+                <EmailInput
                   id="newCustEmail"
-                  type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onValueChange={(val) => setEmail(val)}
                   placeholder="example@email.com"
-                  dir="ltr"
                 />
               </div>
               <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">

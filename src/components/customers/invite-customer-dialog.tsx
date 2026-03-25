@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Send, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
@@ -98,13 +99,11 @@ export function InviteCustomerDialog({ open, onOpenChange }: InviteCustomerDialo
               </div>
               <div>
                 <Label htmlFor="invite-email">כתובת מייל</Label>
-                <Input
+                <EmailInput
                   id="invite-email"
-                  type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onValueChange={(val) => setEmail(val)}
                   placeholder="email@example.com"
-                  dir="ltr"
                   className="mt-1"
                 />
               </div>

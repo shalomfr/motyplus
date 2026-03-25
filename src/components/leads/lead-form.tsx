@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -169,13 +170,11 @@ export function LeadForm({ initialData, leadId, mode }: LeadFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">מייל</Label>
-              <Input
+              <EmailInput
                 id="email"
-                type="email"
                 value={form.email}
-                onChange={(e) => handleChange("email", e.target.value)}
+                onValueChange={(val) => handleChange("email", val)}
                 placeholder="email@example.com"
-                dir="ltr"
                 className="text-left"
               />
             </div>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { EmailInput } from "@/components/ui/email-input"
 import { Badge } from "@/components/ui/badge"
 import { WorkListTable } from "@/components/updates/work-list-table"
 import { ArrowRight, Loader2, ListChecks, SendHorizonal, Search, Mail, UserPlus } from "lucide-react"
@@ -315,11 +316,10 @@ export default function UpdateWorkPage() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="email"
+                  <EmailInput
                     placeholder="example@mail.com"
                     value={manualEmail}
-                    onChange={(e) => setManualEmail(e.target.value)}
+                    onValueChange={(val) => setManualEmail(val)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendToEmail()}
                     className="pr-10"
                     dir="ltr"
