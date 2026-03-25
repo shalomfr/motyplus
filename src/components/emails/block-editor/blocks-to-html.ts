@@ -97,7 +97,7 @@ function renderBlockToHtml(block: EmailBlock): string {
 
     case "paragraph": {
       const align = block.align || "right"
-      return `<p style="margin:0 0 12px 0;text-align:${align};">${escapeHtmlKeepFormatting(block.text)}</p>`
+      return `<div style="margin:0 0 12px 0;text-align:${align};">${escapeHtmlKeepFormatting(block.text)}</div>`
     }
 
     case "folder": {

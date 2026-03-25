@@ -53,6 +53,13 @@ export async function POST(request: NextRequest) {
     // בניית משתנים לפי סוג הנמען
     let variables: Record<string, string> = {};
 
+    // Fetch latest update version for updateVersion variable
+    const latestUpdateVersion = await prisma.updateVersion.findFirst({
+      where: { status: { not: "DRAFT" } },
+      orderBy: { sortOrder: "desc" },
+      select: { version: true },
+    });
+
     if (customerId) {
       const customer = await prisma.customer.findUnique({
         where: { id: customerId },
@@ -75,6 +82,8 @@ export async function POST(request: NextRequest) {
         setType: customer.setType.name,
         purchaseDate: customer.purchaseDate.toLocaleDateString("he-IL"),
         updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
+        currentVersion: customer.currentUpdateVersion || "לא עודכן",
+        updateVersion: latestUpdateVersion?.version || "—",
       };
     } else if (leadId) {
       const lead = await prisma.lead.findUnique({
@@ -107,6 +116,8 @@ export async function POST(request: NextRequest) {
         updateExpiryDate: new Date(
           Date.now() + 365 * 24 * 60 * 60 * 1000
         ).toLocaleDateString("he-IL"),
+        currentVersion: "V4",
+        updateVersion: latestUpdateVersion?.version || "V5",
       };
     }
 

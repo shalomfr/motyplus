@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       email,
       orderFormUrl: ORDER_FORM_URL,
       paymentLink: ORDER_FORM_URL,
+      newCustomerName: name.trim(),
     }
 
     const html = replaceTemplateVariables(template.body, vars)

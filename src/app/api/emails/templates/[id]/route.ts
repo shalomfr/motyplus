@@ -43,6 +43,16 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
+
+    // Partial update: only folderId (move between folders)
+    if (Object.keys(body).length === 1 && body.folderId !== undefined) {
+      const template = await prisma.emailTemplate.update({
+        where: { id },
+        data: { folderId: body.folderId || null },
+      });
+      return NextResponse.json(template);
+    }
+
     const validation = emailTemplateSchema.safeParse(body);
 
     if (!validation.success) {

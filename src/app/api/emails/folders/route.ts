@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 const DEFAULT_FOLDERS = [
   { key: "update", name: "מיילים של עדכון", color: "blue", iconName: "RefreshCw", order: 0 },
   { key: "after_purchase", name: "אחרי רכישה", color: "emerald", iconName: "ShoppingBag", order: 1 },
-  { key: "welcome", name: "לקוח חדש", color: "green", iconName: "UserPlus", order: 2 },
+  { key: "welcome", name: "שליחות פרטיות", color: "green", iconName: "UserPlus", order: 2 },
   { key: "promotion", name: "מבצעים והצעות מחיר", color: "orange", iconName: "Percent", order: 3 },
   { key: "greeting", name: "ברכות וחגים", color: "pink", iconName: "Gift", order: 4 },
   { key: "reminder", name: "תזכורות", color: "amber", iconName: "Bell", order: 5 },
@@ -17,6 +17,19 @@ export async function GET() {
       orderBy: { order: "asc" },
       include: { _count: { select: { templates: true } } },
     })
+
+    // Auto-rename: "לקוח חדש" → "שליחות פרטיות"
+    const welcomeFolder = folders.find((f) => f.key === "welcome" && f.name === "לקוח חדש")
+    if (welcomeFolder) {
+      await prisma.emailFolder.update({
+        where: { id: welcomeFolder.id },
+        data: { name: "שליחות פרטיות" },
+      })
+      folders = await prisma.emailFolder.findMany({
+        orderBy: { order: "asc" },
+        include: { _count: { select: { templates: true } } },
+      })
+    }
 
     // Seed defaults if no folders exist
     if (folders.length === 0) {

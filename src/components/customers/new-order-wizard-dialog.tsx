@@ -12,21 +12,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import DOMPurify from "dompurify"
 import {
   Loader2,
-  Mail,
   Eye,
   Send,
   Check,
   ChevronLeft,
   ChevronRight,
   UserPlus,
-  FolderOpen,
 } from "lucide-react"
 
 interface EmailTemplate {
@@ -51,15 +47,14 @@ interface NewOrderWizardDialogProps {
   onSuccess?: () => void
 }
 
-type WizardStep = "details" | "template" | "preview"
+type WizardStep = "details" | "preview"
 
 const STEP_LABELS: Record<WizardStep, string> = {
   details: "פרטי לקוח",
-  template: "בחירת תבנית",
   preview: "תצוגה מקדימה ושליחה",
 }
 
-const STEPS: WizardStep[] = ["details", "template", "preview"]
+const STEPS: WizardStep[] = ["details", "preview"]
 
 export function NewOrderWizardDialog({
   open,
@@ -73,11 +68,9 @@ export function NewOrderWizardDialog({
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
 
-  // Templates
-  const [templates, setTemplates] = useState<EmailTemplate[]>([])
-  const [folders, setFolders] = useState<EmailFolder[]>([])
-  const [loadingTemplates, setLoadingTemplates] = useState(false)
+  // Template (auto-selected)
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
+  const [loadingTemplate, setLoadingTemplate] = useState(false)
 
   // Preview
   const [previewSubject, setPreviewSubject] = useState("")
@@ -99,42 +92,47 @@ export function NewOrderWizardDialog({
     }
   }, [open])
 
-  const fetchTemplates = async () => {
-    setLoadingTemplates(true)
+  const fetchTemplateAndPreview = async () => {
+    setLoadingTemplate(true)
+    setLoadingPreview(true)
     try {
       const [templatesRes, foldersRes] = await Promise.all([
         fetch("/api/emails/templates"),
         fetch("/api/emails/folders"),
       ])
-      if (templatesRes.ok && foldersRes.ok) {
-        const allTemplates: EmailTemplate[] = await templatesRes.json()
-        const allFolders: EmailFolder[] = await foldersRes.json()
-        setFolders(allFolders)
-
-        // Find the "לקוח חדש" folder (key: "welcome")
-        const newCustomerFolder = allFolders.find((f) => f.key === "welcome")
-        if (newCustomerFolder) {
-          setTemplates(
-            allTemplates.filter(
-              (t) => t.isActive && t.folderId === newCustomerFolder.id
-            )
-          )
-        } else {
-          // Fallback: show all active templates
-          setTemplates(allTemplates.filter((t) => t.isActive))
-        }
+      if (!templatesRes.ok || !foldersRes.ok) {
+        toast({ title: "שגיאה בטעינת תבניות", variant: "destructive" })
+        return
       }
-    } catch {
-      toast({ title: "שגיאה בטעינת תבניות", variant: "destructive" })
-    } finally {
-      setLoadingTemplates(false)
-    }
-  }
 
-  const fetchPreview = async (template: EmailTemplate) => {
-    setLoadingPreview(true)
-    try {
-      // Client-side preview with simple variable replacement
+      const allTemplates: EmailTemplate[] = await templatesRes.json()
+      const allFolders: EmailFolder[] = await foldersRes.json()
+
+      // Find "שליחות פרטיות" folder (key: "welcome")
+      const privateFolder = allFolders.find((f) => f.key === "welcome")
+      let template: EmailTemplate | null = null
+
+      if (privateFolder) {
+        // Find "טופס הזמנת לקוח" template in that folder
+        const folderTemplates = allTemplates.filter(
+          (t) => t.isActive && t.folderId === privateFolder.id
+        )
+        template = folderTemplates.find((t) => t.name.includes("טופס הזמנת לקוח")) || folderTemplates[0] || null
+      }
+
+      if (!template) {
+        // Fallback: find by name in all templates
+        template = allTemplates.find((t) => t.isActive && t.name.includes("טופס הזמנת לקוח")) || null
+      }
+
+      if (!template) {
+        toast({ title: "לא נמצאה תבנית \"טופס הזמנת לקוח\" בתיקיית שליחות פרטיות", variant: "destructive" })
+        return
+      }
+
+      setSelectedTemplate(template)
+
+      // Generate preview
       const orderFormUrl = "https://motyplus-order.onrender.com"
       let body = template.body
       let subject = template.subject
@@ -145,6 +143,7 @@ export function NewOrderWizardDialog({
         email,
         orderFormUrl,
         paymentLink: orderFormUrl,
+        newCustomerName: name,
       }
 
       for (const [key, val] of Object.entries(vars)) {
@@ -162,8 +161,9 @@ export function NewOrderWizardDialog({
       setPreviewSubject(subject)
       setPreviewBody(body)
     } catch {
-      toast({ title: "שגיאה בטעינת תצוגה מקדימה", variant: "destructive" })
+      toast({ title: "שגיאה בטעינת תבנית", variant: "destructive" })
     } finally {
+      setLoadingTemplate(false)
       setLoadingPreview(false)
     }
   }
@@ -200,11 +200,8 @@ export function NewOrderWizardDialog({
   }
 
   const goToStep = (nextStep: WizardStep) => {
-    if (nextStep === "template" && templates.length === 0) {
-      fetchTemplates()
-    }
-    if (nextStep === "preview" && selectedTemplate) {
-      fetchPreview(selectedTemplate)
+    if (nextStep === "preview") {
+      fetchTemplateAndPreview()
     }
     setStep(nextStep)
   }
@@ -281,74 +278,23 @@ export function NewOrderWizardDialog({
                 />
               </div>
               <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
-                במייל שיישלח ללקוח יהיה קישור לטופס התשלום הציבורי
+                במייל שיישלח ללקוח יהיה קישור לטופס התשלום הציבורי.
+                התבנית &quot;טופס הזמנת לקוח&quot; תיבחר אוטומטית מתיקיית שליחות פרטיות.
               </div>
             </div>
           )}
 
-          {/* Step 2: Template selection */}
-          {step === "template" && (
-            <div className="space-y-3">
-              {loadingTemplates ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : templates.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>אין תבניות בתיקיית &quot;לקוח חדש&quot;</p>
-                  <p className="text-sm mt-1">צור תבנית חדשה בתיקייה זו בעמוד המיילים</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">
-                    בחר תבנית מייל מתיקיית &quot;לקוח חדש&quot;:
-                  </p>
-                  <div className="grid grid-cols-1 gap-2 max-h-[350px] overflow-y-auto pr-1">
-                    {templates.map((t) => (
-                      <Card
-                        key={t.id}
-                        onClick={() => setSelectedTemplate(t)}
-                        className={cn(
-                          "border-2 cursor-pointer transition-all hover:shadow-md",
-                          selectedTemplate?.id === t.id
-                            ? "border-blue-500 bg-blue-50 shadow-sm"
-                            : "border-gray-200 hover:border-blue-300"
-                        )}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm truncate flex-1">
-                              {t.name}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] bg-green-50 text-green-700 border-green-200 shrink-0"
-                            >
-                              לקוח חדש
-                            </Badge>
-                            {selectedTemplate?.id === t.id && (
-                              <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-1 mt-1" dir="rtl">
-                            {t.subject}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Preview & Send */}
+          {/* Step 2: Preview & Send */}
           {step === "preview" && (
             <div className="space-y-3">
-              {loadingPreview ? (
+              {loadingPreview || loadingTemplate ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : !selectedTemplate ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>לא נמצאה תבנית &quot;טופס הזמנת לקוח&quot;</p>
+                  <p className="text-sm mt-1">צור תבנית בשם זה בתיקיית &quot;שליחות פרטיות&quot;</p>
                 </div>
               ) : (
                 <>
@@ -407,17 +353,8 @@ export function NewOrderWizardDialog({
           <div className="flex gap-2">
             {step === "details" && (
               <Button
-                onClick={() => goToStep("template")}
-                disabled={!canProceedFromDetails}
-              >
-                בחירת תבנית
-                <ChevronLeft className="h-4 w-4 mr-1" />
-              </Button>
-            )}
-            {step === "template" && (
-              <Button
                 onClick={() => goToStep("preview")}
-                disabled={!selectedTemplate}
+                disabled={!canProceedFromDetails}
               >
                 <Eye className="h-4 w-4 ml-1" />
                 תצוגה מקדימה
@@ -427,7 +364,7 @@ export function NewOrderWizardDialog({
             {step === "preview" && (
               <Button
                 onClick={handleSend}
-                disabled={sending || loadingPreview}
+                disabled={sending || loadingPreview || !selectedTemplate}
                 className="bg-green-600 hover:bg-green-700"
               >
                 {sending ? (

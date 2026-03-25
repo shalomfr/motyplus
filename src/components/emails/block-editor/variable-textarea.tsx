@@ -64,7 +64,7 @@ const INLINE_TAGS: Record<string, { open: string; close: string }> = {
 }
 
 function getSpanColorTag(el: HTMLElement): { open: string; close: string } | null {
-  const color = el.style?.color
+  const color = el.style?.color || el.getAttribute("color")
   if (!color) return null
   return { open: `<span style="color:${color}">`, close: "</span>" }
 }

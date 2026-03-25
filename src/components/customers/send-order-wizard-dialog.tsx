@@ -106,7 +106,7 @@ export function SendOrderWizardDialog({
         const allTemplates: EmailTemplate[] = await templatesRes.json()
         const allFolders: EmailFolder[] = await foldersRes.json()
 
-        // Find the "לקוח חדש" folder (key: "welcome")
+        // Find the "שליחות פרטיות" folder (key: "welcome")
         const newCustomerFolder = allFolders.find((f) => f.key === "welcome")
         if (newCustomerFolder) {
           setTemplates(
@@ -239,13 +239,13 @@ export function SendOrderWizardDialog({
               ) : templates.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>אין תבניות בתיקיית &quot;לקוח חדש&quot;</p>
+                  <p>אין תבניות בתיקיית &quot;שליחות פרטיות&quot;</p>
                   <p className="text-sm mt-1">צור תבנית חדשה בתיקייה זו בעמוד המיילים</p>
                 </div>
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    בחר תבנית מייל מתיקיית &quot;לקוח חדש&quot;:
+                    בחר תבנית מייל מתיקיית &quot;שליחות פרטיות&quot;:
                   </p>
                   <div className="grid grid-cols-1 gap-2 max-h-[350px] overflow-y-auto pr-1">
                     {templates.map((t) => (
@@ -268,7 +268,7 @@ export function SendOrderWizardDialog({
                               variant="outline"
                               className="text-[10px] bg-green-50 text-green-700 border-green-200 shrink-0"
                             >
-                              לקוח חדש
+                              שליחות פרטיות
                             </Badge>
                             {selectedTemplate?.id === t.id && (
                               <Check className="h-4 w-4 text-blue-600 shrink-0" />

@@ -320,7 +320,7 @@ export function CustomerActions({
             שלח הזמנה ללקוח
           </Button>
           <p className="text-[11px] text-muted-foreground text-center mt-2">
-            שליחת הזמנה סופית עם תבנית מתיקיית לקוח חדש
+            שליחת הזמנה סופית עם תבנית מתיקיית שליחות פרטיות
           </p>
         </CardContent>
       </Card>

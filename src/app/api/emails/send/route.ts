@@ -71,6 +71,13 @@ export async function POST(request: NextRequest) {
       });
 
       // בדיקה האם התבנית מכילה משתני קישורים (samplesLink / rhythmsLink)
+      // Fetch latest update version for updateVersion variable
+      const latestUpdateVersion = await prisma.updateVersion.findFirst({
+        where: { status: { not: "DRAFT" } },
+        orderBy: { sortOrder: "desc" },
+        select: { version: true },
+      });
+
       const needsLinks = finalBody.includes("samplesLink") || finalBody.includes("rhythmsLink")
         || finalSubject.includes("samplesLink") || finalSubject.includes("rhythmsLink");
 
@@ -164,6 +171,7 @@ export async function POST(request: NextRequest) {
           remainingAmount: remaining.toLocaleString("he-IL"),
           remainingForFullSet: remaining > 0 ? `${remaining.toLocaleString("he-IL")} ₪` : "שולם במלואו",
           currentVersion: customer.currentUpdateVersion || "לא עודכן",
+          updateVersion: latestUpdateVersion?.version || "—",
           samplesLink,
           rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || "",
           driveLink: "",
