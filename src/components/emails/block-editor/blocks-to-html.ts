@@ -92,7 +92,9 @@ function renderBlockToHtml(block: EmailBlock): string {
     case "banner": {
       const style = BANNER_STYLES[block.color] || BANNER_STYLES.orange
       const isGradient = style.bg.includes("gradient")
-      return `<div style="margin:24px 0;text-align:center;font-size:18px;font-weight:bold;color:${style.color};border:2px solid ${style.border};border-radius:10px;padding:12px;${isGradient ? `background:${style.bg}` : `background-color:${style.bg}`};box-shadow:0 3px 10px rgba(0,0,0,0.12);">${escapeHtmlKeepFormatting(block.text)}</div>`
+      // background-color fallback for email clients that don't support gradients
+      const bgFallback = isGradient ? `background-color:${style.border};` : ""
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td align="center" style="font-size:18px;font-weight:bold;color:${style.color};border:2px solid ${style.border};border-radius:10px;padding:12px;${bgFallback}${isGradient ? `background:${style.bg};` : `background-color:${style.bg};`}">${escapeHtmlKeepFormatting(block.text)}</td></tr></table>`
     }
 
     case "paragraph": {
@@ -162,7 +164,7 @@ function renderBlockToHtml(block: EmailBlock): string {
 
     case "image":
       if (!block.url) return ""
-      return `<div style="margin:12px 0;text-align:center;"><img src="${escapeHtml(block.url)}" alt="${escapeHtml(block.alt)}" style="max-width:100%;height:auto;border-radius:8px;" /></div>`
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0;"><tr><td align="center"><img src="${escapeHtml(block.url)}" alt="${escapeHtml(block.alt)}" width="600" style="max-width:100%;height:auto;border-radius:8px;display:block;" /></td></tr></table>`
 
     case "divider":
       return `<hr style="border:none;border-top:1px solid #C5D5EA;margin:20px 0;" />`
@@ -186,7 +188,7 @@ function wrapEmail(bodyContent: string): string {
 <tr><td align="center" style="padding:10px;">
 <div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #C5D5EA;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#124F90;" dir="rtl">
 <div style="background-color:#F6F9FE;border-radius:0;padding:20px 20px 0 20px;margin:0;">
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;" dir="rtl"><tr><td align="right" style="font-size:12px;font-weight:bold;color:#8fa3b9;">בס&quot;ד</td><td align="left" style="font-size:12px;font-weight:bold;color:#8fa3b9;" dir="ltr">{{todayDate}}</td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;"><tr><td width="50%" align="right" style="font-size:12px;font-weight:bold;color:#8fa3b9;" dir="rtl">בס&quot;ד</td><td width="50%" align="left" style="font-size:12px;font-weight:bold;color:#8fa3b9;" dir="ltr">{{todayDate}}</td></tr></table>
 <!-- BODY_START -->
 ${bodyContent}
 <!-- BODY_END -->

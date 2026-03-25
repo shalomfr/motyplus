@@ -185,8 +185,13 @@ export async function POST(
           data: { currentUpdateVersion: updateVersion.version },
         })
 
-        // שליחת מייל
-        if (updateVersion.emailSubject && updateVersion.emailBody) {
+        // שליחת מייל — שימוש בתבנית לפי אורגן מהאשף, עם fallback לשדות ישירים
+        const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { subject?: string; body?: string }>> | null
+        const organTemplate = tMap?.eligible?.[customer.organId]
+        const emailSubject = organTemplate?.subject || updateVersion.emailSubject
+        const emailBody = organTemplate?.body || updateVersion.emailBody
+
+        if (emailSubject && emailBody) {
           try {
             const additionalOrganName = customer.additionalOrgan?.name || ""
             const additionalOrganLine = additionalOrganName && downloadLink2
@@ -211,10 +216,10 @@ export async function POST(
               customLink: "",
               todayDate: new Date().toLocaleDateString("he-IL"),
             }
-            const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
+            const html = replaceTemplateVariables(emailBody, templateVars)
             await sendEmail({
               to: customer.email,
-              subject: replaceTemplateVariables(updateVersion.emailSubject, templateVars),
+              subject: replaceTemplateVariables(emailSubject, templateVars),
               html,
             })
           } catch (err) {
