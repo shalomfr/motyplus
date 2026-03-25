@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +25,7 @@ import {
   Plus, Send, Mail, Loader2, Edit, Users, AlertTriangle, Info,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
   ChevronDown, ChevronUp, FolderOpen, FolderPlus, Trash2, Pencil,
-  Copy, GripVertical, FolderInput,
+  Copy, GripVertical, FolderInput, Download, Upload,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
@@ -279,6 +279,76 @@ export default function EmailsPage() {
     setDragFolderId(null)
   }
 
+  // ===== Export / Import =====
+  const importFileRef = useRef<HTMLInputElement>(null)
+
+  const downloadJson = (data: unknown, filename: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportTemplate = async (template: EmailTemplate) => {
+    try {
+      const res = await fetch(`/api/emails/templates/export?id=${template.id}`)
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      const datePart = new Date().toISOString().slice(0, 10)
+      const safeName = template.name.replace(/[^a-zA-Z0-9\u0590-\u05FF_-]/g, "_")
+      downloadJson(data, `template-${safeName}-${datePart}.json`)
+      toast({ title: "התבנית יוצאה בהצלחה" })
+    } catch {
+      toast({ title: "שגיאה בייצוא התבנית", variant: "destructive" })
+    }
+  }
+
+  const handleExportAll = async () => {
+    try {
+      const res = await fetch("/api/emails/templates/export")
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      const datePart = new Date().toISOString().slice(0, 10)
+      downloadJson(data, `all-templates-${datePart}.json`)
+      toast({ title: `${data.templates?.length || 0} תבניות יוצאו בהצלחה` })
+    } catch {
+      toast({ title: "שגיאה בייצוא התבניות", variant: "destructive" })
+    }
+  }
+
+  const handleImportTemplates = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      const res = await fetch("/api/emails/templates/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        toast({ title: result.error || "שגיאה בייבוא", variant: "destructive" })
+        return
+      }
+      // Add imported templates to state
+      if (result.templates) {
+        setTemplates((prev) => [...prev, ...result.templates])
+      }
+      toast({ title: result.message || "תבניות יובאו בהצלחה" })
+    } catch {
+      toast({ title: "שגיאה בקריאת הקובץ — ודא שזהו קובץ JSON תקין", variant: "destructive" })
+    }
+    // Reset input
+    if (importFileRef.current) importFileRef.current.value = ""
+  }
+
   const toggleSection = (key: string) => {
     setExpandedSections(prev => {
       const next = new Set(prev)
@@ -399,7 +469,7 @@ export default function EmailsPage() {
           <TableHead>משתנים</TableHead>
           <TableHead>שימושים</TableHead>
           <TableHead>עדכון אחרון</TableHead>
-          <TableHead className="w-28">פעולות</TableHead>
+          <TableHead className="w-36">פעולות</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -443,6 +513,14 @@ export default function EmailsPage() {
                   title="שכפל"
                 >
                   <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleExportTemplate(template)}
+                  title="ייצוא"
+                >
+                  <Download className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -559,6 +637,21 @@ export default function EmailsPage() {
             <FolderPlus className="h-4 w-4" />
             תיקייה חדשה
           </Button>
+          <Button variant="outline" size="sm" onClick={handleExportAll} className="gap-1">
+            <Download className="h-4 w-4" />
+            ייצוא הכל
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} className="gap-1">
+            <Upload className="h-4 w-4" />
+            ייבוא תבניות
+          </Button>
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImportTemplates}
+          />
           <Button
             variant="ghost"
             size="sm"
