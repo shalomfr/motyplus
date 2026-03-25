@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { emailTemplateSchema } from "@/lib/validators";
-import { DEFAULT_EMAIL_TEMPLATES } from "./seed/route";
 import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html";
 import type { EmailBlock } from "@/components/emails/block-editor/types";
 
-// GET /api/emails/templates - רשימת תבניות מייל (auto-seed אם ריק)
+// GET /api/emails/templates - רשימת תבניות מייל
 export async function GET() {
   try {
     const session = await auth();
@@ -15,20 +14,6 @@ export async function GET() {
         { error: "לא מורשה. יש להתחבר למערכת" },
         { status: 401 }
       );
-    }
-
-    const existingCount = await prisma.emailTemplate.count();
-    if (existingCount === 0) {
-      for (const t of DEFAULT_EMAIL_TEMPLATES) {
-        const body = blocksToHtml(t.blocks);
-        await prisma.emailTemplate.create({
-          data: {
-            name: t.name, subject: t.subject, body,
-            category: t.category, variables: t.variables,
-            blocks: JSON.parse(JSON.stringify(t.blocks)),
-          },
-        });
-      }
     }
 
     const templates = await prisma.emailTemplate.findMany({

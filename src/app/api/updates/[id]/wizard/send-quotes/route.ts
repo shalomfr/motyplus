@@ -74,6 +74,7 @@ export async function POST(
         remainingAmount: String(remaining),
         remainingForFullSet: `₪${remaining.toLocaleString("he-IL")}`,
         paymentLink: entry.paymentLink || "",
+        todayDate: new Date().toLocaleDateString("he-IL"),
       };
 
       const html = replaceTemplateVariables(template.body, vars);

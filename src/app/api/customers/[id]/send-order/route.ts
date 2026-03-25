@@ -68,6 +68,7 @@ export async function POST(
       currentVersion: customer.currentUpdateVersion || "—",
       purchaseDate: customer.purchaseDate.toLocaleDateString("he-IL"),
       updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
+      todayDate: new Date().toLocaleDateString("he-IL"),
     }
 
     const html = replaceTemplateVariables(template.body, vars)

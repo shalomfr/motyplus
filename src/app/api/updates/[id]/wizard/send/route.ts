@@ -99,6 +99,7 @@ async function sendToEligible(
           releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
           downloadLink, downloadLink2,
           customLink: "",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         };
         const html = replaceTemplateVariables(emailBody, vars);
         const subject = replaceTemplateVariables(emailSubject, vars);
@@ -177,6 +178,7 @@ async function sendBulkTemplate(
       remainingAmount: String(remainingForFullSet),
       remainingForFullSet: `₪${remainingForFullSet}`,
       paymentLink,
+      todayDate: new Date().toLocaleDateString("he-IL"),
     };
 
     const html = replaceTemplateVariables(template.body, vars);

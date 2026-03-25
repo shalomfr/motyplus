@@ -35,6 +35,7 @@ export function EmailPreview({ subject, body, recipient }: EmailPreviewProps) {
     remainingAmount: "350",
     remainingForFullSet: "₪350",
     paymentLink: "https://pay.example.com/link/demo",
+    todayDate: new Date().toLocaleDateString("he-IL"),
   }
 
   const FSI = "\u2068" // First Strong Isolate

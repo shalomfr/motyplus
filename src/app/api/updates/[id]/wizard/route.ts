@@ -53,6 +53,7 @@ function getSampleVariables(version: string): Record<string, string> {
     additionalOrganName: "",
     additionalOrganLine: "",
     customerId: "12345",
+    todayDate: new Date().toLocaleDateString("he-IL"),
   };
 }
 

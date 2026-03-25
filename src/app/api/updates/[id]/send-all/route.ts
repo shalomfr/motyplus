@@ -209,6 +209,7 @@ export async function POST(
               downloadLink,
               downloadLink2,
               customLink: "",
+              todayDate: new Date().toLocaleDateString("he-IL"),
             }
             const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
             await sendEmail({

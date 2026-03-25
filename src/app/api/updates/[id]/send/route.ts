@@ -64,6 +64,7 @@ export async function POST(
           rhythmsLink: updateVersion.rhythmsFileUrl || "",
           releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
           customLink: "",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         }
         const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
         await sendEmail({
@@ -280,6 +281,7 @@ export async function POST(
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
               releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
               customLink: "",
+              todayDate: new Date().toLocaleDateString("he-IL"),
             }
             const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
             await sendEmail({

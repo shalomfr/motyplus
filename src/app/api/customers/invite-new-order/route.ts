@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       orderFormUrl: ORDER_FORM_URL,
       paymentLink: ORDER_FORM_URL,
       newCustomerName: name.trim(),
+      todayDate: new Date().toLocaleDateString("he-IL"),
     }
 
     const html = replaceTemplateVariables(template.body, vars)

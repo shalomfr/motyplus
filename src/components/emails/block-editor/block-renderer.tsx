@@ -31,6 +31,7 @@ const SAMPLE_VARS: Record<string, string> = {
   paymentLink: "https://pay.example.com/link/demo",
   additionalOrganName: "",
   additionalOrganLine: "",
+  todayDate: new Date().toLocaleDateString("he-IL"),
 }
 
 const FSI = "\u2068" // First Strong Isolate
