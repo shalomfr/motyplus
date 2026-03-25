@@ -55,18 +55,19 @@ export function replaceTemplateVariables(
   template: string,
   variables: Record<string, string>
 ): string {
-  let result = template;
+  // Strip invisible BiDi/zero-width characters around braces that can prevent matching
+  let result = template.replace(/[\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF]/g, "");
   for (const [key, value] of Object.entries(variables)) {
     // Escape regex special characters in value to prevent injection
     const safeValue = value.replace(/\$/g, "$$$$");
     const isolated = `${FSI}${safeValue}${PDI}`;
     // Replace {{var}} format (double braces)
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), isolated);
+    result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), isolated);
     // Replace {var} format (single braces — common typo in subject lines)
-    result = result.replace(new RegExp(`(?<!\\{)\\{${key}\\}(?!\\})`, "g"), isolated);
+    result = result.replace(new RegExp(`(?<!\\{)\\{\\s*${key}\\s*\\}(?!\\})`, "g"), isolated);
     // Replace <span data-var="var">...</span> format (from rich editor variable badges)
     result = result.replace(
-      new RegExp(`<span[^>]*data-var="${key}"[^>]*>[^<]*</span>`, "g"),
+      new RegExp(`<span[^>]*data-var=["']?${key}["']?[^>]*>[^<]*</span>`, "g"),
       isolated
     );
   }
