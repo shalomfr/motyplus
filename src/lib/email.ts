@@ -60,8 +60,10 @@ export function replaceTemplateVariables(
     // Escape regex special characters in value to prevent injection
     const safeValue = value.replace(/\$/g, "$$$$");
     const isolated = `${FSI}${safeValue}${PDI}`;
-    // Replace {{var}} format
+    // Replace {{var}} format (double braces)
     result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), isolated);
+    // Replace {var} format (single braces — common typo in subject lines)
+    result = result.replace(new RegExp(`(?<!\\{)\\{${key}\\}(?!\\})`, "g"), isolated);
     // Replace <span data-var="var">...</span> format (from rich editor variable badges)
     result = result.replace(
       new RegExp(`<span[^>]*data-var="${key}"[^>]*>[^<]*</span>`, "g"),

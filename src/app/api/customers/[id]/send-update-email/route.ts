@@ -55,16 +55,21 @@ export async function POST(
       return NextResponse.json({ error: "אין עדכונים זמינים" }, { status: 400 });
     }
 
-    // בניית קישורים
-    const updateFile = latestVersion.updateFiles[0];
+    // בניית קישור מקצבים מתיקיית דרייב
+    const [organ, setType2] = await Promise.all([
+      prisma.organ.findUnique({ where: { id: customer.organId }, select: { demoAlias: true } }),
+      prisma.setType.findUnique({ where: { id: customer.setTypeId }, select: { demoAlias: true } }),
+    ]);
     let rhythmsLink = latestVersion.rhythmsFileUrl || "";
-    if (updateFile?.fileUrl) {
+    if (organ?.demoAlias && setType2?.demoAlias) {
+      const folderPath = `updates/beats/${organ.demoAlias}/${setType2.demoAlias}/${latestVersion.version} - ${organ.demoAlias}`;
       try {
-        rhythmsLink = await getShareableLink(updateFile.fileUrl);
+        rhythmsLink = await getShareableLink(folderPath);
       } catch {
         // fallback to generic URL
       }
     }
+    const updateFile = latestVersion.updateFiles[0];
     const downloadLink = updateFile?.fileUrl || rhythmsLink;
 
     // טעינת תבנית
