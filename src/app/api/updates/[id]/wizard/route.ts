@@ -200,6 +200,7 @@ export async function GET(
     const notUpdatedFiltered = notUpdated.length === 0
       ? allActive.filter((c) => {
           if (alreadyReceivedIds.has(c.id)) return false;
+          if (!c.organ?.supportsUpdates) return false;
           if (!c.setType?.includesUpdates) return false;
           if (!currentVersion) return c.currentUpdateVersion === null;
           return c.currentUpdateVersion !== currentVersion;

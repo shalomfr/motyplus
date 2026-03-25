@@ -48,6 +48,7 @@ export async function GET(
       where: {
         id: { notIn: alreadyReceivedIds.length > 0 ? alreadyReceivedIds : [-1] },
         status: { notIn: ["BLOCKED", "FROZEN"] },
+        organ: { supportsUpdates: true },
         setType: { includesUpdates: true },
         OR: [
           { updateExpiryDate: { gte: now } },

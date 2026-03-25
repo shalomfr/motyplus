@@ -113,7 +113,7 @@ export async function POST(
         updateExpiryDate: true,
         organId: true,
         setTypeId: true,
-        organ: { select: { name: true } },
+        organ: { select: { name: true, supportsUpdates: true } },
         additionalOrgan: { select: { name: true } },
         setType: { select: { includesUpdates: true, name: true } },
       },
@@ -152,9 +152,12 @@ export async function POST(
       })
     }
 
+    // סינון אורגנים שלא תומכים בעדכונים
+    eligible = eligible.filter(c => c.organ?.supportsUpdates)
+
     if (eligible.length === 0) {
       return NextResponse.json(
-        { error: force ? "הלקוח כבר קיבל את העדכון הזה" : "אין לקוחות זכאים לשליחה" },
+        { error: force ? "הלקוח כבר קיבל את העדכון הזה" : "אין לקוחות זכאים לשליחה — האורגן לא תומך בעדכונים" },
         { status: 400 }
       )
     }

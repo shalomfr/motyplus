@@ -304,6 +304,7 @@ export async function POST(
       const customers = await prisma.customer.findMany({
         where: {
           status: "ACTIVE",
+          organ: { supportsUpdates: true },
           setType: { includesUpdates: true },
           isCasual: false,
           OR: [
@@ -326,6 +327,7 @@ export async function POST(
       const customers = await prisma.customer.findMany({
         where: {
           status: "ACTIVE",
+          organ: { supportsUpdates: true },
           setType: { includesUpdates: false },
           isCasual: false,
         },

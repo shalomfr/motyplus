@@ -88,11 +88,15 @@ export function StepEmailSelect({
         }
         if (organsRes.ok) {
           const organs = await organsRes.json()
-          setAllOrgans(organs.map((o: { id: string; name: string }) => ({
-            organId: o.id,
-            organName: o.name,
-            count: 0,
-          })))
+          setAllOrgans(
+            organs
+              .filter((o: { supportsUpdates: boolean }) => o.supportsUpdates)
+              .map((o: { id: string; name: string }) => ({
+                organId: o.id,
+                organName: o.name,
+                count: 0,
+              }))
+          )
         }
         if (foldersRes.ok) {
           const foldersData = await foldersRes.json()
