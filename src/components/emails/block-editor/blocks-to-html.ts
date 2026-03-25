@@ -186,7 +186,7 @@ function wrapEmail(bodyContent: string): string {
 <tr><td align="center" style="padding:10px;">
 <div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #C5D5EA;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#124F90;" dir="rtl">
 <div style="background-color:#F6F9FE;border-radius:0;padding:20px 20px 0 20px;margin:0;">
-<div style="font-size:12px;font-weight:bold;color:#8fa3b9;margin-bottom:10px;text-align:right;">בס&quot;ד</div>
+<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:bold;color:#8fa3b9;margin-bottom:10px;"><span>{{todayDate}}</span><span>בס&quot;ד</span></div>
 <!-- BODY_START -->
 ${bodyContent}
 <!-- BODY_END -->

@@ -171,6 +171,8 @@ export async function POST(request: NextRequest) {
           driveLink: "",
           youtubeLink: "",
           customLink: "",
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
         const html = replaceTemplateVariables(template.body, variables);
@@ -257,6 +259,8 @@ export async function POST(request: NextRequest) {
           driveLink: "",
           youtubeLink: "",
           customLink: "",
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
         const html = replaceTemplateVariables(template.body, variables);

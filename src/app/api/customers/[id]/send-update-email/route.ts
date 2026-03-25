@@ -93,6 +93,8 @@ export async function POST(
       setType: customer.setType.name,
       customerId: String(customer.id),
       customLink: "",
+      orderFormLink: "https://motyplus-order.onrender.com/",
+      todayDate: new Date().toLocaleDateString("he-IL"),
     };
 
     const html = template

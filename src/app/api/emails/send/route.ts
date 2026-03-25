@@ -178,6 +178,8 @@ export async function POST(request: NextRequest) {
           youtubeLink: "",
           customLink: "",
           customerId: String(customer.id),
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
         const personalizedSubject = replaceTemplateVariables(finalSubject, variables);
@@ -228,6 +230,8 @@ export async function POST(request: NextRequest) {
           firstName: lead.fullName.split(" ")[0],
           email: lead.email,
           phone: lead.phone,
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
         const personalizedSubject = replaceTemplateVariables(finalSubject, variables);

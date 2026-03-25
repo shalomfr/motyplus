@@ -84,6 +84,8 @@ export async function POST(request: NextRequest) {
         updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
         currentVersion: customer.currentUpdateVersion || "לא עודכן",
         updateVersion: latestUpdateVersion?.version || "—",
+        orderFormLink: "https://motyplus-order.onrender.com/",
+        todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else if (leadId) {
       const lead = await prisma.lead.findUnique({
@@ -102,6 +104,8 @@ export async function POST(request: NextRequest) {
         firstName: lead.fullName.split(" ")[0],
         email: lead.email || "",
         phone: lead.phone,
+        orderFormLink: "https://motyplus-order.onrender.com/",
+        todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else {
       // משתנים לדוגמה
@@ -118,6 +122,8 @@ export async function POST(request: NextRequest) {
         ).toLocaleDateString("he-IL"),
         currentVersion: "V4",
         updateVersion: latestUpdateVersion?.version || "V5",
+        orderFormLink: "https://motyplus-order.onrender.com/",
+        todayDate: new Date().toLocaleDateString("he-IL"),
       };
     }
 
