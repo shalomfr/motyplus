@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Upload info file to Google Drive
+    // Upload info files to Google Drive
     try {
       const fileName = `${customer.id}.n27`;
       const url = await uploadFile(
@@ -123,9 +123,21 @@ export async function POST(request: NextRequest) {
         fileName,
         "customers/info"
       );
+      const updateData: Record<string, string> = { infoFileUrl: url };
+
+      if (pendingOrder.additionalInfoFileData && pendingOrder.additionalInfoFileData.length > 0) {
+        const addFileName = `${customer.id}_2.n27`;
+        const addUrl = await uploadFile(
+          Buffer.from(pendingOrder.additionalInfoFileData),
+          addFileName,
+          "customers/info"
+        );
+        updateData.additionalInfoFileUrl = addUrl;
+      }
+
       await prisma.customer.update({
         where: { id: customer.id },
-        data: { infoFileUrl: url },
+        data: updateData,
       });
     } catch (uploadErr) {
       console.error("Error uploading info file:", uploadErr);

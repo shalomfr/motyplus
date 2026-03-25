@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const isUpdateOnly = formData.get("isUpdateOnly") === "true";
     const notes = formData.get("notes") as string | null;
     const infoFile = formData.get("infoFile") as File | null;
+    const additionalInfoFile = formData.get("additionalInfoFile") as File | null;
     const couponCode = formData.get("couponCode") as string | null;
     const customAmountStr = formData.get("customAmount") as string | null;
     const customDescription = formData.get("customDescription") as string | null;
@@ -81,13 +82,20 @@ export async function POST(request: NextRequest) {
       promotionId = promotion.id;
     }
 
-    // Read info file
+    // Read info files
     let infoFileData = Buffer.alloc(0);
     let infoFileName = "";
     if (infoFile) {
       const bytes = await infoFile.bytes();
       infoFileData = Buffer.from(bytes);
       infoFileName = infoFile.name;
+    }
+    let additionalInfoFileData: Uint8Array | null = null;
+    let additionalInfoFileName: string | null = null;
+    if (additionalInfoFile) {
+      const bytes = await additionalInfoFile.bytes();
+      additionalInfoFileData = new Uint8Array(bytes);
+      additionalInfoFileName = additionalInfoFile.name;
     }
 
     // 100% discount — create customer directly without payment
@@ -141,13 +149,21 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Upload info file
+      // Upload info files
       try {
         if (infoFileData.length > 0) {
           const { uploadFile } = await import("@/lib/file-storage");
           const fileName = `${customer.id}.n27`;
           const url = await uploadFile(Buffer.from(infoFileData), fileName, "customers/info");
-          await prisma.customer.update({ where: { id: customer.id }, data: { infoFileUrl: url } });
+          const updateData: Record<string, string> = { infoFileUrl: url };
+
+          if (additionalInfoFileData && additionalInfoFileData.length > 0) {
+            const addFileName = `${customer.id}_2.n27`;
+            const addUrl = await uploadFile(Buffer.from(additionalInfoFileData), addFileName, "customers/info");
+            updateData.additionalInfoFileUrl = addUrl;
+          }
+
+          await prisma.customer.update({ where: { id: customer.id }, data: updateData });
         }
       } catch (e) {
         console.error("Error uploading info file (free order):", e);
@@ -217,6 +233,8 @@ export async function POST(request: NextRequest) {
         amount,
         infoFileData,
         infoFileName,
+        additionalInfoFileData: additionalInfoFileData ? new Uint8Array(additionalInfoFileData.buffer) as Uint8Array<ArrayBuffer> : null,
+        additionalInfoFileName,
         notes,
       },
     });

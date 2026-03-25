@@ -549,6 +549,8 @@ model PendingOrder {
   amount          Decimal  @db.Decimal(10, 2)
   infoFileData    Bytes
   infoFileName    String
+  additionalInfoFileData Bytes?
+  additionalInfoFileName String?
   notes           String?  @db.Text
   status          String   @default("PENDING") // PENDING, COMPLETED, EXPIRED
   createdAt       DateTime @default(now())
