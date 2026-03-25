@@ -162,26 +162,30 @@ export function StepEmailSelect({
   }, [templates, folders])
 
   // Folder-name based filtering for each segment
-  const eligibleFolderIds = useMemo(() => {
-    // "מעודכנים" but NOT "לא מעודכנים"
-    return new Set(
-      folders
-        .filter((f) => f.name.includes("מעודכנים") && !f.name.includes("לא"))
-        .map((f) => f.id)
-    )
+  const segmentFolderMap = useMemo(() => {
+    const map: Record<string, Set<string>> = {
+      eligible: new Set<string>(),
+      not_updated: new Set<string>(),
+      half_set: new Set<string>(),
+    }
+    for (const f of folders) {
+      const name = f.name.trim()
+      // Exact matching to avoid "לא מעודכנים" being included in "מעודכנים"
+      if (name === "מעודכנים") {
+        map.eligible.add(f.id)
+      } else if (name === "לא מעודכנים") {
+        map.not_updated.add(f.id)
+      } else if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
+        map.not_updated.add(f.id)
+        map.half_set.add(f.id)
+      }
+    }
+    return map
   }, [folders])
 
-  const notUpdatedFolderIds = useMemo(() => {
-    // "לא מעודכנים"
-    return new Set(
-      folders
-        .filter((f) => f.name.includes("לא מעודכנים"))
-        .map((f) => f.id)
-    )
-  }, [folders])
-
-  const filterGroupsByFolder = (groups: typeof groupedTemplates, allowedIds: Set<string>) => {
-    if (allowedIds.size === 0) return groups // fallback: show all if no matching folders
+  const filterGroupsBySegment = (groups: typeof groupedTemplates, segmentKey: string) => {
+    const allowedIds = segmentFolderMap[segmentKey]
+    if (!allowedIds || allowedIds.size === 0) return groups // fallback: show all if no matching folders
     return groups.filter((g) => g.folderId != null && allowedIds.has(g.folderId))
   }
 
@@ -363,7 +367,7 @@ export function StepEmailSelect({
                     selected?.templateId,
                     `eligible:${group.organId}`,
                     (t) => selectForOrgan(group.organId, t),
-                    filterGroupsByFolder(groupedTemplates, eligibleFolderIds),
+                    filterGroupsBySegment(groupedTemplates, "eligible"),
                   )}
                 </div>
               </div>
@@ -387,7 +391,7 @@ export function StepEmailSelect({
             templateMap.not_updated?.templateId,
             "not_updated",
             (t) => selectForSegment("not_updated", t),
-            filterGroupsByFolder(groupedTemplates, notUpdatedFolderIds),
+            filterGroupsBySegment(groupedTemplates, "not_updated"),
           )}
         </SegmentSection>
       )}
@@ -407,7 +411,7 @@ export function StepEmailSelect({
             templateMap.half_set?.templateId,
             "half_set",
             (t) => selectForSegment("half_set", t),
-            filterGroupsByFolder(groupedTemplates, notUpdatedFolderIds),
+            filterGroupsBySegment(groupedTemplates, "half_set"),
           )}
         </SegmentSection>
       )}
