@@ -97,7 +97,9 @@ export function replaceTemplateVariables(
   // Second pass: replace English variables with actual values
   for (const [key, value] of Object.entries(variables)) {
     const safeValue = value.replace(/\$/g, "$$$$");
-    const isolated = `${FSI}${safeValue}${PDI}`;
+    // Don't wrap URLs in BiDi characters — they break href attributes
+    const isUrl = /^https?:\/\//.test(value);
+    const isolated = isUrl ? safeValue : `${FSI}${safeValue}${PDI}`;
     // Replace {{var}} format (double braces)
     result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), isolated);
     // Replace {var} format (single braces)
