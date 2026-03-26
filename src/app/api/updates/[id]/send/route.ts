@@ -398,7 +398,7 @@ export async function POST(
     }
 
     // עדכון סטטוס העדכון
-    if (results.sent > 0 && (updateVersion.status === "DRAFT" || updateVersion.status === "READY")) {
+    if (results.sent > 0 && updateVersion.status === "READY") {
       await prisma.updateVersion.update({
         where: { id },
         data: { status: "SENDING" },
