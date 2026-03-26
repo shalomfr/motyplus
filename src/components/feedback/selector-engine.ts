@@ -39,11 +39,11 @@ export function getSelector(el: Element): string {
       /* continue */
     }
 
-    const parent = current.parentElement;
+    const parent: Element | null = current.parentElement;
     if (parent) {
       const siblings = Array.from(parent.children).filter((s) => s.tagName === current!.tagName);
       if (siblings.length > 1) {
-        path[0] = segment + `:nth-child(${siblings.indexOf(current) + 1})`;
+        path[0] = segment + `:nth-child(${siblings.indexOf(current!) + 1})`;
         try {
           if (document.querySelectorAll(path.join(" > ")).length === 1) return path.join(" > ");
         } catch {
