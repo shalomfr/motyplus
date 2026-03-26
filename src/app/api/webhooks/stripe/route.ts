@@ -166,9 +166,10 @@ export async function POST(request: NextRequest) {
       });
 
       // Increment promotion usage after successful payment
-      if (order.promotionId) {
+      const promotionId = session.metadata?.promotionId;
+      if (promotionId) {
         await prisma.promotion.update({
-          where: { id: order.promotionId },
+          where: { id: promotionId },
           data: { currentUses: { increment: 1 } },
         });
       }
