@@ -61,6 +61,9 @@ export function CustomerBalanceCard({ customerId, customerName, customerEmail, a
   const config = STATUS_CONFIG[details.type]
   const Icon = config.icon
   const progressPercent = computeProgress(details)
+  const updateProgressPercent = details.totalUpdates > 0
+    ? Math.round((details.completedUpdates / details.totalUpdates) * 100)
+    : 100
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", maximumFractionDigits: 0 }).format(n)
 
@@ -105,6 +108,23 @@ export function CustomerBalanceCard({ customerId, customerName, customerEmail, a
               {details.totalOwed > 0 ? formatCurrency(details.totalOwed) : "שולם במלואו"}
             </span>
           </div>
+
+          {/* Update progress bar */}
+          {details.totalUpdates > 0 && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>מצב עדכונים: {details.currentVersion || "—"} מתוך {details.latestVersion || "—"}</span>
+                <span>{updateProgressPercent}%</span>
+              </div>
+              <Progress
+                value={updateProgressPercent}
+                className={cn(
+                  "h-2.5",
+                  details.completedUpdates >= details.totalUpdates ? "[&>div]:bg-green-500" : "[&>div]:bg-amber-500"
+                )}
+              />
+            </div>
+          )}
 
           {/* Version info */}
           <div className="flex justify-between text-sm">

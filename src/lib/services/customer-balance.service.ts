@@ -16,6 +16,8 @@ export interface BalanceDetails {
   setPrice: number;
   description: string;
   discountPercent: number | null;
+  totalUpdates: number;
+  completedUpdates: number;
 }
 
 export async function getCustomerBalanceDetails(
@@ -45,7 +47,8 @@ export async function getCustomerBalanceDetails(
     return buildFullSetBalance(customer, allUpdates, latestVersion, amountPaid, setPrice, discountPercent);
   }
 
-  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion, discountPercent);
+  const halfSetMissing = findMissingUpdates(customer.currentUpdateVersion, allUpdates);
+  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion, discountPercent, allUpdates.length, allUpdates.length - halfSetMissing.length);
 }
 
 // ===== Helpers =====
@@ -60,6 +63,8 @@ function buildFullSetBalance(
 ): BalanceDetails {
   const isInPeriod = new Date() <= customer.updateExpiryDate;
   const isException = customer.status === "EXCEPTION";
+  const totalUpdates = allUpdates.length;
+  const completedUpdates = totalUpdates - findMissingUpdates(customer.currentUpdateVersion, allUpdates).length;
 
   if (isInPeriod || isException) {
     return {
@@ -73,6 +78,8 @@ function buildFullSetBalance(
       setPrice,
       description: "מעודכן — אין יתרה",
       discountPercent,
+      totalUpdates,
+      completedUpdates: totalUpdates,
     };
   }
 
@@ -95,6 +102,8 @@ function buildFullSetBalance(
     setPrice,
     description,
     discountPercent,
+    totalUpdates,
+    completedUpdates: totalUpdates - missing.length,
   };
 }
 
@@ -104,6 +113,8 @@ async function buildHalfSetBalance(
   setPrice: number,
   latestVersion: string | null,
   discountPercent: number | null,
+  totalUpdates: number = 0,
+  completedUpdates: number = 0,
 ): Promise<BalanceDetails> {
   const fullSet = await prisma.setType.findFirst({
     where: { includesUpdates: true },
@@ -133,6 +144,8 @@ async function buildHalfSetBalance(
       ? `השלמת סט שלם — חסר ₪${completionCost.toLocaleString("he-IL")}`
       : "שולם במלואו",
     discountPercent,
+    totalUpdates,
+    completedUpdates,
   };
 }
 
