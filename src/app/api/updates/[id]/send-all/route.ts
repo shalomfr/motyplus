@@ -239,7 +239,7 @@ export async function POST(
               setType: customer.setType?.name || "",
               samplesLink: downloadLink,
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
-              releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
+              releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
               downloadLink,
               downloadLink2,
               customLink: "",

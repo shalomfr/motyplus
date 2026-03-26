@@ -62,7 +62,7 @@ export async function POST(
           downloadLink: "",
           downloadLink2: "",
           rhythmsLink: updateVersion.rhythmsFileUrl || "",
-          releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
+          releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           customLink: "",
           todayDate: new Date().toLocaleDateString("he-IL"),
         }
@@ -282,7 +282,7 @@ export async function POST(
               downloadLink,
               downloadLink2,
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
-              releaseDate: updateVersion.releaseDate ? new Date(updateVersion.releaseDate).toLocaleDateString("he-IL") : "",
+              releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
               customLink: "",
               todayDate: new Date().toLocaleDateString("he-IL"),
             }
