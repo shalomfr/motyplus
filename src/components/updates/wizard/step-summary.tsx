@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Music,
   Users,
+  Send,
 } from "lucide-react"
 
 interface Segment {
@@ -30,6 +31,7 @@ interface StepSummaryProps {
   cpiStatus: { ready: number; total: number }
   foldersReady: boolean
   alreadySent: number
+  onGoToSend: () => void
 }
 
 export function StepSummary({
@@ -39,6 +41,7 @@ export function StepSummary({
   cpiStatus,
   foldersReady,
   alreadySent,
+  onGoToSend,
 }: StepSummaryProps) {
   const router = useRouter()
   const [finishing, setFinishing] = useState(false)
@@ -48,7 +51,31 @@ export function StepSummary({
   const eligibleCount = eligibleSegment?.count || 0
   const totalCustomers = segments.reduce((sum, s) => sum + s.count, 0)
 
-  const handleFinish = async () => {
+  const handleGoToSend = async () => {
+    setFinishing(true)
+    setError("")
+
+    try {
+      const res = await fetch(`/api/updates/${updateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "READY" }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "שגיאה בעדכון הסטטוס")
+      }
+
+      onGoToSend()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה בעדכון הסטטוס")
+    } finally {
+      setFinishing(false)
+    }
+  }
+
+  const handleSaveOnly = async () => {
     setFinishing(true)
     setError("")
 
@@ -172,10 +199,10 @@ export function StepSummary({
         </CardContent>
       </Card>
 
-      {/* Finish Button */}
-      <div className="border-t pt-4">
+      {/* Action Buttons */}
+      <div className="border-t pt-4 space-y-3">
         <Button
-          onClick={handleFinish}
+          onClick={handleGoToSend}
           disabled={finishing}
           className="w-full bg-green-600 hover:bg-green-700"
           size="lg"
@@ -183,13 +210,19 @@ export function StepSummary({
           {finishing ? (
             <Loader2 className="h-5 w-5 animate-spin ml-2" />
           ) : (
-            <CheckCircle2 className="h-5 w-5 ml-2" />
+            <Send className="h-5 w-5 ml-2" />
           )}
-          {finishing ? "מסיים..." : "סיום הכנת העדכון"}
+          {finishing ? "מסיים..." : "סיום הכנה ומעבר לשליחה"}
         </Button>
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          לאחר סיום ההכנה, ניתן לשלוח את העדכון מדף פרטי העדכון
-        </p>
+        <Button
+          onClick={handleSaveOnly}
+          disabled={finishing}
+          variant="outline"
+          className="w-full"
+          size="lg"
+        >
+          שמור מבלי לשלוח
+        </Button>
       </div>
 
       {/* Error */}

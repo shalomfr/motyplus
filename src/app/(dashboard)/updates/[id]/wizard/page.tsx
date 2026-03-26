@@ -175,6 +175,7 @@ export default function UpdateWizardPage({
         onStepChange={handleStepChange}
         canGoNext={true}
         completedSteps={completedSteps}
+        hideNavigation={activeStepKey === "summary" || activeStepKey === "send"}
       >
         {activeStepKey === "details" && (
           <StepDetails
@@ -231,6 +232,10 @@ export default function UpdateWizardPage({
             cpiStatus={wizardData.cpiStatus}
             alreadySent={wizardData.alreadySent}
             foldersReady={foldersReady}
+            onGoToSend={() => {
+              const sendIndex = wizardSteps.findIndex((s) => s.key === "send")
+              if (sendIndex >= 0) handleStepChange(sendIndex)
+            }}
           />
         )}
 
