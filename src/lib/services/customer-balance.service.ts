@@ -18,6 +18,7 @@ export interface BalanceDetails {
   discountPercent: number | null;
   totalUpdates: number;
   completedUpdates: number;
+  organSupportsUpdates: boolean;
 }
 
 export async function getCustomerBalanceDetails(
@@ -25,7 +26,7 @@ export async function getCustomerBalanceDetails(
 ): Promise<BalanceDetails | null> {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
-    include: { setType: true, promotion: true },
+    include: { setType: true, promotion: true, organ: true },
   });
   if (!customer) return null;
 
@@ -43,12 +44,14 @@ export async function getCustomerBalanceDetails(
   const setPrice = Number(customer.setType.price);
   const discountPercent = customer.promotion?.discountPercent || null;
 
+  const organSupportsUpdates = customer.organ.supportsUpdates;
+
   if (customer.setType.includesUpdates) {
-    return buildFullSetBalance(customer, allUpdates, latestVersion, amountPaid, setPrice, discountPercent);
+    return buildFullSetBalance(customer, allUpdates, latestVersion, amountPaid, setPrice, discountPercent, organSupportsUpdates);
   }
 
   const halfSetMissing = findMissingUpdates(customer.currentUpdateVersion, allUpdates);
-  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion, discountPercent, allUpdates.length, allUpdates.length - halfSetMissing.length);
+  return buildHalfSetBalance(customer, amountPaid, setPrice, latestVersion, discountPercent, allUpdates.length, allUpdates.length - halfSetMissing.length, organSupportsUpdates);
 }
 
 // ===== Helpers =====
@@ -60,6 +63,7 @@ function buildFullSetBalance(
   amountPaid: number,
   setPrice: number,
   discountPercent: number | null,
+  organSupportsUpdates: boolean,
 ): BalanceDetails {
   const isInPeriod = new Date() <= customer.updateExpiryDate;
   const isException = customer.status === "EXCEPTION";
@@ -80,6 +84,7 @@ function buildFullSetBalance(
       discountPercent,
       totalUpdates,
       completedUpdates: totalUpdates,
+      organSupportsUpdates,
     };
   }
 
@@ -104,6 +109,7 @@ function buildFullSetBalance(
     discountPercent,
     totalUpdates,
     completedUpdates: totalUpdates - missing.length,
+    organSupportsUpdates,
   };
 }
 
@@ -115,6 +121,7 @@ async function buildHalfSetBalance(
   discountPercent: number | null,
   totalUpdates: number = 0,
   completedUpdates: number = 0,
+  organSupportsUpdates: boolean = false,
 ): Promise<BalanceDetails> {
   const fullSet = await prisma.setType.findFirst({
     where: { includesUpdates: true },
@@ -146,6 +153,7 @@ async function buildHalfSetBalance(
     discountPercent,
     totalUpdates,
     completedUpdates,
+    organSupportsUpdates,
   };
 }
 

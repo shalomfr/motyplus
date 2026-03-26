@@ -58,6 +58,9 @@ export function CustomerBalanceCard({ customerId, customerName, customerEmail, a
 
   if (!details) return null
 
+  // אורגן ללא עדכונים — לא מציג את הכרטיס כלל
+  if (!details.organSupportsUpdates) return null
+
   const config = STATUS_CONFIG[details.type]
   const Icon = config.icon
   const progressPercent = computeProgress(details)
