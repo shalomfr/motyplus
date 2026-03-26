@@ -217,25 +217,26 @@ export async function listFiles(prefix: string): Promise<{ path: string; size: n
 
 export async function shareFile(
   path: string,
-  email: string,
-  role: "reader" | "writer" = "reader"
+  _email: string,
+  _role: "reader" | "writer" = "reader"
 ): Promise<string> {
   const fileId = await resolveFileId(path);
   if (!fileId) throw new Error(`File not found: ${path}`);
 
   const drive = getDrive();
+
+  // שיתוף עם "כל מי שיש לו את הלינק" — עובד לכל סוגי מייל (לא רק Gmail)
   await drive.permissions.create({
     fileId,
     requestBody: {
-      type: "user",
-      role,
-      emailAddress: email,
+      type: "anyone",
+      role: "reader",
     },
-    sendNotificationEmail: false,
   });
 
-  const file = await drive.files.get({ fileId, fields: "webViewLink" });
-  return file.data.webViewLink || "";
+  const file = await drive.files.get({ fileId, fields: "webContentLink, webViewLink" });
+  // webContentLink = הורדה ישירה, webViewLink = צפייה בדרייב
+  return file.data.webContentLink || file.data.webViewLink || "";
 }
 
 export async function getShareableLink(path: string): Promise<string> {
