@@ -71,7 +71,7 @@ export default function UpdateDetailsPage() {
   const [deleting, setDeleting] = useState(false)
   const [sendingAll, setSendingAll] = useState(false)
   const [sendAllResult, setSendAllResult] = useState<{
-    sent: number; failed: number; skippedNoFile: number; total: number
+    sent: number; emailSent: number; emailSkipped: number; failed: number; skippedNoFile: number; total: number
   } | null>(null)
 
   const fetchUpdate = async () => {
@@ -255,7 +255,8 @@ export default function UpdateDetailsPage() {
         <Card className="border-blue-200 bg-orange-50">
           <CardContent className="p-4">
             <p className="font-medium text-blue-800">
-              תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות
+              תוצאות שליחה לכולם: נשלח ל-{sendAllResult.sent} לקוחות | {sendAllResult.emailSent} מיילים נשלחו
+              {sendAllResult.emailSkipped > 0 && ` | ${sendAllResult.emailSkipped} ללא תבנית מייל`}
               {sendAllResult.skippedNoFile > 0 && ` | ${sendAllResult.skippedNoFile} דולגו (אין קובץ CPI)`}
               {sendAllResult.failed > 0 && ` | ${sendAllResult.failed} נכשלו`}
             </p>

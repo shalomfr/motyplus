@@ -164,6 +164,8 @@ export async function POST(
     // שליחת עדכון לכל לקוח זכאי
     const results = {
       sent: 0,
+      emailSent: 0,
+      emailSkipped: 0,
       skippedNoFile: 0,
       failed: 0,
       total: eligibleCustomers.length,
@@ -244,14 +246,22 @@ export async function POST(
               todayDate: new Date().toLocaleDateString("he-IL"),
             }
             const html = replaceTemplateVariables(emailBody, templateVars)
-            await sendEmail({
+            const emailResult = await sendEmail({
               to: customer.email,
               subject: replaceTemplateVariables(emailSubject, templateVars),
               html,
             })
+            if (emailResult.success) {
+              results.emailSent++
+            } else {
+              console.error(`Email failed for customer ${customer.id}:`, emailResult.error)
+            }
           } catch (err) {
             console.error(`Failed to send email to customer ${customer.id}:`, err)
           }
+        } else {
+          results.emailSkipped++
+          console.warn(`No email template for customer ${customer.id} (organ: ${customer.organId}). emailSubject: ${!!emailSubject}, emailBody: ${!!emailBody}`)
         }
 
         // שליחת WhatsApp
@@ -303,8 +313,10 @@ export async function POST(
     }
 
     return NextResponse.json({
-      message: `העדכון נשלח בהצלחה ל-${results.sent} לקוחות`,
+      message: `העדכון נשלח בהצלחה ל-${results.sent} לקוחות (${results.emailSent} מיילים נשלחו${results.emailSkipped > 0 ? `, ${results.emailSkipped} ללא תבנית מייל` : ""})`,
       sent: results.sent,
+      emailSent: results.emailSent,
+      emailSkipped: results.emailSkipped,
       skippedNoFile: results.skippedNoFile,
       failed: results.failed,
       total: results.total,

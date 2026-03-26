@@ -46,9 +46,38 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
 const FSI = "\u2068"; // First Strong Isolate
 const PDI = "\u2069"; // Pop Directional Isolate
 
+// Hebrew label → English variable name mapping
+// Allows {{גרסת_עדכון}} or {{גרסת עדכון}} to work as {{updateVersion}}
+const HEBREW_ALIAS_MAP: Record<string, string> = {
+  "שם_מלא": "fullName", "שם מלא": "fullName",
+  "שם_פרטי": "firstName", "שם פרטי": "firstName",
+  "מייל": "email",
+  "טלפון": "phone",
+  "אורגן": "organ",
+  "סוג_סט": "setType", "סוג סט": "setType",
+  "תאריך_רכישה": "purchaseDate", "תאריך רכישה": "purchaseDate",
+  "תפוגת_עדכון": "updateExpiryDate", "תפוגת עדכון": "updateExpiryDate",
+  "גרסה_נוכחית": "currentVersion", "גרסה נוכחית": "currentVersion",
+  "גרסת_עדכון": "updateVersion", "גרסת עדכון": "updateVersion",
+  "תאריך_שחרור": "releaseDate", "תאריך שחרור": "releaseDate",
+  "סכום_ששולם": "amountPaid", "סכום ששולם": "amountPaid",
+  "יתרה_לתשלום": "remainingAmount", "יתרה לתשלום": "remainingAmount",
+  "יתרה_להשלמת_סט": "remainingForFullSet", "יתרה להשלמת סט": "remainingForFullSet",
+  "קישור_דגימות": "samplesLink", "קישור דגימות": "samplesLink",
+  "קישור_מקצבים": "rhythmsLink", "קישור מקצבים": "rhythmsLink",
+  "קישור_דרייב": "driveLink", "קישור דרייב": "driveLink",
+  "קישור_יוטיוב": "youtubeLink", "קישור יוטיוב": "youtubeLink",
+  "קישור_חריג": "customLink", "קישור חריג": "customLink",
+  "מזהה_לקוח": "customerId", "מזהה לקוח": "customerId",
+  "לינק_תשלום_אישי": "paymentLink", "לינק תשלום אישי": "paymentLink",
+  "לינק_טופס_הזמנה": "orderFormLink", "לינק טופס הזמנה": "orderFormLink",
+  "לקוח_חדש": "newCustomerName", "לקוח חדש": "newCustomerName",
+  "תאריך_היום": "todayDate", "תאריך היום": "todayDate",
+};
+
 /**
  * Replace dynamic variables in email template
- * Variables format: {{variableName}}
+ * Variables format: {{variableName}} or {{שם_עברי}}
  * Each replaced value is wrapped in FSI/PDI to prevent BiDi reordering
  */
 export function replaceTemplateVariables(
@@ -57,13 +86,21 @@ export function replaceTemplateVariables(
 ): string {
   // Strip invisible BiDi/zero-width characters around braces that can prevent matching
   let result = template.replace(/[\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF]/g, "");
+
+  // First pass: replace Hebrew aliases with English variable names
+  for (const [hebrewKey, englishKey] of Object.entries(HEBREW_ALIAS_MAP)) {
+    const escapedKey = hebrewKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, "g"), `{{${englishKey}}}`);
+    result = result.replace(new RegExp(`(?<!\\{)\\{\\s*${escapedKey}\\s*\\}(?!\\})`, "g"), `{${englishKey}}`);
+  }
+
+  // Second pass: replace English variables with actual values
   for (const [key, value] of Object.entries(variables)) {
-    // Escape regex special characters in value to prevent injection
     const safeValue = value.replace(/\$/g, "$$$$");
     const isolated = `${FSI}${safeValue}${PDI}`;
     // Replace {{var}} format (double braces)
     result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), isolated);
-    // Replace {var} format (single braces — common typo in subject lines)
+    // Replace {var} format (single braces)
     result = result.replace(new RegExp(`(?<!\\{)\\{\\s*${key}\\s*\\}(?!\\})`, "g"), isolated);
     // Replace <span data-var="var">...</span> format (from rich editor variable badges)
     result = result.replace(
