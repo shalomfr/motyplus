@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2, CreditCard } from "lucide-react"
+import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2, CreditCard, Send } from "lucide-react"
 import { WizardShell } from "@/components/updates/wizard/wizard-shell"
 import { StepDetails, type UpdateDetailsData } from "@/components/updates/wizard/step-details"
 import { StepRhythms } from "@/components/updates/wizard/step-rhythms"
@@ -12,6 +12,7 @@ import { StepEmailSelect } from "@/components/updates/wizard/step-email-select"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
 import { StepQuotes } from "@/components/updates/wizard/step-quotes"
+import { StepSend } from "@/components/updates/wizard/step-send"
 
 const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
@@ -21,6 +22,7 @@ const ALL_WIZARD_STEPS = [
   { key: "emails", label: "תצוגת מייל", icon: <Mail className="h-4 w-4" /> },
   { key: "quotes", label: "הצעות מחיר", icon: <CreditCard className="h-4 w-4" /> },
   { key: "summary", label: "סיכום", icon: <CheckCircle2 className="h-4 w-4" /> },
+  { key: "send", label: "שליחה", icon: <Send className="h-4 w-4" /> },
 ]
 
 interface WizardData {
@@ -123,7 +125,7 @@ export default function UpdateWizardPage({
 
   const handleStepChange = (step: number) => {
     const stepKey = wizardSteps[step]?.key
-    if (stepKey === "emails" || stepKey === "quotes" || stepKey === "summary") {
+    if (stepKey === "emails" || stepKey === "quotes" || stepKey === "summary" || stepKey === "send") {
       fetchWizardData()
       fetchFolderStatus()
     }
@@ -227,6 +229,16 @@ export default function UpdateWizardPage({
             version={wizardData.updateVersion.version}
             segments={wizardData.segments}
             cpiStatus={wizardData.cpiStatus}
+            alreadySent={wizardData.alreadySent}
+            foldersReady={foldersReady}
+          />
+        )}
+
+        {activeStepKey === "send" && (
+          <StepSend
+            updateId={id}
+            version={wizardData.updateVersion.version}
+            segments={wizardData.segments}
             alreadySent={wizardData.alreadySent}
             foldersReady={foldersReady}
           />
