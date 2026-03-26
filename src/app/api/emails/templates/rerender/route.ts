@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html"
@@ -45,7 +46,7 @@ export async function POST() {
 
     let versionsUpdated = 0
     const versions = await prisma.updateVersion.findMany({
-      where: { emailTemplateMap: { not: null } },
+      where: { emailTemplateMap: { not: Prisma.DbNull } },
       select: { id: true, emailTemplateMap: true },
     })
 
