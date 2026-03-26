@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activity-logger"
 import { sendEmail, replaceTemplateVariables } from "@/lib/email"
 import { sendWhatsApp } from "@/lib/whatsapp"
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
+import { getBillingClient } from "@/lib/billing"
 
 // POST /api/updates/[id]/send — שיתוף קבצי CPI ושליחת מייל + WhatsApp ללקוחות זכאים
 export async function POST(
@@ -117,7 +118,10 @@ export async function POST(
         setTypeId: true,
         organ: { select: { name: true, supportsUpdates: true } },
         additionalOrgan: { select: { name: true } },
-        setType: { select: { includesUpdates: true, name: true } },
+        setType: { select: { includesUpdates: true, name: true, price: true } },
+        amountPaid: true,
+        purchaseDate: true,
+        currentUpdateVersion: true,
       },
     })
 
@@ -269,6 +273,34 @@ export async function POST(
             const additionalOrganLine = additionalOrganName && downloadLink2
               ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>`
               : ""
+            // חישוב יתרה ולינק תשלום
+            const fullSetPrice = customer.setType?.price ? Number(customer.setType.price) : 0;
+            const paid = Number(customer.amountPaid || 0);
+            const remaining = Math.max(0, fullSetPrice - paid);
+
+            let paymentLink = "";
+            const needsPaymentLink = (updateVersion.emailBody || "").includes("{{paymentLink}}") || (updateVersion.emailSubject || "").includes("{{paymentLink}}");
+            if (needsPaymentLink && remaining > 0) {
+              const billing = await getBillingClient();
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+              if (billing) {
+                try {
+                  const page = await billing.client.createPaymentPage({
+                    customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+                    items: [{ description: `השלמת תשלום — ${customer.setType?.name || ""}`, quantity: 1, unitPrice: remaining }],
+                    successUrl: `${baseUrl}/order/success`,
+                    cancelUrl: `${baseUrl}/order/cancel`,
+                    autoCreateDoc: true,
+                    docType: "invoice_receipt",
+                    metadata: { customerId: String(customer.id), source: "email_send" },
+                  });
+                  paymentLink = page.url;
+                } catch (err) {
+                  console.error(`Failed to create payment link for customer ${customer.id}:`, err);
+                }
+              }
+            }
+
             const templateVars = {
               customerName: customer.fullName,
               fullName: customer.fullName,
@@ -286,6 +318,15 @@ export async function POST(
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
               releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
               customLink: "",
+              orderFormLink: "https://motyplus-order.onrender.com/",
+              termsLink: "https://motyplus-order.onrender.com/terms",
+              updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "",
+              currentVersion: customer.currentUpdateVersion || "—",
+              amountPaid: String(paid),
+              purchaseDate: customer.purchaseDate ? new Date(customer.purchaseDate).toLocaleDateString("he-IL") : "",
+              remainingAmount: String(remaining),
+              remainingForFullSet: remaining > 0 ? `₪${remaining}` : "₪0",
+              paymentLink,
               todayDate: new Date().toLocaleDateString("he-IL"),
             }
             const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)

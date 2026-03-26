@@ -89,6 +89,11 @@ export interface SignatureBlock {
   id: string
 }
 
+export interface BrandBannerBlock {
+  type: "brandBanner"
+  id: string
+}
+
 export interface ImageBlock {
   type: "image"
   id: string
@@ -121,6 +126,7 @@ export type EmailBlock =
   | BankTableBlock
   | WarningBlock
   | SignatureBlock
+  | BrandBannerBlock
   | ImageBlock
   | DividerBlock
   | InstructionsBlock
@@ -138,6 +144,7 @@ export const BLOCK_LABELS: Record<EmailBlock["type"], string> = {
   bankTable: "טבלת פרטי בנק",
   warning: "אזהרה",
   signature: "חתימה",
+  brandBanner: "באנר מיתוג",
   image: "תמונה",
   divider: "קו מפריד",
   instructions: "הוראות",
@@ -181,6 +188,8 @@ export function createDefaultBlock(type: EmailBlock["type"]): EmailBlock {
     case "warning":
       return { type, id, text: "" }
     case "signature":
+      return { type, id }
+    case "brandBanner":
       return { type, id }
     case "image":
       return { type, id, url: "", alt: "" }

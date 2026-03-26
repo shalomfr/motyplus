@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import {
   Heading1, Heading2, MessageSquare, Type, FolderOpen, List, MousePointer2,
-  Percent, Building2, AlertTriangle, PenLine, ImageIcon, Minus, BookOpen, Plus,
+  Percent, Building2, AlertTriangle, PenLine, ImageIcon, Minus, BookOpen, Plus, Flag,
 } from "lucide-react"
 import type { EmailBlock } from "./types"
 
@@ -25,6 +25,7 @@ const BLOCK_OPTIONS: Array<{ type: EmailBlock["type"]; label: string; icon: type
   { type: "bankTable", label: "טבלת בנק", icon: Building2 },
   { type: "warning", label: "אזהרה", icon: AlertTriangle },
   { type: "signature", label: "חתימה", icon: PenLine },
+  { type: "brandBanner", label: "באנר מיתוג", icon: Flag },
   { type: "image", label: "תמונה", icon: ImageIcon },
   { type: "divider", label: "מפריד", icon: Minus },
 ]

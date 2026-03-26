@@ -4,6 +4,31 @@ import { auth } from "@/lib/auth";
 import { emailTemplateSchema } from "@/lib/validators";
 import { blocksToHtml } from "@/components/emails/block-editor/blocks-to-html";
 import type { EmailBlock } from "@/components/emails/block-editor/types";
+import { uploadFile, getShareableLink } from "@/lib/file-storage";
+
+async function uploadBlockImages(blocks: EmailBlock[]): Promise<EmailBlock[]> {
+  const processed: EmailBlock[] = []
+  for (const block of blocks) {
+    if (block.type === "image" && block.url && block.url.startsWith("data:")) {
+      try {
+        const match = block.url.match(/^data:(image\/\w+);base64,(.+)$/)
+        if (match) {
+          const ext = match[1].split("/")[1].replace("jpeg", "jpg")
+          const buffer = Buffer.from(match[2], "base64")
+          const filename = `email-img-${Date.now()}.${ext}`
+          await uploadFile(buffer, filename, "email-assets")
+          const publicUrl = await getShareableLink(`email-assets/${filename}`)
+          processed.push({ ...block, url: publicUrl })
+          continue
+        }
+      } catch (err) {
+        console.error("Failed to upload image to Drive:", err)
+      }
+    }
+    processed.push(block)
+  }
+  return processed
+}
 
 // GET /api/emails/templates - רשימת תבניות מייל
 export async function GET() {
@@ -58,7 +83,8 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    const blocks = body.blocks as EmailBlock[] | undefined;
+    const rawBlocks = body.blocks as EmailBlock[] | undefined;
+    const blocks = rawBlocks && rawBlocks.length > 0 ? await uploadBlockImages(rawBlocks) : rawBlocks;
     const finalBody = blocks && blocks.length > 0 ? blocksToHtml(blocks) : data.body;
 
     const template = await prisma.emailTemplate.create({

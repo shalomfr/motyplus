@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
+import { getBillingClient } from "@/lib/billing";
 
 interface SendEmailBody {
   templateId?: string;
@@ -158,6 +159,30 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // יצירת לינק תשלום דינמי אם נדרש
+        let paymentLink = "";
+        const needsPaymentLink = finalBody.includes("{{paymentLink}}") || finalSubject.includes("{{paymentLink}}");
+        if (needsPaymentLink && remaining > 0) {
+          const billing = await getBillingClient();
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+          if (billing) {
+            try {
+              const page = await billing.client.createPaymentPage({
+                customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+                items: [{ description: `השלמת תשלום — ${customer.setType.name}`, quantity: 1, unitPrice: remaining }],
+                successUrl: `${baseUrl}/order/success`,
+                cancelUrl: `${baseUrl}/order/cancel`,
+                autoCreateDoc: true,
+                docType: "invoice_receipt",
+                metadata: { customerId: String(customer.id), source: "email_general" },
+              });
+              paymentLink = page.url;
+            } catch (err) {
+              console.error(`Failed to create payment link for customer ${customer.id}:`, err);
+            }
+          }
+        }
+
         const variables: Record<string, string> = {
           fullName: customer.fullName,
           firstName: customer.fullName.split(" ")[0],
@@ -165,8 +190,8 @@ export async function POST(request: NextRequest) {
           phone: customer.phone,
           organ: customer.organ.name,
           setType: customer.setType.name,
-          purchaseDate: customer.purchaseDate.toLocaleDateString("he-IL"),
-          updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
+          purchaseDate: customer.purchaseDate ? customer.purchaseDate.toLocaleDateString("he-IL") : "",
+          updateExpiryDate: customer.updateExpiryDate ? customer.updateExpiryDate.toLocaleDateString("he-IL") : "",
           amountPaid: paid.toLocaleString("he-IL"),
           remainingAmount: remaining.toLocaleString("he-IL"),
           remainingForFullSet: remaining > 0 ? `${remaining.toLocaleString("he-IL")} ₪` : "שולם במלואו",
@@ -177,6 +202,7 @@ export async function POST(request: NextRequest) {
           driveLink: "",
           youtubeLink: "",
           customLink: "",
+          paymentLink,
           customerId: String(customer.id),
           orderFormLink: "https://motyplus-order.onrender.com/",
           termsLink: "https://motyplus-order.onrender.com/terms",

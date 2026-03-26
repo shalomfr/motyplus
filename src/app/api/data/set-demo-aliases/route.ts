@@ -54,6 +54,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Disable updates for PSR organs (except PSR-SX920)
+    const psrOrgans = organs.filter(o => o.name.startsWith("PSR") && o.name !== "PSR-SX920" && o.supportsUpdates);
+    for (const organ of psrOrgans) {
+      await prisma.organ.update({
+        where: { id: organ.id },
+        data: { supportsUpdates: false },
+      });
+      results.push(`PSR disabled: ${organ.name}`);
+    }
+
     // Update set types
     const setTypes = await prisma.setType.findMany();
     for (const st of setTypes) {

@@ -670,6 +670,22 @@ function RenderBlockFields({
         </p>
       )
 
+    case "brandBanner":
+      return (
+        <div className="text-center py-2">
+          <img
+            src="https://lh3.googleusercontent.com/d/1x85Addx_XnSEEA16Vwqu7vERydgDCuri"
+            alt="באנר מיתוג"
+            className="max-w-full h-auto rounded mx-auto"
+            style={{ maxHeight: 120 }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none'
+              ;(e.target as HTMLImageElement).insertAdjacentHTML('afterend', '<div class="text-xs text-muted-foreground text-center py-4">באנר מיתוג (תמונה תוצג במייל)</div>')
+            }}
+          />
+        </div>
+      )
+
     case "image":
       return (
         <div className="space-y-1.5">
@@ -784,6 +800,7 @@ const TYPE_COLORS: Partial<Record<EmailBlock["type"], string>> = {
   instructions: "border-l-orange-500",
   bankTable: "border-l-gray-400",
   signature: "border-l-gray-300",
+  brandBanner: "border-l-blue-400",
 }
 
 export function BlockItem({

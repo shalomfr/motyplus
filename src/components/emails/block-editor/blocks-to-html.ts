@@ -1,5 +1,7 @@
 import type { EmailBlock, ButtonConfig } from "./types"
 
+const BRAND_BANNER_URL = process.env.NEXT_PUBLIC_BRAND_BANNER_URL || "https://lh3.googleusercontent.com/d/1x85Addx_XnSEEA16Vwqu7vERydgDCuri"
+
 const BUTTON_COLORS: Record<ButtonConfig["color"], { bg: string; border: string }> = {
   gold: { bg: "linear-gradient(145deg,#124F90,#0A3D6E)", border: "#0A3D6E" },
   green: { bg: "linear-gradient(145deg,#43a047,#2e7d32)", border: "#1b5e20" },
@@ -161,6 +163,9 @@ function renderBlockToHtml(block: EmailBlock): string {
 
     case "signature":
       return `<p style="margin-top:24px;">בברכה,<br>מוטי רוזנפלד<br>עדכוני סאונדים ומקצבים לאורגנים | Yamaha</p>`
+
+    case "brandBanner":
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;"><tr><td align="center"><img src="${BRAND_BANNER_URL}" alt="Motty Beats" width="600" style="max-width:100%;height:auto;display:block;" /></td></tr></table>`
 
     case "image":
       if (!block.url) return ""

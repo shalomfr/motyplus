@@ -22,6 +22,8 @@ interface SendableCustomer {
   organ: { name: string };
   additionalOrgan: { name: string } | null;
   setType: { name: string; includesUpdates: boolean; price?: number };
+  purchaseDate: Date | null;
+  updateExpiryDate: Date | null;
 }
 
 function buildCpiMap(sampleFiles: { path: string }[]): Map<number, { main?: string; additional?: string }> {
@@ -123,6 +125,33 @@ async function sendToEligible(
         const additionalOrganLine = additionalOrganName && downloadLink2
           ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>` : "";
 
+        // חישוב יתרה ולינק תשלום
+        const fullSetPrice = customer.setType.price ? Number(customer.setType.price) : 0;
+        const remaining = Math.max(0, fullSetPrice - Number(customer.amountPaid || 0));
+
+        let paymentLink = "";
+        const needsPaymentLink = (emailBody || "").includes("{{paymentLink}}") || (emailSubject || "").includes("{{paymentLink}}");
+        if (needsPaymentLink && remaining > 0) {
+          const billing = await getBillingClient();
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+          if (billing) {
+            try {
+              const page = await billing.client.createPaymentPage({
+                customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+                items: [{ description: `השלמת תשלום — ${customer.setType.name}`, quantity: 1, unitPrice: remaining }],
+                successUrl: `${baseUrl}/order/success`,
+                cancelUrl: `${baseUrl}/order/cancel`,
+                autoCreateDoc: true,
+                docType: "invoice_receipt",
+                metadata: { customerId: String(customer.id), source: "email_eligible" },
+              });
+              paymentLink = page.url;
+            } catch (err) {
+              console.error(`Failed to create payment link for customer ${customer.id}:`, err);
+            }
+          }
+        }
+
         const vars = {
           customerName: customer.fullName, fullName: customer.fullName,
           firstName: customer.fullName.split(" ")[0],
@@ -137,6 +166,13 @@ async function sendToEligible(
           customLink: "",
           orderFormLink: "https://motyplus-order.onrender.com/",
           termsLink: "https://motyplus-order.onrender.com/terms",
+          updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "",
+          currentVersion: customer.currentUpdateVersion || "—",
+          amountPaid: String(customer.amountPaid || 0),
+          purchaseDate: customer.purchaseDate ? new Date(customer.purchaseDate).toLocaleDateString("he-IL") : "",
+          remainingAmount: String(remaining),
+          remainingForFullSet: remaining > 0 ? `₪${remaining}` : "₪0",
+          paymentLink,
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
         const html = replaceTemplateVariables(emailBody, vars);
@@ -289,7 +325,7 @@ export async function POST(
     const customerInclude = {
       organ: { select: { name: true, supportsUpdates: true } },
       additionalOrgan: { select: { name: true } },
-      setType: { select: { name: true, includesUpdates: true } },
+      setType: { select: { name: true, includesUpdates: true, price: true } },
     } as const;
 
     let sampleFiles: { path: string }[] = [];
