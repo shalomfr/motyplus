@@ -33,6 +33,25 @@ export async function POST(
       )
     }
 
+    // טעינת תבניות לפי אורגן, עם fallback לתבנית ברירת מחדל מ-DB
+    const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { subject?: string; body?: string }>> | null
+    let fallbackTemplate: { subject: string; body: string } | null = null
+    if (!updateVersion.emailSubject || !updateVersion.emailBody) {
+      const dbTemplate = await prisma.emailTemplate.findFirst({
+        where: {
+          OR: [
+            { category: "after_purchase" },
+            { name: { contains: "עדכון" } },
+            { name: { contains: "שליחת" } },
+          ],
+          isActive: true,
+        },
+        orderBy: { updatedAt: "desc" },
+        select: { subject: true, body: true },
+      })
+      if (dbTemplate) fallbackTemplate = dbTemplate
+    }
+
     // קבלת רשימת לקוחות שכבר קיבלו את העדכון הזה
     const alreadyReceived = await prisma.customerUpdate.findMany({
       where: { updateVersionId: id },
@@ -133,6 +152,15 @@ export async function POST(
       }
     }
 
+    // בדיקה שיש תבנית מייל זמינה
+    const hasAnyTemplate = updateVersion.emailSubject || updateVersion.emailBody || tMap || fallbackTemplate
+    if (!hasAnyTemplate) {
+      return NextResponse.json(
+        { error: "לא הוגדרה תבנית מייל לעדכון הזה. יש להגדיר תבנית באשף ההכנות או ליצור תבנית מייל במערכת." },
+        { status: 400 }
+      )
+    }
+
     // שליחת עדכון לכל לקוח זכאי
     const results = {
       sent: 0,
@@ -185,11 +213,10 @@ export async function POST(
           data: { currentUpdateVersion: updateVersion.version },
         })
 
-        // שליחת מייל — שימוש בתבנית לפי אורגן מהאשף, עם fallback לשדות ישירים
-        const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { subject?: string; body?: string }>> | null
+        // שליחת מייל — תבנית לפי אורגן → שדות ישירים → תבנית ברירת מחדל מ-DB
         const organTemplate = tMap?.eligible?.[customer.organId]
-        const emailSubject = organTemplate?.subject || updateVersion.emailSubject
-        const emailBody = organTemplate?.body || updateVersion.emailBody
+        const emailSubject = organTemplate?.subject || updateVersion.emailSubject || fallbackTemplate?.subject
+        const emailBody = organTemplate?.body || updateVersion.emailBody || fallbackTemplate?.body
 
         if (emailSubject && emailBody) {
           try {
