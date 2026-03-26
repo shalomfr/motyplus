@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/header";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 
 export default function DashboardLayout({
   children,
@@ -55,7 +54,6 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
-      <FeedbackWidget />
     </div>
   );
 }
