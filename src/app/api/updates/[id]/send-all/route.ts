@@ -243,6 +243,8 @@ export async function POST(
               downloadLink,
               downloadLink2,
               customLink: "",
+              orderFormLink: "https://motyplus-order.onrender.com/",
+              termsLink: "https://motyplus-order.onrender.com/terms",
               todayDate: new Date().toLocaleDateString("he-IL"),
             }
             const html = replaceTemplateVariables(emailBody, templateVars)

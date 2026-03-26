@@ -25,6 +25,7 @@ export const EMAIL_VARIABLES = [
   { name: "customerId", label: "מזהה לקוח" },
   { name: "paymentLink", label: "לינק תשלום אישי" },
   { name: "orderFormLink", label: "לינק טופס הזמנה" },
+  { name: "termsLink", label: "קישור לתקנון" },
   { name: "newCustomerName", label: "לקוח חדש" },
   { name: "todayDate", label: "תאריך היום" },
 ]

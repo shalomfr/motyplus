@@ -64,6 +64,8 @@ export async function POST(
           rhythmsLink: updateVersion.rhythmsFileUrl || "",
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           customLink: "",
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         }
         const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)

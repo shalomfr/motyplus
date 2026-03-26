@@ -29,6 +29,8 @@ const SAMPLE_VARS: Record<string, string> = {
   customLink: "#",
   customerId: "12345",
   paymentLink: "https://pay.example.com/link/demo",
+  orderFormLink: "https://motyplus-order.onrender.com/",
+  termsLink: "https://motyplus-order.onrender.com/terms",
   additionalOrganName: "",
   additionalOrganLine: "",
   todayDate: new Date().toLocaleDateString("he-IL"),

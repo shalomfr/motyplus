@@ -113,6 +113,7 @@ const HEBREW_ALIAS_MAP: Record<string, string> = {
   "מזהה_לקוח": "customerId", "מזהה לקוח": "customerId",
   "לינק_תשלום_אישי": "paymentLink", "לינק תשלום אישי": "paymentLink",
   "לינק_טופס_הזמנה": "orderFormLink", "לינק טופס הזמנה": "orderFormLink",
+  "קישור_לתקנון": "termsLink", "קישור לתקנון": "termsLink",
   "לקוח_חדש": "newCustomerName", "לקוח חדש": "newCustomerName",
   "תאריך_היום": "todayDate", "תאריך היום": "todayDate",
 };

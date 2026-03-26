@@ -53,6 +53,8 @@ function getSampleVariables(version: string): Record<string, string> {
     additionalOrganName: "",
     additionalOrganLine: "",
     customerId: "12345",
+    orderFormLink: "https://motyplus-order.onrender.com/",
+    termsLink: "https://motyplus-order.onrender.com/terms",
     todayDate: new Date().toLocaleDateString("he-IL"),
   };
 }

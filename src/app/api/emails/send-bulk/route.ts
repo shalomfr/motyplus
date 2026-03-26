@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
           youtubeLink: "",
           customLink: "",
           orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
@@ -260,6 +261,7 @@ export async function POST(request: NextRequest) {
           youtubeLink: "",
           customLink: "",
           orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 

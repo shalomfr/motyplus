@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
         currentVersion: customer.currentUpdateVersion || "לא עודכן",
         updateVersion: latestUpdateVersion?.version || "—",
         orderFormLink: "https://motyplus-order.onrender.com/",
+        termsLink: "https://motyplus-order.onrender.com/terms",
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else if (leadId) {
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
         email: lead.email || "",
         phone: lead.phone,
         orderFormLink: "https://motyplus-order.onrender.com/",
+        termsLink: "https://motyplus-order.onrender.com/terms",
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else {
@@ -123,6 +125,7 @@ export async function POST(request: NextRequest) {
         currentVersion: "V4",
         updateVersion: latestUpdateVersion?.version || "V5",
         orderFormLink: "https://motyplus-order.onrender.com/",
+        termsLink: "https://motyplus-order.onrender.com/terms",
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     }

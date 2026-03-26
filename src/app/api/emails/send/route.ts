@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
           customLink: "",
           customerId: String(customer.id),
           orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
@@ -231,6 +232,7 @@ export async function POST(request: NextRequest) {
           email: lead.email,
           phone: lead.phone,
           orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 

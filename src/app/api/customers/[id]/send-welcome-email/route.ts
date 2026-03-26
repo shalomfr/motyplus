@@ -43,6 +43,7 @@ export async function POST(
       organName: customer.organ.name,
       customerId: String(customer.id),
       orderFormLink: "https://motyplus-order.onrender.com/",
+      termsLink: "https://motyplus-order.onrender.com/terms",
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 

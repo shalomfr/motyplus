@@ -99,6 +99,7 @@ export async function POST(
       customerId: String(customer.id),
       customLink: "",
       orderFormLink: "https://motyplus-order.onrender.com/",
+      termsLink: "https://motyplus-order.onrender.com/terms",
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 

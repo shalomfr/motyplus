@@ -135,6 +135,8 @@ async function sendToEligible(
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           downloadLink, downloadLink2,
           customLink: "",
+          orderFormLink: "https://motyplus-order.onrender.com/",
+          termsLink: "https://motyplus-order.onrender.com/terms",
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
         const html = replaceTemplateVariables(emailBody, vars);
@@ -227,6 +229,8 @@ async function sendBulkTemplate(
       remainingAmount: String(remainingForFullSet),
       remainingForFullSet: `₪${remainingForFullSet}`,
       paymentLink,
+      orderFormLink: "https://motyplus-order.onrender.com/",
+      termsLink: "https://motyplus-order.onrender.com/terms",
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 
