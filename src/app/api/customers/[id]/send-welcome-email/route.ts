@@ -5,7 +5,7 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { logActivity } from "@/lib/activity-logger";
 
-// POST /api/customers/[id]/send-welcome-email - שליחת מייל ברכה לאחר רכישה
+// POST /api/customers/[id]/send-welcome-email - שליחת מייל ברכה לאחר רכישה / עדכון
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,6 +23,10 @@ export async function POST(
       return NextResponse.json({ error: "מזהה לקוח לא תקין" }, { status: 400 });
     }
 
+    // בדיקה אם זה מצב עדכון (לקוח קיים שקנה עדכון)
+    const body = await request.json().catch(() => ({}));
+    const updateOnly = body?.updateOnly === true;
+
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
       include: { organ: true, setType: true },
@@ -32,9 +36,10 @@ export async function POST(
       return NextResponse.json({ error: "הלקוח לא נמצא" }, { status: 404 });
     }
 
-    // טעינת תבנית "ברכת קנייה" מה-DB (ניתנת לעריכה)
+    // טעינת תבנית מה-DB — "ברכת עדכון" ללקוח קיים, "ברכת קנייה" ללקוח חדש
+    const templateName = updateOnly ? "ברכת עדכון" : "ברכת קנייה";
     const template = await prisma.emailTemplate.findFirst({
-      where: { name: "ברכת קנייה" },
+      where: { name: templateName },
     });
 
     const variables = {
@@ -80,10 +85,10 @@ export async function POST(
     await logActivity({
       userId: session.user.id,
       customerId: customer.id,
-      action: "EMAIL_WELCOME",
+      action: updateOnly ? "EMAIL_WELCOME_UPDATE" : "EMAIL_WELCOME",
       entityType: "CUSTOMER",
       entityId: String(customer.id),
-      details: { to: customer.email, whatsapp: phone },
+      details: { to: customer.email, whatsapp: phone, updateOnly },
     });
 
     return NextResponse.json({ message: "מייל הברכה נשלח בהצלחה" });

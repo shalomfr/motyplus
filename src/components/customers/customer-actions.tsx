@@ -130,6 +130,9 @@ export function CustomerActions({
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [sendMenuOpen, setSendMenuOpen] = useState(false)
   const [sendOrderOpen, setSendOrderOpen] = useState(false)
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
+  const [whatsappMenuOpen, setWhatsappMenuOpen] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
 
   const handleAction = async (
     action: string,
@@ -325,48 +328,53 @@ export function CustomerActions({
         </CardContent>
       </Card>
 
-      {/* #16: תפריט שליחות — 7 אפשרויות */}
+      {/* #16: תפריט שליחות — 9 אפשרויות */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base cursor-pointer flex items-center justify-between" onClick={() => setSendMenuOpen(!sendMenuOpen)}>
             <span>תפריט שליחות</span>
             {sendMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </CardTitle>
-          <CardDescription>7 אפשרויות שליחה ללקוח</CardDescription>
+          <CardDescription>9 אפשרויות שליחה ללקוח</CardDescription>
         </CardHeader>
         {sendMenuOpen && (
         <CardContent className="space-y-2">
-          {/* 1. מייל ברכה */}
+          {/* 1. מייל ברכה + מקצבים (לקוח חדש) */}
           <Button variant="outline" className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50" onClick={handleSendWelcomeEmail} disabled={loadingAction === "welcomeEmail"}>
             {loadingAction === "welcomeEmail" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <PartyPopper className="h-4 w-4 ml-2" />}
-            1. מייל ברכה לאחר רכישה
+            1. מייל ברכה + מקצבים (לקוח חדש)
           </Button>
-          {/* 2. מקצבים בלבד */}
-          <Button variant="outline" className="w-full justify-start" onClick={handleSendUpdateEmail} disabled={loadingAction === "sendUpdate"}>
-            {loadingAction === "sendUpdate" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Music className="h-4 w-4 ml-2" />}
-            2. שליחת מקצבים בלבד
+          {/* 2. מייל ברכה + עדכון (לקוח קיים) */}
+          <Button variant="outline" className="w-full justify-start text-green-700 border-green-200 hover:bg-green-50" onClick={() => handleAction("welcomeUpdate", `/api/customers/${customerId}/send-welcome-email`, "POST", { updateOnly: true })} disabled={loadingAction === "welcomeUpdate"}>
+            {loadingAction === "welcomeUpdate" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Package className="h-4 w-4 ml-2" />}
+            2. מייל ברכה + עדכון (לקוח קיים)
           </Button>
-          {/* 3. דגימות בלבד */}
-          <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendSamples", `/api/customers/${customerId}/send-update-email`, "POST", { samplesOnly: true })} disabled={loadingAction === "sendSamples"}>
-            {loadingAction === "sendSamples" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
-            3. שליחת דגימות בלבד
-          </Button>
-          {/* 4. מקצבים + דגימות */}
+          {/* 3. מקצבים + דגימות (בלי ברכה) */}
           <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendBoth", `/api/customers/${customerId}/send-update-email`, "POST", { includeSamples: true })} disabled={loadingAction === "sendBoth"}>
             {loadingAction === "sendBoth" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
-            4. שליחת מקצבים ודגימות
+            3. מקצבים + דגימות (בלי ברכה)
           </Button>
-          {/* 5. הוראות בלבד */}
+          {/* 4. שליחת מקצבים בלבד */}
+          <Button variant="outline" className="w-full justify-start" onClick={handleSendUpdateEmail} disabled={loadingAction === "sendUpdate"}>
+            {loadingAction === "sendUpdate" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Music className="h-4 w-4 ml-2" />}
+            4. שליחת מקצבים בלבד
+          </Button>
+          {/* 5. שליחת דגימות בלבד */}
+          <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendSamples", `/api/customers/${customerId}/send-update-email`, "POST", { samplesOnly: true })} disabled={loadingAction === "sendSamples"}>
+            {loadingAction === "sendSamples" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
+            5. שליחת דגימות בלבד
+          </Button>
+          {/* 6. הוראות שימוש */}
           <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendInstructions", `/api/customers/${customerId}/send-email`, "POST", { subject: "הוראות שימוש", body: "הוראות שימוש מצורפות" })} disabled={loadingAction === "sendInstructions"}>
             {loadingAction === "sendInstructions" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <BookOpen className="h-4 w-4 ml-2" />}
-            5. שליחת הוראות בלבד
+            6. הוראות שימוש
           </Button>
-          {/* 6. מייל חופשי */}
+          {/* 7. מייל חופשי */}
           <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
                 <Send className="h-4 w-4 ml-2" />
-                6. שליחת מייל חופשי
+                7. מייל חופשי
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
@@ -393,11 +401,21 @@ export function CustomerActions({
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          {/* 7. טופס עדכון פרטים */}
+          {/* 8. טופס לעדכון פרטים */}
           <Button variant="outline" className="w-full justify-start" onClick={handleSendDetailsForm} disabled={loadingAction === "detailsForm"}>
             {loadingAction === "detailsForm" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <FileText className="h-4 w-4 ml-2" />}
-            7. שליחת טופס עדכון פרטים
+            8. טופס לעדכון פרטים
           </Button>
+          {/* 9. שלח אינפו ללקוח */}
+          {infoFileUrl && (
+            <Button variant="outline" className="w-full justify-start" onClick={() => handleAction("sendInfo", `/api/customers/${customerId}/send-email`, "POST", {
+              subject: "קובץ אינפו שלך",
+              body: `<p>שלום ${customerName},</p><p>מצורף קישור לקובץ האינפו שלך:</p><p><a href="${infoFileUrl}">לחץ להורדה</a></p>`,
+            })} disabled={loadingAction === "sendInfo"}>
+              {loadingAction === "sendInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Upload className="h-4 w-4 ml-2" />}
+              9. שלח אינפו ללקוח
+            </Button>
+          )}
         </CardContent>
         )}
       </Card>
@@ -405,37 +423,52 @@ export function CustomerActions({
       {/* פעולות מהירות */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">פעולות מהירות</CardTitle>
+          <CardTitle className="text-base cursor-pointer flex items-center justify-between" onClick={() => setQuickActionsOpen(!quickActionsOpen)}>
+            <span>פעולות מהירות</span>
+            {quickActionsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </CardTitle>
         </CardHeader>
+        {quickActionsOpen && (
         <CardContent className="space-y-2">
-          <Button variant="outline" className="w-full justify-start" onClick={handleCopyId}>
-            <Copy className="h-4 w-4 ml-2" />
-            העתקת מזהה ({customerId})
+          {/* העתקת מזהה עם אינדיקציית ✓ */}
+          <Button variant="outline" className="w-full justify-start" onClick={() => {
+            navigator.clipboard.writeText(customerId.toString())
+            setCopiedId(true)
+            toast({ title: "מזהה הועתק ללוח", variant: "success" as "default" })
+            setTimeout(() => setCopiedId(false), 2000)
+          }}>
+            {copiedId ? <CheckCircle className="h-4 w-4 ml-2 text-green-600" /> : <Copy className="h-4 w-4 ml-2" />}
+            {copiedId ? `הועתק! (${customerId})` : `העתקת מזהה (${customerId})`}
           </Button>
 
-          <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50" onClick={handleSendUpdateRequest} disabled={loadingAction === "updateRequest"}>
-            {loadingAction === "updateRequest" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Wrench className="h-4 w-4 ml-2" />}
-            הכנת עדכון (שלח לאדמין)
-          </Button>
+          {/* תפריט WhatsApp מתכווץ */}
+          <div className="border rounded-md">
+            <Button variant="ghost" className="w-full justify-start text-emerald-700 hover:bg-emerald-50" onClick={() => setWhatsappMenuOpen(!whatsappMenuOpen)}>
+              <MessageCircle className="h-4 w-4 ml-2" />
+              WhatsApp
+              {whatsappMenuOpen ? <ChevronUp className="h-4 w-4 mr-auto" /> : <ChevronDown className="h-4 w-4 mr-auto" />}
+            </Button>
+            {whatsappMenuOpen && (
+              <div className="px-2 pb-2 space-y-1">
+                <Button variant="outline" size="sm" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={handleWhatsAppGreeting} disabled={loadingAction === "waGreeting"}>
+                  {loadingAction === "waGreeting" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <MessageCircle className="h-4 w-4 ml-2" />}
+                  וואטסאפ ברכה
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                  onClick={() => {
+                    const phone = (customerWhatsapp || customerPhone).replace(/\D/g, "")
+                    const intlPhone = phone.startsWith("0") ? "972" + phone.slice(1) : phone
+                    window.open(`https://wa.me/${intlPhone}`, "_blank")
+                  }}
+                >
+                  <ExternalLink className="h-4 w-4 ml-2" />
+                  פתח צ&apos;אט WhatsApp
+                </Button>
+              </div>
+            )}
+          </div>
 
-          {/* #18: תפריט WhatsApp מלא */}
-          <Button variant="outline" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={handleWhatsAppGreeting} disabled={loadingAction === "waGreeting"}>
-            {loadingAction === "waGreeting" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <MessageCircle className="h-4 w-4 ml-2" />}
-            וואטסאפ ברכה
-          </Button>
-
-          <Button variant="outline" className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-50"
-            onClick={() => {
-              const phone = (customerWhatsapp || customerPhone).replace(/\D/g, "")
-              const intlPhone = phone.startsWith("0") ? "972" + phone.slice(1) : phone
-              window.open(`https://wa.me/${intlPhone}`, "_blank")
-            }}
-          >
-            <ExternalLink className="h-4 w-4 ml-2" />
-            פתח צ&apos;אט WhatsApp
-          </Button>
-
-          {/* בדיקת דגימות — האם יש ללקוח קובץ דגימות */}
+          {/* בדיקת דגימות — בודק CPI בדרייב, פותח אשף שליחה */}
           <Button variant="outline" className="w-full justify-start"
             onClick={async () => {
               setLoadingAction("checkSamples")
@@ -443,11 +476,12 @@ export function CustomerActions({
                 const res = await fetch(`/api/customers/${customerId}/updates`)
                 const data = await res.json()
                 const hasSamples = data?.some?.((u: { downloadedAt: string | null }) => u.downloadedAt)
-                toast({
-                  title: hasSamples ? "יש דגימות ללקוח" : "אין דגימות ללקוח",
-                  description: hasSamples ? "הלקוח הוריד דגימות בעבר" : "הלקוח לא הוריד דגימות",
-                  variant: hasSamples ? ("success" as "default") : "destructive",
-                })
+                if (hasSamples) {
+                  toast({ title: "נמצאו דגימות! פותח אשף שליחה...", variant: "success" as "default" })
+                  setSendOrderOpen(true)
+                } else {
+                  toast({ title: "אין דגימות ללקוח", description: "הלקוח לא הוריד דגימות", variant: "destructive" })
+                }
               } catch {
                 toast({ title: "שגיאה בבדיקה", variant: "destructive" })
               } finally {
@@ -459,20 +493,6 @@ export function CustomerActions({
             {loadingAction === "checkSamples" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
             בדיקת דגימות
           </Button>
-
-          {/* שליחת אינפו ללקוח */}
-          {infoFileUrl && (
-            <Button variant="outline" className="w-full justify-start"
-              onClick={() => handleAction("sendInfo", `/api/customers/${customerId}/send-email`, "POST", {
-                subject: "קובץ אינפו שלך",
-                body: `<p>שלום ${customerName},</p><p>מצורף קישור לקובץ האינפו שלך:</p><p><a href="${infoFileUrl}">לחץ להורדה</a></p>`,
-              })}
-              disabled={loadingAction === "sendInfo"}
-            >
-              {loadingAction === "sendInfo" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
-              שלח אינפו ללקוח במייל
-            </Button>
-          )}
 
           {/* סנכרון לספק חיוב */}
           <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
@@ -498,7 +518,7 @@ export function CustomerActions({
             סנכרן לספק חיוב
           </Button>
 
-          {/* הנפקת קבלה ידנית */}
+          {/* הנפקת קבלה */}
           <Button variant="outline" className="w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50"
             onClick={async () => {
               const amountStr = prompt("סכום הקבלה:")
@@ -532,52 +552,29 @@ export function CustomerActions({
             הנפק קבלה
           </Button>
 
-          {/* #15: קישור להעלאת אינפו */}
+          {/* צור ושלח קישור להעלאת אינפו — כפתור אחד */}
           <Button variant="outline" className="w-full justify-start"
             onClick={async () => {
+              setLoadingAction("createAndSendUploadLink")
               try {
-                const res = await fetch(`/api/customers/${customerId}/upload-link`, { method: "POST" })
+                const res = await fetch(`/api/customers/${customerId}/send-upload-link`, { method: "POST" })
                 const data = await res.json()
-                if (data.link) {
-                  navigator.clipboard.writeText(data.link)
-                  toast({ title: "הקישור הועתק!", description: data.link })
+                if (data.success) {
+                  toast({ title: "קישור נוצר ונשלח במייל!", description: customerEmail })
                 } else {
-                  toast({ title: "שגיאה", description: data.error || "לא ניתן ליצור קישור", variant: "destructive" })
+                  toast({ title: "שגיאה", description: data.error || "שגיאה ביצירת/שליחת הקישור", variant: "destructive" })
                 }
               } catch {
-                toast({ title: "שגיאה", description: "לא ניתן ליצור קישור", variant: "destructive" })
+                toast({ title: "שגיאה", description: "שגיאה ביצירת/שליחת הקישור", variant: "destructive" })
+              } finally {
+                setLoadingAction(null)
               }
             }}
+            disabled={loadingAction === "createAndSendUploadLink"}
           >
-            <Upload className="h-4 w-4 ml-2" />
-            צור קישור להעלאת אינפו
+            {loadingAction === "createAndSendUploadLink" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Link2 className="h-4 w-4 ml-2" />}
+            צור ושלח קישור להעלאת אינפו
           </Button>
-
-          {/* שלח קישור העלאת אינפו במייל */}
-          {customerEmail && (
-            <Button variant="outline" className="w-full justify-start"
-              onClick={async () => {
-                setLoadingAction("sendUploadLink")
-                try {
-                  const res = await fetch(`/api/customers/${customerId}/send-upload-link`, { method: "POST" })
-                  const data = await res.json()
-                  if (data.success) {
-                    toast({ title: "הקישור נשלח במייל!", description: customerEmail })
-                  } else {
-                    toast({ title: "שגיאה", description: data.error || "שגיאה בשליחה", variant: "destructive" })
-                  }
-                } catch {
-                  toast({ title: "שגיאה", description: "שגיאה בשליחת הקישור", variant: "destructive" })
-                } finally {
-                  setLoadingAction(null)
-                }
-              }}
-              disabled={loadingAction === "sendUploadLink"}
-            >
-              {loadingAction === "sendUploadLink" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Mail className="h-4 w-4 ml-2" />}
-              שלח קישור העלאת אינפו במייל
-            </Button>
-          )}
 
           {/* החלפת אינפו */}
           {infoFileUrl && (
@@ -660,26 +657,22 @@ export function CustomerActions({
             </Button>
           )}
 
-          <Button variant="outline" className={cn("w-full justify-start", status === "BLOCKED" && "border-red-300 text-red-700")} onClick={handleToggleBlock} disabled={loadingAction === "toggleBlock"}>
+          <Button variant="outline" className="w-full justify-start text-red-700 border-red-200 hover:bg-red-50" onClick={handleToggleBlock} disabled={loadingAction === "toggleBlock"}>
             {loadingAction === "toggleBlock" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Ban className="h-4 w-4 ml-2" />}
             {status === "BLOCKED" ? "שחרור חסימה" : "חסימה"}
           </Button>
 
-          <Button variant="outline" className={cn("w-full justify-start", status === "EXCEPTION" && "border-orange-300 text-blue-700")} onClick={handleToggleException} disabled={loadingAction === "toggleException"}>
+          <Button variant="outline" className="w-full justify-start text-orange-700 border-orange-200 hover:bg-orange-50" onClick={handleToggleException} disabled={loadingAction === "toggleException"}>
             {loadingAction === "toggleException" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <AlertTriangle className="h-4 w-4 ml-2" />}
             {status === "EXCEPTION" ? "ביטול חריג" : "סימון חריג"}
           </Button>
 
-          <Button variant="outline" className="w-full justify-start" onClick={handleFreeze} disabled={loadingAction === "freeze" || status === "FROZEN"}>
+          <Button variant="outline" className="w-full justify-start text-sky-700 border-sky-200 hover:bg-sky-50" onClick={handleFreeze} disabled={loadingAction === "freeze" || status === "FROZEN"}>
             {loadingAction === "freeze" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Snowflake className="h-4 w-4 ml-2" />}
             הקפאה
           </Button>
-
-          <Button variant="outline" className="w-full justify-start" onClick={handleToggleSampleType} disabled={loadingAction === "sampleType"}>
-            {loadingAction === "sampleType" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Monitor className="h-4 w-4 ml-2" />}
-            דגימות למחשב: {sampleType}
-          </Button>
         </CardContent>
+        )}
       </Card>
 
       {/* Balance & Updates Status + Quote Wizard */}
