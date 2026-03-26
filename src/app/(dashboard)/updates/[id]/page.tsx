@@ -116,6 +116,8 @@ export default function UpdateDetailsPage() {
       if (res.ok) {
         setSendAllResult({
           sent: data.sent,
+          emailSent: data.emailSent || 0,
+          emailSkipped: data.emailSkipped || 0,
           failed: data.failed,
           skippedNoFile: data.skippedNoFile,
           total: data.total,
