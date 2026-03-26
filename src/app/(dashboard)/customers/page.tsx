@@ -82,7 +82,7 @@ export default function CustomersListPage() {
         (data.customers || []).map((c: {
           id: number; fullName: string; phone: string; email: string;
           amountPaid?: number;
-          organ?: { name: string }; setType?: { name: string; price?: number; includesUpdates?: boolean };
+          organ?: { name: string; supportsUpdates?: boolean }; setType?: { name: string; price?: number; includesUpdates?: boolean };
           promotion?: { discountPercent: number; couponCode: string } | null;
           status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"; updatedAt: string;
           currentUpdateVersion?: string | null; infoFileUrl?: string | null;
@@ -95,6 +95,7 @@ export default function CustomersListPage() {
           amountPaid: Number(c.amountPaid || 0),
           currentUpdateVersion: c.currentUpdateVersion || null,
           includesUpdates: c.setType?.includesUpdates ?? false,
+          organSupportsUpdates: c.organ?.supportsUpdates ?? false,
           infoFileUrl: c.infoFileUrl || null,
           discountPercent: c.promotion?.discountPercent || null,
         }))

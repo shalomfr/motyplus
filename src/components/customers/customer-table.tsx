@@ -39,6 +39,7 @@ export interface CustomerRow {
   updatedAt: string
   currentUpdateVersion: string | null
   includesUpdates: boolean
+  organSupportsUpdates: boolean
   infoFileUrl: string | null
   discountPercent: number | null
 }
@@ -87,14 +88,25 @@ function PaymentBadge({
   setTypePrice,
   fullSetPrice,
   includesUpdates,
+  organSupportsUpdates,
 }: {
   amountPaid: number
   setTypePrice: number
   fullSetPrice: number
   includesUpdates: boolean
+  organSupportsUpdates: boolean
 }) {
   const paid = Number(amountPaid)
   const price = Number(setTypePrice)
+
+  // אורגן ללא עדכונים
+  if (!organSupportsUpdates) {
+    return (
+      <Badge variant="outline" className="font-normal whitespace-nowrap bg-gray-50 text-gray-500 border-gray-200 text-[10px] gap-0.5">
+        אורגן ללא עדכונים
+      </Badge>
+    )
+  }
 
   if (includesUpdates) {
     const diff = price - paid
@@ -292,6 +304,7 @@ export function CustomerTable({
                       setTypePrice={customer.setTypePrice}
                       fullSetPrice={customer.fullSetPrice}
                       includesUpdates={customer.includesUpdates}
+                      organSupportsUpdates={customer.organSupportsUpdates}
                     />
                   </TableCell>
                   <TableCell className="text-center">

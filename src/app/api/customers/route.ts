@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       prisma.customer.findMany({
         where,
         include: {
-          organ: { select: { id: true, name: true } },
+          organ: { select: { id: true, name: true, supportsUpdates: true } },
           setType: { select: { id: true, name: true, price: true, includesUpdates: true } },
           promotion: { select: { discountPercent: true, couponCode: true } },
         },
