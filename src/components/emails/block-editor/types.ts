@@ -170,8 +170,8 @@ export function createDefaultBlock(type: EmailBlock["type"]): EmailBlock {
       return {
         type, id,
         buttons: [
-          { label: "דגימות", url: "{{LINK_SAMPLES}}", color: "gold" },
-          { label: "מקצבים", url: "{{LINK_STYLES}}", color: "gold" },
+          { label: "דגימות", url: "{{samplesLink}}", color: "gold" },
+          { label: "מקצבים", url: "{{rhythmsLink}}", color: "gold" },
         ],
       }
     case "promo":
