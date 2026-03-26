@@ -1,10 +1,40 @@
 const SMTP2GO_API_URL = "https://api.smtp2go.com/v3/email/send";
 
+interface InlineImage {
+  filename: string;
+  fileblob: string;
+  mimetype: string;
+}
+
 interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
   from?: string;
+}
+
+/**
+ * Extract base64 images from HTML and convert to CID inline attachments.
+ * Replaces <img src="data:image/...;base64,..."> with <img src="cid:image_N">
+ * Returns the modified HTML and the list of inline images for SMTP2GO.
+ */
+function extractInlineImages(html: string): { html: string; inlineImages: InlineImage[] } {
+  const inlineImages: InlineImage[] = [];
+  const modified = html.replace(
+    /(<img\b[^>]*\bsrc=")data:(image\/(png|jpe?g|gif|webp|svg\+xml));base64,([^"]+)(")/gi,
+    (_match, before, _fullMime, ext, base64Data, after) => {
+      const idx = inlineImages.length;
+      const cleanExt = ext.replace(/\+xml/, "").replace(/e?pg/, "pg");
+      const filename = `image_${idx}.${cleanExt === "jpeg" ? "jpg" : cleanExt}`;
+      inlineImages.push({
+        filename,
+        fileblob: base64Data,
+        mimetype: `image/${ext}`,
+      });
+      return `${before}cid:${filename}${after}`;
+    }
+  );
+  return { html: modified, inlineImages };
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
@@ -16,16 +46,26 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
   }
 
   try {
+    // Extract base64 images and convert to CID inline attachments
+    const { html: processedHtml, inlineImages } = extractInlineImages(html);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload: Record<string, any> = {
+      api_key: apiKey,
+      to: [to],
+      sender: from || `מוטי רוזנפלד <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
+      subject,
+      html_body: processedHtml,
+    };
+
+    if (inlineImages.length > 0) {
+      payload.inlineimages = inlineImages;
+    }
+
     const res = await fetch(SMTP2GO_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        api_key: apiKey,
-        to: [to],
-        sender: from || `מוטי רוזנפלד <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
-        subject,
-        html_body: html,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
@@ -99,8 +139,8 @@ export function replaceTemplateVariables(
   // Second pass: replace English variables with actual values
   for (const [key, value] of Object.entries(variables)) {
     const safeValue = value.replace(/\$/g, "$$$$");
-    // Don't wrap URLs in BiDi characters — they break href attributes
-    const isUrl = /^https?:\/\//.test(value);
+    // Don't wrap URLs or data URIs in BiDi characters — they break href/src attributes
+    const isUrl = /^https?:\/\//.test(value) || /^data:/.test(value);
     const isolated = isUrl ? safeValue : `${FSI}${safeValue}${PDI}`;
     // Replace {{var}} format (double braces)
     result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), isolated);
