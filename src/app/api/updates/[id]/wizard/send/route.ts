@@ -46,8 +46,23 @@ async function sendToEligible(
   cpiMap: Map<number, { main?: string; additional?: string }>,
   userId: string,
   rhythmsLinkMap: Map<string, string>
-): Promise<{ sent: number; skippedNoFile: number; failed: number }> {
-  const results = { sent: 0, skippedNoFile: 0, failed: 0 };
+): Promise<{ sent: number; skippedNoFile: number; failed: number; emailSent: number; emailSkipped: number }> {
+  const results = { sent: 0, skippedNoFile: 0, failed: 0, emailSent: 0, emailSkipped: 0 };
+
+  // Pre-load fallback template from DB in case emailTemplateMap is missing/empty
+  const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { templateName?: string; subject?: string; body?: string }>> | null;
+  let fallbackTemplate: { subject: string; body: string } | null = null;
+  if (!updateVersion.emailSubject || !updateVersion.emailBody) {
+    // Try to find a default template by name from the eligible map or a known default
+    const defaultNames = ["שליחת עדכון", "עדכון — Genos / PSR-SX920", "עדכון חדש — ללקוח מעודכן"];
+    for (const name of defaultNames) {
+      const tpl = await prisma.emailTemplate.findFirst({ where: { name, isActive: true } });
+      if (tpl) {
+        fallbackTemplate = { subject: tpl.subject, body: tpl.body };
+        break;
+      }
+    }
+  }
 
   for (const customer of customers) {
     const cpiFiles = cpiMap.get(customer.id);
@@ -58,7 +73,10 @@ async function sendToEligible(
       let downloadLink2 = "";
 
       try { downloadLink = await shareFile(cpiFiles.main, customer.email, "reader"); }
-      catch { results.failed++; continue; }
+      catch (err) {
+        console.error(`Failed to share CPI for customer ${customer.id}:`, err);
+        results.failed++; continue;
+      }
 
       if (cpiFiles.additional) {
         try { downloadLink2 = await shareFile(cpiFiles.additional, customer.email, "reader"); }
@@ -76,11 +94,29 @@ async function sendToEligible(
         data: { currentUpdateVersion: updateVersion.version },
       });
 
-      // Look up per-organ template from emailTemplateMap, fallback to legacy emailSubject/emailBody
-      const tMap = updateVersion.emailTemplateMap as Record<string, Record<string, { subject?: string; body?: string }>> | null;
+      // Look up per-organ template from emailTemplateMap, fallback to updateVersion fields, then DB template
       const organTemplate = tMap?.eligible?.[customer.organId];
-      const emailSubject = organTemplate?.subject || updateVersion.emailSubject;
-      const emailBody = organTemplate?.body || updateVersion.emailBody;
+      let emailSubject = organTemplate?.subject || updateVersion.emailSubject;
+      let emailBody = organTemplate?.body || updateVersion.emailBody;
+
+      // If still no template, try loading from DB by templateName in the map
+      if (!emailSubject || !emailBody) {
+        if (organTemplate?.templateName) {
+          const dbTpl = await prisma.emailTemplate.findFirst({ where: { name: organTemplate.templateName, isActive: true } });
+          if (dbTpl) {
+            emailSubject = emailSubject || dbTpl.subject;
+            emailBody = emailBody || dbTpl.body;
+          }
+        }
+      }
+
+      // Last resort: use pre-loaded fallback template
+      if (!emailSubject || !emailBody) {
+        if (fallbackTemplate) {
+          emailSubject = emailSubject || fallbackTemplate.subject;
+          emailBody = emailBody || fallbackTemplate.body;
+        }
+      }
 
       if (emailSubject && emailBody) {
         const additionalOrganName = customer.additionalOrgan?.name || "";
@@ -103,7 +139,19 @@ async function sendToEligible(
         };
         const html = replaceTemplateVariables(emailBody, vars);
         const subject = replaceTemplateVariables(emailSubject, vars);
-        try { await sendEmail({ to: customer.email, subject, html }); } catch { /* logged below */ }
+        try {
+          const emailResult = await sendEmail({ to: customer.email, subject, html });
+          if (emailResult.success) {
+            results.emailSent++;
+          } else {
+            console.error(`Email send failed for customer ${customer.id}:`, emailResult.error);
+          }
+        } catch (err) {
+          console.error(`Email send error for customer ${customer.id}:`, err);
+        }
+      } else {
+        console.warn(`No email template found for customer ${customer.id} (organ: ${customer.organId}). emailSubject: ${!!emailSubject}, emailBody: ${!!emailBody}`);
+        results.emailSkipped++;
       }
 
       const phone = customer.whatsappPhone || customer.phone;
@@ -121,7 +169,8 @@ async function sendToEligible(
       });
 
       results.sent++;
-    } catch {
+    } catch (err) {
+      console.error(`Failed to process eligible customer ${customer.id}:`, err);
       results.failed++;
     }
   }

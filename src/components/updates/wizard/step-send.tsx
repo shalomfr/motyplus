@@ -29,6 +29,8 @@ interface SendResults {
     sent: number
     failed: number
     skippedNoFile?: number
+    emailSent?: number
+    emailSkipped?: number
   }
 }
 
@@ -226,6 +228,8 @@ export function StepSend({ updateId, version, segments, alreadySent, foldersRead
                 {key}: {r.sent} נשלחו
                 {r.failed > 0 && `, ${r.failed} נכשלו`}
                 {r.skippedNoFile && r.skippedNoFile > 0 && `, ${r.skippedNoFile} דולגו (חסר CPI)`}
+                {r.emailSent !== undefined && `, ${r.emailSent} מיילים נשלחו`}
+                {r.emailSkipped && r.emailSkipped > 0 && `, ${r.emailSkipped} מיילים דולגו (חסר תבנית)`}
               </div>
             ))}
           </CardContent>
