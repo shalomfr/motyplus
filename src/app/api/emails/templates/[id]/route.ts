@@ -123,6 +123,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    // Detach email logs before deleting template
+    await prisma.emailLog.updateMany({
+      where: { templateId: id },
+      data: { templateId: null },
+    });
     await prisma.emailTemplate.delete({ where: { id } });
 
     return NextResponse.json({ message: "התבנית נמחקה" });

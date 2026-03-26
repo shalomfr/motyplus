@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { RefreshCw, Loader2, FolderOpen, CheckCircle2, XCircle, FolderPlus, AlertTriangle } from "lucide-react"
+import { RefreshCw, Loader2, FolderOpen, CheckCircle2, XCircle, FolderPlus, AlertTriangle, ChevronDown, FileText } from "lucide-react"
 
 interface FolderStatus {
   organ: string
@@ -14,6 +14,7 @@ interface FolderStatus {
     alias: string
     hasFiles: boolean
     fileCount: number
+    fileNames?: string[]
   }[]
 }
 
@@ -38,6 +39,7 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
   const [refreshing, setRefreshing] = useState(false)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState("")
+  const [expandedFolder, setExpandedFolder] = useState<string | null>(null)
 
   const fetchFolders = useCallback(async () => {
     try {
@@ -194,28 +196,45 @@ export function StepRhythms({ updateId, version }: StepRhythmsProps) {
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-3">
-                  {organEntry.packageTypes.map((pkg) => (
-                    <div
-                      key={pkg.alias}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
-                        pkg.hasFiles
-                          ? "bg-green-50 border-green-200 text-green-800"
-                          : "bg-red-50 border-red-200 text-red-700"
-                      }`}
-                    >
-                      {pkg.hasFiles ? (
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 shrink-0" />
-                      )}
-                      <span className="truncate">{pkg.alias}</span>
-                      {pkg.hasFiles && pkg.fileCount > 0 && (
-                        <span className="text-xs text-green-600 mr-auto">
-                          ({pkg.fileCount})
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                  {organEntry.packageTypes.map((pkg) => {
+                    const folderKey = `${organEntry.organAlias}/${pkg.alias}`
+                    const isExpanded = expandedFolder === folderKey
+                    return (
+                      <div key={pkg.alias}>
+                        <button
+                          onClick={() => setExpandedFolder(isExpanded ? null : folderKey)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                            pkg.hasFiles
+                              ? "bg-green-50 border-green-200 text-green-800 hover:bg-green-100"
+                              : "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                          }`}
+                        >
+                          {pkg.hasFiles ? (
+                            <CheckCircle2 className="h-4 w-4 shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className="truncate">{pkg.alias}</span>
+                          {pkg.hasFiles && pkg.fileCount > 0 && (
+                            <span className="text-xs text-green-600 mr-auto">
+                              ({pkg.fileCount})
+                            </span>
+                          )}
+                          {pkg.hasFiles && <ChevronDown className={`h-3 w-3 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />}
+                        </button>
+                        {isExpanded && pkg.fileNames && pkg.fileNames.length > 0 && (
+                          <div className="mt-1 p-2 bg-white border rounded-lg text-xs space-y-1 max-h-40 overflow-y-auto">
+                            {pkg.fileNames.map((name, i) => (
+                              <div key={i} className="flex items-center gap-1.5 text-gray-600">
+                                <FileText className="h-3 w-3 shrink-0 text-gray-400" />
+                                <span className="truncate" dir="ltr">{name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}

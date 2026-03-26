@@ -23,9 +23,7 @@ export default function NewPromotionPage() {
   const [error, setError] = useState("")
 
   const [name, setName] = useState("")
-  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent")
   const [discountPercent, setDiscountPercent] = useState(10)
-  const [discountAmount, setDiscountAmount] = useState(0)
   const [couponCode, setCouponCode] = useState("")
   const [validFrom, setValidFrom] = useState("")
   const [validUntil, setValidUntil] = useState("")
@@ -42,8 +40,8 @@ export default function NewPromotionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          discountPercent: discountType === "percent" ? discountPercent : 0,
-          discountAmount: discountType === "amount" ? discountAmount : 0,
+          discountPercent,
+          discountAmount: 0,
           couponCode,
           validFrom,
           validUntil,
@@ -104,47 +102,16 @@ export default function NewPromotionPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>סוג הנחה</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={discountType === "percent" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setDiscountType("percent")}
-                  >
-                    אחוז %
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={discountType === "amount" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setDiscountType("amount")}
-                  >
-                    סכום קבוע
-                  </Button>
-                </div>
-                {discountType === "percent" ? (
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={discountPercent}
-                    onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
-                    placeholder="אחוז הנחה"
-                    required
-                  />
-                ) : (
-                  <Input
-                    type="number"
-                    min={1}
-                    value={discountAmount}
-                    onChange={(e) => setDiscountAmount(parseInt(e.target.value) || 0)}
-                    placeholder="סכום הנחה בש״ח"
-                    required
-                  />
-                )}
+                <Label>אחוז הנחה</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
+                  placeholder="אחוז הנחה"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -226,7 +193,7 @@ export default function NewPromotionPage() {
                 </code>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                * הקישור מדגים כיצד ייראה קישור התשלום עם קוד הקופון {couponCode} ({discountType === "amount" ? `${discountAmount} ₪ הנחה` : `${discountPercent}% הנחה`})
+                * הקישור מדגים כיצד ייראה קישור התשלום עם קוד הקופון {couponCode} ({discountPercent}% הנחה)
               </p>
             </CardContent>
           </Card>

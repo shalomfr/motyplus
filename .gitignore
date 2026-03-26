@@ -9,3 +9,4 @@ source.zip
 .env
 generated-info-files/
 גיבויים/
+prisma/upload-fake-cpi.ts

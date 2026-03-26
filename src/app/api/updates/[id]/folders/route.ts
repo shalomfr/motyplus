@@ -33,17 +33,21 @@ async function listSubfolders(
   return (res.data.files || []).map((f) => f.name || "").filter(Boolean);
 }
 
-async function countFolderContents(
+async function listFolderContents(
   drive: ReturnType<typeof getDrive>,
   folderId: string
-): Promise<number> {
+): Promise<{ count: number; fileNames: string[] }> {
   const res = await drive.files.list({
     q: `'${folderId}' in parents and trashed=false`,
-    fields: "files(id)",
+    fields: "files(id,name,mimeType)",
     spaces: "drive",
-    pageSize: 50,
+    pageSize: 100,
   });
-  return res.data.files?.length || 0;
+  const files = res.data.files || [];
+  return {
+    count: files.length,
+    fileNames: files.map((f) => f.name || "").filter(Boolean),
+  };
 }
 
 async function ensureSubfolder(
@@ -169,8 +173,8 @@ export async function GET(
               return { name: setType.name, alias: packageName, hasFiles: false, fileCount: 0 };
             }
 
-            const fileCount = await countFolderContents(drive, versionOrganId);
-            return { name: setType.name, alias: packageName, hasFiles: fileCount > 0, fileCount };
+            const contents = await listFolderContents(drive, versionOrganId);
+            return { name: setType.name, alias: packageName, hasFiles: contents.count > 0, fileCount: contents.count, fileNames: contents.fileNames };
           })
         );
 
