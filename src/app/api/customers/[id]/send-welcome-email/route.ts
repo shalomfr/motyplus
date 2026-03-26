@@ -81,6 +81,7 @@ export async function POST(
         customerId: customer.id,
         toEmail: customer.email,
         subject,
+        body: html,
         status: "SENT",
         sentAt: new Date(),
         userId: session.user.id,
