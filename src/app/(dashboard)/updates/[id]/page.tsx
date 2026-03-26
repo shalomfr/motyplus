@@ -73,6 +73,7 @@ export default function UpdateDetailsPage() {
   const [sendAllResult, setSendAllResult] = useState<{
     sent: number; emailSent: number; emailSkipped: number; failed: number; skippedNoFile: number; total: number
   } | null>(null)
+  const [eligibleCount, setEligibleCount] = useState<number>(0)
 
   const fetchUpdate = async () => {
     try {
@@ -85,6 +86,18 @@ export default function UpdateDetailsPage() {
       console.error("Error fetching update:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchEligible = async () => {
+    try {
+      const res = await fetch(`/api/updates/${id}/work-list`)
+      if (res.ok) {
+        const data = await res.json()
+        setEligibleCount(data.totalEligible || 0)
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -136,6 +149,7 @@ export default function UpdateDetailsPage() {
 
   useEffect(() => {
     fetchUpdate()
+    fetchEligible()
   }, [id])
 
   if (loading) {
@@ -156,7 +170,7 @@ export default function UpdateDetailsPage() {
 
   const sentCount = update.customerUpdates.filter((cu) => cu.sentAt).length
   const downloadedCount = update.customerUpdates.filter((cu) => cu.downloadedAt).length
-  const totalEligible = update.customerUpdates.length
+  const totalEligible = eligibleCount + update.customerUpdates.length
   const statusConfig = STATUS_CONFIG[update.status] || STATUS_CONFIG.DRAFT
 
   return (
