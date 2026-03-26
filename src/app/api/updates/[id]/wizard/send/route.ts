@@ -96,20 +96,25 @@ async function sendToEligible(
         data: { currentUpdateVersion: updateVersion.version },
       });
 
-      // Look up per-organ template from emailTemplateMap, fallback to updateVersion fields, then DB template
+      // Look up per-organ template from emailTemplateMap
       const organTemplate = tMap?.eligible?.[customer.organId];
-      let emailSubject = organTemplate?.subject || updateVersion.emailSubject;
-      let emailBody = organTemplate?.body || updateVersion.emailBody;
 
-      // If still no template, try loading from DB by templateName in the map
-      if (!emailSubject || !emailBody) {
-        if (organTemplate?.templateName) {
-          const dbTpl = await prisma.emailTemplate.findFirst({ where: { name: organTemplate.templateName, isActive: true } });
-          if (dbTpl) {
-            emailSubject = emailSubject || dbTpl.subject;
-            emailBody = emailBody || dbTpl.body;
-          }
+      // Always load fresh template from DB (not cached copy from emailTemplateMap)
+      let emailSubject: string | null = null;
+      let emailBody: string | null = null;
+
+      if (organTemplate?.templateName) {
+        const dbTpl = await prisma.emailTemplate.findFirst({ where: { name: organTemplate.templateName, isActive: true } });
+        if (dbTpl) {
+          emailSubject = dbTpl.subject;
+          emailBody = dbTpl.body;
         }
+      }
+
+      // Fallback to updateVersion fields
+      if (!emailSubject || !emailBody) {
+        emailSubject = emailSubject || updateVersion.emailSubject;
+        emailBody = emailBody || updateVersion.emailBody;
       }
 
       // Last resort: use pre-loaded fallback template
