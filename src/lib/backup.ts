@@ -142,6 +142,11 @@ export async function importAllData(backup: BackupData): Promise<{ tablesRestore
     throw new Error("קובץ גיבוי לא תקין — חסר metadata או data")
   }
 
+  const SUPPORTED_VERSIONS = ["1.0"];
+  if (!SUPPORTED_VERSIONS.includes(backup.metadata.version)) {
+    throw new Error(`גרסת גיבוי ${backup.metadata.version} לא נתמכת. גרסאות נתמכות: ${SUPPORTED_VERSIONS.join(", ")}`)
+  }
+
   for (const key of TABLE_ORDER) {
     if (!Array.isArray(backup.data[key])) {
       // Allow missing tables (treat as empty)
@@ -281,6 +286,7 @@ export async function importAllData(backup: BackupData): Promise<{ tablesRestore
           infoFileUrl: r.infoFileUrl as string | null,
           additionalInfoFileUrl: r.additionalInfoFileUrl as string | null,
           notes: r.notes as string | null,
+          isCasual: (r.isCasual as boolean) || false,
           linkedCustomerId: null, // set in second pass
           createdAt: new Date(r.createdAt as string), updatedAt: new Date(r.updatedAt as string),
         },

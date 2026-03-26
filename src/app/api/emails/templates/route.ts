@@ -31,7 +31,7 @@ async function uploadBlockImages(blocks: EmailBlock[]): Promise<EmailBlock[]> {
 }
 
 // GET /api/emails/templates - רשימת תבניות מייל
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -41,7 +41,22 @@ export async function GET() {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const folderId = searchParams.get("folderId");
+    const search = searchParams.get("search");
+    const where: any = {};
+    if (folderId) {
+      where.folderId = folderId;
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { subject: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
     const templates = await prisma.emailTemplate.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         _count: {

@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     // הכנת נתונים לאקסל
     const excelData = customers.map((customer) => ({
       "מזהה": customer.id,
+      "קוד לקוח": customer.customerId || "",
       "שם מלא": customer.fullName,
       "טלפון": customer.phone,
       "וואטסאפ": customer.whatsappPhone || "",
@@ -64,8 +65,8 @@ export async function GET(request: NextRequest) {
       "אורגן": customer.organ.name,
       "סוג סט": customer.setType.name,
       "סכום ששולם": Number(customer.amountPaid),
-      "תאריך רכישה": customer.purchaseDate.toLocaleDateString("he-IL"),
-      "תפוגת עדכונים": customer.updateExpiryDate.toLocaleDateString("he-IL"),
+      "תאריך רכישה": customer.purchaseDate ? new Date(customer.purchaseDate) : "",
+      "תפוגת עדכונים": customer.updateExpiryDate ? new Date(customer.updateExpiryDate) : "",
       "סטטוס": customer.status,
       "סוג דגימה": customer.sampleType,
       "גרסה נוכחית": customer.currentUpdateVersion || "",
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
     // הגדרת רוחב עמודות
     worksheet["!cols"] = [
       { wch: 8 },   // מזהה
+      { wch: 12 },  // קוד לקוח
       { wch: 20 },  // שם מלא
       { wch: 15 },  // טלפון
       { wch: 15 },  // וואטסאפ

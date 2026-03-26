@@ -91,6 +91,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fallback for orders without setTypeId (free amount)
+    if (!setTypeId && !pendingOrder.isUpdateOnly) {
+      let freeSet = await prisma.setType.findFirst({ where: { name: "סכום חופשי" } });
+      if (!freeSet) {
+        freeSet = await prisma.setType.create({
+          data: { name: "סכום חופשי", price: 0, includesUpdates: false, sortOrder: 98, isActive: false },
+        });
+      }
+      setTypeId = freeSet.id;
+    }
+
     // Extract promotionId from metadata
     const promoId = metadata.promotionId || null;
 
@@ -173,6 +184,14 @@ export async function POST(request: NextRequest) {
         receiptNumber: docNumber,
       },
     });
+
+    // Increment promotion usage after successful payment
+    if (pendingOrder.promotionId) {
+      await prisma.promotion.update({
+        where: { id: pendingOrder.promotionId },
+        data: { currentUses: { increment: 1 } },
+      });
+    }
 
     // Mark as completed
     await prisma.pendingOrder.update({

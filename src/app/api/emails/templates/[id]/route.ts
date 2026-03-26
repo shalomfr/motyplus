@@ -67,6 +67,12 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    const existing = await prisma.emailTemplate.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "תבנית לא נמצאה" }, { status: 404 });
+    }
+
     const body = await request.json();
 
     // Partial update: only folderId (move between folders)
@@ -123,6 +129,12 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const existing = await prisma.emailTemplate.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "תבנית לא נמצאה" }, { status: 404 });
+    }
+
     // Detach email logs before deleting template
     await prisma.emailLog.updateMany({
       where: { templateId: id },

@@ -64,6 +64,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ id: updated.id, message: "ספק עודכן" });
     }
 
+    // If new provider is primary, unset all other providers' isPrimary
+    if (true) { // All new providers are created as isPrimary
+      await prisma.billingProvider.updateMany({
+        where: { isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
     // יצירה חדשה
     const created = await prisma.billingProvider.create({
       data: {

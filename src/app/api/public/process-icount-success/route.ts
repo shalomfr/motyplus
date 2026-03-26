@@ -7,12 +7,16 @@ import { processCompletedOrder } from "@/app/api/webhooks/icount/route";
 // Idempotent — safe to call multiple times (checks pendingOrder.status)
 export async function POST(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
     const body = await request.json();
     const { pendingOrderId, docnum, doc_url, total, confirmation_code, customer_id, cp, promotionId } = body;
 
     if (!pendingOrderId) {
       return NextResponse.json({ error: "Missing pendingOrderId" }, { status: 400 });
     }
+
+    // Extract token from body or query params
+    const token = body.token || searchParams.get("token");
 
     // Fetch pending order — idempotency check
     const pendingOrder = await prisma.pendingOrder.findUnique({
@@ -21,6 +25,12 @@ export async function POST(request: NextRequest) {
 
     if (!pendingOrder) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Basic security: verify the token matches the payment session
+    // Soft check — if no token is provided, we still allow it (backward compatibility)
+    if (token && pendingOrder.paymentSessionId && token !== pendingOrder.paymentSessionId) {
+      return NextResponse.json({ error: "אימות נכשל" }, { status: 403 });
     }
 
     if (pendingOrder.status !== "PENDING") {

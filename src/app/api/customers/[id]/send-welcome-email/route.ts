@@ -75,6 +75,18 @@ export async function POST(
       return NextResponse.json({ error: "שגיאה בשליחת המייל" }, { status: 500 });
     }
 
+    // רישום לוג מייל
+    await prisma.emailLog.create({
+      data: {
+        customerId: customer.id,
+        toEmail: customer.email,
+        subject,
+        status: "SENT",
+        sentAt: new Date(),
+        userId: session.user.id,
+      },
+    });
+
     // שליחת וואטסאפ במקביל (לא חוסם אם נכשל)
     const whatsappMessage = `שלום ${customer.fullName}!\nתודה על רכישת *${customer.setType.name}* לאורגן *${customer.organ.name}*.\nמספר לקוח: ${customer.id}\nלכל שאלה - כאן בשבילך 🎹`;
     const phone = customer.whatsappPhone || customer.phone;

@@ -34,6 +34,19 @@ export async function POST(
       )
     }
 
+    if (updateVersion.status === "DRAFT") {
+      return NextResponse.json(
+        { error: "לא ניתן לשלוח עדכון בסטטוס טיוטה" },
+        { status: 400 }
+      )
+    }
+    if (updateVersion.status === "COMPLETED") {
+      return NextResponse.json(
+        { error: "העדכון כבר הושלם — לא ניתן לשלוח שוב" },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
     const { customerIds, force, email } = body as {
       customerIds?: number[]
@@ -250,11 +263,21 @@ export async function POST(
           }
         }
 
-        // יצירת רשומת CustomerUpdate
-        await prisma.customerUpdate.create({
-          data: {
+        // יצירת/עדכון רשומת CustomerUpdate
+        await prisma.customerUpdate.upsert({
+          where: {
+            customerId_updateVersionId: {
+              customerId: customer.id,
+              updateVersionId: id,
+            },
+          },
+          create: {
             customerId: customer.id,
             updateVersionId: id,
+            sentAt: now,
+            sentById: session.user.id,
+          },
+          update: {
             sentAt: now,
             sentById: session.user.id,
           },
@@ -375,7 +398,7 @@ export async function POST(
     }
 
     // עדכון סטטוס העדכון
-    if (results.sent > 0 && updateVersion.status === "DRAFT") {
+    if (results.sent > 0 && (updateVersion.status === "DRAFT" || updateVersion.status === "READY")) {
       await prisma.updateVersion.update({
         where: { id },
         data: { status: "SENDING" },

@@ -90,7 +90,10 @@ export async function DELETE(
       where: { id },
       include: {
         _count: {
-          select: { customers: true },
+          select: {
+            customers: true,
+            additionalCustomers: true,
+          },
         },
       },
     });
@@ -102,10 +105,10 @@ export async function DELETE(
       );
     }
 
-    if (existing._count.customers > 0) {
+    if (existing._count.customers > 0 || existing._count.additionalCustomers > 0) {
       return NextResponse.json(
         {
-          error: `לא ניתן למחוק את האורגן. קיימים ${existing._count.customers} לקוחות המשויכים אליו`,
+          error: `לא ניתן למחוק אורגן שמקושר ל-${existing._count.customers + existing._count.additionalCustomers} לקוחות`,
         },
         { status: 400 }
       );

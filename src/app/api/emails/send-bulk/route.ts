@@ -5,6 +5,14 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 import { getBillingClient } from "@/lib/billing";
 
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 // GET /api/emails/send-bulk — סטטיסטיקות: כמה לקוחות בכל קבוצה
 export async function GET() {
   try {
@@ -136,71 +144,96 @@ export async function POST(request: NextRequest) {
         include: { organ: true, setType: true },
       });
 
-      for (const customer of customers) {
-        const remainingForFullSet = fullSetPrice
-          ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
-          : 0;
+      const notUpdatedChunks = chunkArray(customers, 10);
+      for (const chunk of notUpdatedChunks) {
+        await Promise.all(
+          chunk.map(async (customer) => {
+            const remainingForFullSet = fullSetPrice
+              ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
+              : 0;
 
-        // Create payment link if billing is available and there's a balance
-        let paymentLink = "";
-        if (billing && remainingForFullSet > 0) {
-          try {
-            const page = await billing.client.createPaymentPage({
-              customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-              items: [{ description: "עדכון תוכנה", quantity: 1, unitPrice: remainingForFullSet }],
-              successUrl: `${baseUrl}/order/success`,
-              cancelUrl: `${baseUrl}/order/cancel`,
-              autoCreateDoc: true,
-              docType: "invoice_receipt",
-              metadata: { customerId: String(customer.id), source: "bulk_quote" },
-            });
-            paymentLink = page.url;
-          } catch { /* continue without link */ }
-        }
+            // Create payment link if billing is available and there's a balance
+            let paymentLink = "";
+            if (billing && remainingForFullSet > 0) {
+              try {
+                const page = await billing.client.createPaymentPage({
+                  customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+                  items: [{ description: "עדכון תוכנה", quantity: 1, unitPrice: remainingForFullSet }],
+                  successUrl: `${baseUrl}/order/success`,
+                  cancelUrl: `${baseUrl}/order/cancel`,
+                  autoCreateDoc: true,
+                  docType: "invoice_receipt",
+                  metadata: { customerId: String(customer.id), source: "bulk_quote" },
+                });
+                paymentLink = page.url;
+              } catch { /* continue without link */ }
+            }
 
-        const variables = {
-          fullName: customer.fullName,
-          firstName: customer.fullName.split(" ")[0],
-          organ: customer.organ.name,
-          setType: customer.setType.name,
-          currentVersion: customer.currentUpdateVersion || "—",
-          updateVersion: latestVersion?.version || "—",
-          remainingAmount: String(remainingForFullSet),
-          remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
-          paymentLink,
-          driveLink: "",
-          youtubeLink: "",
-          customLink: "",
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
-          todayDate: new Date().toLocaleDateString("he-IL"),
-        };
+            const variables = {
+              fullName: customer.fullName,
+              firstName: customer.fullName.split(" ")[0],
+              organ: customer.organ.name,
+              setType: customer.setType.name,
+              currentVersion: customer.currentUpdateVersion || "—",
+              updateVersion: latestVersion?.version || "—",
+              remainingAmount: String(remainingForFullSet),
+              remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
+              paymentLink,
+              driveLink: "",
+              youtubeLink: "",
+              customLink: "",
+              orderFormLink: "https://motyplus-order.onrender.com/",
+              termsLink: "https://motyplus-order.onrender.com/terms",
+              todayDate: new Date().toLocaleDateString("he-IL"),
+            };
 
-        const html = replaceTemplateVariables(template.body, variables);
-        const subject = replaceTemplateVariables(template.subject, variables);
+            const html = replaceTemplateVariables(template.body, variables);
+            const subject = replaceTemplateVariables(template.subject, variables);
 
-        try {
-          const result = await sendEmail({ to: customer.email, subject, html });
-          if (result.success) {
-            totalSent++;
-            await prisma.emailLog.create({
-              data: {
-                customerId: customer.id,
-                templateId: template.id,
-                toEmail: customer.email,
-                subject,
-                body: html,
-                status: "SENT",
-                sentAt: new Date(),
-                userId: session.user.id,
-              },
-            });
-          } else {
-            totalFailed++;
-          }
-        } catch {
-          totalFailed++;
-        }
+            try {
+              const result = await sendEmail({ to: customer.email, subject, html });
+              if (result.success) {
+                totalSent++;
+                await prisma.emailLog.create({
+                  data: {
+                    customerId: customer.id,
+                    templateId: template.id,
+                    toEmail: customer.email,
+                    subject,
+                    body: html,
+                    status: "SENT",
+                    sentAt: new Date(),
+                    userId: session.user.id,
+                  },
+                });
+              } else {
+                totalFailed++;
+                await prisma.emailLog.create({
+                  data: {
+                    customerId: customer.id,
+                    toEmail: customer.email,
+                    subject: subject,
+                    status: "FAILED",
+                    templateId: template.id,
+                    userId: session.user.id,
+                  },
+                });
+              }
+            } catch {
+              totalFailed++;
+              await prisma.emailLog.create({
+                data: {
+                  customerId: customer.id,
+                  toEmail: customer.email,
+                  subject: subject,
+                  status: "FAILED",
+                  templateId: template.id,
+                  userId: session.user.id,
+                },
+              });
+            }
+          })
+        );
       }
     }
 
@@ -226,70 +259,95 @@ export async function POST(request: NextRequest) {
         include: { organ: true, setType: true },
       });
 
-      for (const customer of customers) {
-        const remainingForFullSet = fullSetPrice
-          ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
-          : 0;
+      const halfSetChunks = chunkArray(customers, 10);
+      for (const chunk of halfSetChunks) {
+        await Promise.all(
+          chunk.map(async (customer) => {
+            const remainingForFullSet = fullSetPrice
+              ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
+              : 0;
 
-        let paymentLink = "";
-        if (billing && remainingForFullSet > 0) {
-          try {
-            const page = await billing.client.createPaymentPage({
-              customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-              items: [{ description: "שדרוג לסט שלם", quantity: 1, unitPrice: remainingForFullSet }],
-              successUrl: `${baseUrl}/order/success`,
-              cancelUrl: `${baseUrl}/order/cancel`,
-              autoCreateDoc: true,
-              docType: "invoice_receipt",
-              metadata: { customerId: String(customer.id), source: "bulk_quote_half" },
-            });
-            paymentLink = page.url;
-          } catch { /* continue without link */ }
-        }
+            let paymentLink = "";
+            if (billing && remainingForFullSet > 0) {
+              try {
+                const page = await billing.client.createPaymentPage({
+                  customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
+                  items: [{ description: "שדרוג לסט שלם", quantity: 1, unitPrice: remainingForFullSet }],
+                  successUrl: `${baseUrl}/order/success`,
+                  cancelUrl: `${baseUrl}/order/cancel`,
+                  autoCreateDoc: true,
+                  docType: "invoice_receipt",
+                  metadata: { customerId: String(customer.id), source: "bulk_quote_half" },
+                });
+                paymentLink = page.url;
+              } catch { /* continue without link */ }
+            }
 
-        const variables = {
-          fullName: customer.fullName,
-          firstName: customer.fullName.split(" ")[0],
-          organ: customer.organ.name,
-          setType: customer.setType.name,
-          currentVersion: customer.currentUpdateVersion || "—",
-          updateVersion: latestVersion?.version || "—",
-          remainingAmount: String(remainingForFullSet),
-          remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
-          paymentLink,
-          driveLink: "",
-          youtubeLink: "",
-          customLink: "",
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
-          todayDate: new Date().toLocaleDateString("he-IL"),
-        };
+            const variables = {
+              fullName: customer.fullName,
+              firstName: customer.fullName.split(" ")[0],
+              organ: customer.organ.name,
+              setType: customer.setType.name,
+              currentVersion: customer.currentUpdateVersion || "—",
+              updateVersion: latestVersion?.version || "—",
+              remainingAmount: String(remainingForFullSet),
+              remainingForFullSet: `₪${remainingForFullSet.toLocaleString("he-IL")}`,
+              paymentLink,
+              driveLink: "",
+              youtubeLink: "",
+              customLink: "",
+              orderFormLink: "https://motyplus-order.onrender.com/",
+              termsLink: "https://motyplus-order.onrender.com/terms",
+              todayDate: new Date().toLocaleDateString("he-IL"),
+            };
 
-        const html = replaceTemplateVariables(template.body, variables);
-        const subject = replaceTemplateVariables(template.subject, variables);
+            const html = replaceTemplateVariables(template.body, variables);
+            const subject = replaceTemplateVariables(template.subject, variables);
 
-        try {
-          const result = await sendEmail({ to: customer.email, subject, html });
-          if (result.success) {
-            totalSent++;
-            await prisma.emailLog.create({
-              data: {
-                customerId: customer.id,
-                templateId: template.id,
-                toEmail: customer.email,
-                subject,
-                body: html,
-                status: "SENT",
-                sentAt: new Date(),
-                userId: session.user.id,
-              },
-            });
-          } else {
-            totalFailed++;
-          }
-        } catch {
-          totalFailed++;
-        }
+            try {
+              const result = await sendEmail({ to: customer.email, subject, html });
+              if (result.success) {
+                totalSent++;
+                await prisma.emailLog.create({
+                  data: {
+                    customerId: customer.id,
+                    templateId: template.id,
+                    toEmail: customer.email,
+                    subject,
+                    body: html,
+                    status: "SENT",
+                    sentAt: new Date(),
+                    userId: session.user.id,
+                  },
+                });
+              } else {
+                totalFailed++;
+                await prisma.emailLog.create({
+                  data: {
+                    customerId: customer.id,
+                    toEmail: customer.email,
+                    subject: subject,
+                    status: "FAILED",
+                    templateId: template.id,
+                    userId: session.user.id,
+                  },
+                });
+              }
+            } catch {
+              totalFailed++;
+              await prisma.emailLog.create({
+                data: {
+                  customerId: customer.id,
+                  toEmail: customer.email,
+                  subject: subject,
+                  status: "FAILED",
+                  templateId: template.id,
+                  userId: session.user.id,
+                },
+              });
+            }
+          })
+        );
       }
     }
 

@@ -118,7 +118,7 @@ model Customer {
 
   // Linked customer (additional organ)
   linkedCustomerId Int?
-  linkedCustomer   Customer?  @relation("LinkedCustomers", fields: [linkedCustomerId], references: [id])
+  linkedCustomer   Customer?  @relation("LinkedCustomers", fields: [linkedCustomerId], references: [id], onDelete: SetNull)
   linkedFrom       Customer[] @relation("LinkedCustomers")
 
   // Relations
@@ -230,13 +230,14 @@ model CustomerUpdate {
 
   // Relations
   customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  updateVersion UpdateVersion @relation(fields: [updateVersionId], references: [id])
+  updateVersion UpdateVersion @relation(fields: [updateVersionId], references: [id], onDelete: Cascade)
   updateFile    UpdateFile?   @relation(fields: [updateFileId], references: [id])
   sentBy        User?         @relation(fields: [sentById], references: [id])
 
   @@unique([customerId, updateVersionId])
   @@index([customerId])
   @@index([updateVersionId])
+  @@index([sentAt])
 }
 
 // ===== קבצי עדכון (מטריצה: גרסה × סוג סט × אורגן) =====
@@ -291,25 +292,27 @@ model Lead {
   // Relations
   organ             Organ?     @relation(fields: [organId], references: [id])
   assignedAgent     User?      @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
-  convertedCustomer Customer?  @relation("ConvertedLead", fields: [convertedCustomerId], references: [id])
+  convertedCustomer Customer?  @relation("ConvertedLead", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
   notes             LeadNote[]
   emailLogs         EmailLog[]
 
   @@index([stage])
   @@index([assignedAgentId])
   @@index([organId])
+  @@index([phone])
+  @@index([email])
 }
 
 model LeadNote {
   id        String   @id @default(cuid())
   leadId    String
-  userId    String
+  userId    String?
   content   String   @db.Text
   createdAt DateTime @default(now())
 
   // Relations
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([leadId])
 }
@@ -370,7 +373,7 @@ model EmailLog {
 
   // Relations
   customer Customer?      @relation(fields: [customerId], references: [id])
-  lead     Lead?          @relation(fields: [leadId], references: [id])
+  lead     Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
   template EmailTemplate? @relation(fields: [templateId], references: [id])
   user     User?          @relation(fields: [userId], references: [id])
 
@@ -385,8 +388,8 @@ model EmailLog {
 model Promotion {
   id              String    @id @default(cuid())
   name            String
-  discountPercent Int       @default(0)
-  discountAmount  Int       @default(0)
+  discountPercent Float     @default(0)
+  discountAmount  Float     @default(0)
   couponCode      String    @unique
   validFrom       DateTime
   validUntil      DateTime
@@ -413,7 +416,7 @@ enum BillingProviderType {
 
 model BillingProvider {
   id          String              @id @default(cuid())
-  userId      String
+  userId      String?
   provider    BillingProviderType
   displayName String
   apiKey      String              @db.Text // מוצפן — Company ID
@@ -427,7 +430,7 @@ model BillingProvider {
   updatedAt   DateTime            @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([provider])
@@ -500,7 +503,6 @@ model FileStorage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([path])
 }
 
 // ===== משימות =====
@@ -538,7 +540,7 @@ model Task {
 
 model PendingOrder {
   id              String   @id @default(cuid())
-  stripeSessionId String   @unique
+  paymentSessionId String   @unique @map("stripeSessionId")
   fullName        String
   phone           String
   email           String
@@ -555,7 +557,7 @@ model PendingOrder {
   status          String   @default("PENDING") // PENDING, COMPLETED, EXPIRED
   createdAt       DateTime @default(now())
 
-  @@index([stripeSessionId])
+  @@index([paymentSessionId])
   @@index([status])
 }
 

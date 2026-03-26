@@ -65,12 +65,29 @@ export async function GET(request: NextRequest) {
     }
 
     if (missingDetails === "true") {
-      where.OR = [
-        { address: null },
-        { address: "" },
-        { whatsappPhone: null },
-        { whatsappPhone: "" },
-      ];
+      const missingCondition = {
+        OR: [
+          { address: null },
+          { address: "" },
+          { whatsappPhone: null },
+          { whatsappPhone: "" },
+        ],
+      };
+
+      // If both search and missingDetails are active, combine them with AND
+      if (search) {
+        const searchCondition = {
+          OR: [
+            { fullName: { contains: search, mode: "insensitive" as const } },
+            { phone: { contains: search } },
+            { email: { contains: search, mode: "insensitive" as const } },
+          ],
+        };
+        where.AND = [searchCondition, missingCondition];
+        delete where.OR; // Remove since we're using AND now
+      } else {
+        where.OR = missingCondition.OR;
+      }
     }
 
     // בניית מיון
@@ -189,7 +206,9 @@ export async function POST(request: NextRequest) {
       },
       include: {
         organ: true,
+        additionalOrgan: true,
         setType: true,
+        promotion: { select: { id: true, name: true, discountPercent: true, couponCode: true } },
       },
     });
 

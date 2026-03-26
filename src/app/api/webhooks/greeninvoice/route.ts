@@ -222,6 +222,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Increment promotion usage after successful payment
+    if (pendingOrder.promotionId) {
+      await prisma.promotion.update({
+        where: { id: pendingOrder.promotionId },
+        data: { currentUses: { increment: 1 } },
+      });
+    }
+
     // Mark as completed
     await prisma.pendingOrder.update({
       where: { id: pendingOrderId },

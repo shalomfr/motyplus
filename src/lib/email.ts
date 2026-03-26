@@ -115,5 +115,8 @@ export function replaceTemplateVariables(
       isolated
     );
   }
+  // Clean up any remaining unmatched template variables
+  result = result.replace(/\{\{[^}]+\}\}/g, "");
+  result = result.replace(/\{[^}]+\}/g, "");
   return result;
 }

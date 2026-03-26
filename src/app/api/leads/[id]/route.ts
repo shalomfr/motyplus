@@ -107,6 +107,15 @@ export async function PUT(
 
     const data = validation.data;
 
+    if (data.stage === "CLOSED_WON") {
+      if (!existing.convertedCustomerId) {
+        return NextResponse.json(
+          { error: "לא ניתן לסמן ליד כ-CLOSED_WON ללא המרה ללקוח. השתמש בכפתור 'המר ללקוח'" },
+          { status: 400 }
+        );
+      }
+    }
+
     const lead = await prisma.lead.update({
       where: { id },
       data: {
@@ -168,6 +177,16 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Clean up EmailLogs before deleting lead
+    await prisma.emailLog.updateMany({
+      where: { leadId: id },
+      data: { leadId: null },
+    });
+    // Clean up ActivityLogs
+    await prisma.activityLog.deleteMany({
+      where: { entityType: "LEAD", entityId: id },
+    });
 
     await prisma.lead.delete({
       where: { id },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { uploadFile } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
 
@@ -171,6 +172,12 @@ async function handlePaymentPageWebhook(body: Record<string, unknown>) {
     if (customFields?.pendingOrderId) {
       pendingOrderId = customFields.pendingOrderId;
     }
+    if (!pendingOrderId && body.pendingOrderId) {
+      pendingOrderId = String(body.pendingOrderId);
+    }
+    if (!pendingOrderId && body.m__pendingOrderId) {
+      pendingOrderId = String(body.m__pendingOrderId);
+    }
 
     if (!pendingOrderId) {
       console.log("iCount webhook: no pendingOrderId found, body keys:", Object.keys(body).join(", "));
@@ -297,83 +304,91 @@ export async function processCompletedOrder(
     }
   }
 
-  // Create customer
-  const customer = await prisma.customer.create({
-    data: {
-      fullName: pendingOrder.fullName,
-      phone: pendingOrder.phone,
-      email: pendingOrder.email,
-      organId: pendingOrder.organId,
-      setTypeId: setTypeId!,
-      amountPaid: Number(pendingOrder.amount),
-      purchaseDate,
-      updateExpiryDate,
-      hasV3: true,
-      sampleType: "CPI",
-      currentUpdateVersion,
-      status: "PENDING_APPROVAL",
-      notes: pendingOrder.notes,
-      icountClientId: payment.clientId,
-      promotionId: promotionId || undefined,
-    },
+  // Wrap core DB operations in a transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Create customer
+    const customer = await tx.customer.create({
+      data: {
+        fullName: pendingOrder.fullName,
+        phone: pendingOrder.phone,
+        email: pendingOrder.email,
+        organId: pendingOrder.organId,
+        setTypeId: setTypeId!,
+        amountPaid: Number(pendingOrder.amount),
+        purchaseDate,
+        updateExpiryDate,
+        hasV3: true,
+        sampleType: "CPI",
+        currentUpdateVersion,
+        status: "PENDING_APPROVAL",
+        notes: pendingOrder.notes,
+        icountClientId: payment.clientId,
+        promotionId: promotionId || undefined,
+      },
+    });
+
+    // Create payment record
+    await tx.payment.create({
+      data: {
+        customerId: customer.id,
+        amount: payment.total || Number(pendingOrder.amount),
+        description: pendingOrder.isUpdateOnly ? "עדכון תוכנה" : "רכישת סט",
+        status: "COMPLETED",
+        paymentMethod: "ICOUNT",
+        externalPaymentId: payment.paymentId,
+        receiptNumber: payment.docnum,
+        receiptUrl: payment.docUrl,
+        hasReceipt: !!payment.docnum,
+        promotionId: promotionId || undefined,
+      },
+    });
+
+    // Log activity (inline instead of logActivity helper, which uses prisma directly)
+    await tx.activityLog.create({
+      data: {
+        customerId: customer.id,
+        action: "CREATE",
+        entityType: "CUSTOMER",
+        entityId: String(customer.id),
+        details: {
+          fullName: customer.fullName,
+          source: "icount_payment",
+          receiptNumber: payment.docnum,
+          paymentPageId: payment.cp,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    // Mark as completed
+    await tx.pendingOrder.update({
+      where: { id: pendingOrder.id },
+      data: { status: "COMPLETED" },
+    });
+
+    return { customer };
   });
 
-  // Upload info files to Google Drive
+  // Upload info files to Google Drive (external operation — outside transaction)
   try {
-    const fileName = `${customer.id}.n27`;
+    const fileName = `${result.customer.id}.n27`;
     const url = await uploadFile(Buffer.from(pendingOrder.infoFileData), fileName, "customers/info");
     const updateData: Record<string, string> = { infoFileUrl: url };
 
     if (pendingOrder.additionalInfoFileData && pendingOrder.additionalInfoFileData.length > 0) {
-      const addFileName = `${customer.id}_2.n27`;
+      const addFileName = `${result.customer.id}_2.n27`;
       const addUrl = await uploadFile(Buffer.from(pendingOrder.additionalInfoFileData), addFileName, "customers/info");
       updateData.additionalInfoFileUrl = addUrl;
     }
 
     await prisma.customer.update({
-      where: { id: customer.id },
+      where: { id: result.customer.id },
       data: updateData,
     });
   } catch (uploadErr) {
     console.error("Error uploading info file:", uploadErr);
   }
 
-  // Create payment record
-  await prisma.payment.create({
-    data: {
-      customerId: customer.id,
-      amount: payment.total || Number(pendingOrder.amount),
-      description: pendingOrder.isUpdateOnly ? "עדכון תוכנה" : "רכישת סט",
-      status: "COMPLETED",
-      paymentMethod: "ICOUNT",
-      externalPaymentId: payment.paymentId,
-      receiptNumber: payment.docnum,
-      receiptUrl: payment.docUrl,
-      hasReceipt: !!payment.docnum,
-    },
-  });
-
-  // Log activity
-  await logActivity({
-    customerId: customer.id,
-    action: "CREATE",
-    entityType: "CUSTOMER",
-    entityId: String(customer.id),
-    details: {
-      fullName: customer.fullName,
-      source: "icount_payment",
-      receiptNumber: payment.docnum,
-      paymentPageId: payment.cp,
-    },
-  });
-
-  // Mark as completed
-  await prisma.pendingOrder.update({
-    where: { id: pendingOrder.id },
-    data: { status: "COMPLETED" },
-  });
-
-  return customer;
+  return result.customer;
 }
 
 /**

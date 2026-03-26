@@ -45,6 +45,13 @@ export async function POST(
       );
     }
 
+    if (!lead.email || lead.email.trim() === "") {
+      return NextResponse.json(
+        { error: "לא ניתן להמיר ליד ללא כתובת מייל" },
+        { status: 400 }
+      );
+    }
+
     // קבלת נתונים נוספים מהבקשה (סוג סט, סכום, וכו')
     const body = await request.json();
     const {

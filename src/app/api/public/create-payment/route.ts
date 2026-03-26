@@ -98,6 +98,20 @@ export async function POST(request: NextRequest) {
       additionalInfoFileName = additionalInfoFile.name;
     }
 
+    const MAX_INFO_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (infoFileData && infoFileData.length > MAX_INFO_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "קובץ אינפו גדול מדי (מקסימום 10MB)" },
+        { status: 400 }
+      );
+    }
+    if (additionalInfoFileData && additionalInfoFileData.length > MAX_INFO_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "קובץ אינפו נוסף גדול מדי (מקסימום 10MB)" },
+        { status: 400 }
+      );
+    }
+
     // 100% discount — create customer directly without payment
     if (amount <= 0 && promotionId) {
       const purchaseDate = new Date();
@@ -222,7 +236,7 @@ export async function POST(request: NextRequest) {
     // Create pending order FIRST so we can pass its ID in metadata
     const pendingOrder = await prisma.pendingOrder.create({
       data: {
-        stripeSessionId: `billing_${Date.now()}`,
+        paymentSessionId: `billing_${Date.now()}`,
         fullName,
         phone,
         email,
@@ -273,14 +287,6 @@ export async function POST(request: NextRequest) {
     if (!paymentPage.url) {
       await prisma.pendingOrder.delete({ where: { id: pendingOrder.id } });
       return NextResponse.json({ error: "לא ניתן ליצור דף תשלום" }, { status: 500 });
-    }
-
-    // עדכון שימוש בקופון
-    if (promotionId) {
-      await prisma.promotion.update({
-        where: { id: promotionId },
-        data: { currentUses: { increment: 1 } },
-      });
     }
 
     return NextResponse.json({ url: paymentPage.url });

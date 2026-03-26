@@ -9,17 +9,7 @@ import { z } from "zod";
 import { LogIn, Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
-
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "נא להזין כתובת אימייל")
-    .email("כתובת אימייל לא תקינה"),
-  password: z
-    .string()
-    .min(1, "נא להזין סיסמה")
-    .min(6, "הסיסמה חייבת להכיל לפחות 6 תווים"),
-});
+import { loginSchema } from "@/lib/validators";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 

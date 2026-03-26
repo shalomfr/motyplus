@@ -32,6 +32,7 @@ export async function GET(
       where: { id: customerId },
       include: {
         organ: true,
+        additionalOrgan: true,
         setType: true,
         promotion: { select: { id: true, name: true, discountPercent: true, couponCode: true } },
         customerUpdates: {
@@ -128,6 +129,21 @@ export async function PUT(
       updateExpiryDate.setFullYear(updateExpiryDate.getFullYear() + 1);
     }
 
+    // If setTypeId changed, recalculate currentUpdateVersion
+    const extraUpdateData: Record<string, unknown> = {};
+    if (data.setTypeId && data.setTypeId !== existing.setTypeId) {
+      const newSetType = await prisma.setType.findUnique({ where: { id: data.setTypeId } });
+      if (newSetType?.includesUpdates) {
+        const latestVersion = await prisma.updateVersion.findFirst({
+          where: { status: { not: "DRAFT" } },
+          orderBy: { createdAt: "desc" },
+        });
+        if (latestVersion) {
+          extraUpdateData.currentUpdateVersion = latestVersion.version;
+        }
+      }
+    }
+
     const customer = await prisma.customer.update({
       where: { id: customerId },
       data: {
@@ -142,6 +158,7 @@ export async function PUT(
           ? new Date(data.purchaseDate)
           : undefined,
         updateExpiryDate,
+        ...extraUpdateData,
       },
       include: {
         organ: true,
@@ -261,9 +278,12 @@ export async function PATCH(
     }
 
     if (action === "approve" || body.status === "ACTIVE") {
+      const updateExpiryDate = new Date();
+      updateExpiryDate.setFullYear(updateExpiryDate.getFullYear() + 1);
+
       const customer = await prisma.customer.update({
         where: { id: customerId },
-        data: { status: "ACTIVE" },
+        data: { status: "ACTIVE", updateExpiryDate },
         include: { organ: true, setType: true },
       });
 
@@ -326,6 +346,17 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Unlink any customers that point to this customer
+    await prisma.customer.updateMany({
+      where: { linkedCustomerId: parseInt(id) },
+      data: { linkedCustomerId: null },
+    });
+    // Clean up Lead.convertedCustomerId
+    await prisma.lead.updateMany({
+      where: { convertedCustomerId: parseInt(id) },
+      data: { convertedCustomerId: null },
+    });
 
     // Delete related records first to avoid FK constraint errors
     await prisma.payment.deleteMany({ where: { customerId } });

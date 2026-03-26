@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { uploadFile } from "@/lib/file-storage";
 
 const ALLOWED_TYPES: Record<string, string[]> = {
-  customers: ["bin", "sty"],
+  customers: ["bin", "sty", "n27"],
   updates: ["zip", "ppf"],
 };
 

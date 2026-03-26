@@ -165,6 +165,14 @@ export async function POST(request: NextRequest) {
         details: { fullName: customer.fullName, source: "public_order", stripeSession: session.id },
       });
 
+      // Increment promotion usage after successful payment
+      if (order.promotionId) {
+        await prisma.promotion.update({
+          where: { id: order.promotionId },
+          data: { currentUses: { increment: 1 } },
+        });
+      }
+
       // Mark as completed
       await prisma.pendingOrder.update({
         where: { id: pendingOrderId },

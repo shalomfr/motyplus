@@ -124,6 +124,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Sync customer amountPaid with total payments
+    const totalPayments = await prisma.payment.aggregate({
+      where: { customerId: body.customerId, status: "COMPLETED" },
+      _sum: { amount: true },
+    });
+    if (totalPayments._sum.amount !== null) {
+      await prisma.customer.update({
+        where: { id: body.customerId },
+        data: { amountPaid: totalPayments._sum.amount },
+      });
+    }
+
     // הנפקת קבלה אוטומטית
     let receiptInfo = null;
     try {

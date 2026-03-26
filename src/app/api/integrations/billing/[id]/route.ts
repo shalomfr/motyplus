@@ -37,6 +37,16 @@ export async function PATCH(
     const body = await request.json();
     const { isActive, isPrimary, settings } = body;
 
+    if (body.isPrimary === true) {
+      await prisma.billingProvider.updateMany({
+        where: {
+          isPrimary: true,
+          id: { not: id },
+        },
+        data: { isPrimary: false },
+      });
+    }
+
     const updated = await prisma.billingProvider.update({
       where: { id },
       data: {

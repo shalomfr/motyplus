@@ -260,6 +260,11 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        if (!phone || phone.trim() === "") {
+          errors.push({ row: rowNum, customerId: customerIdStr, error: "מספר טלפון חסר" });
+          continue;
+        }
+
         // Lookup organ
         let organId = organMap.get(organName);
         if (!organId && organName) {
@@ -351,6 +356,11 @@ export async function POST(request: NextRequest) {
         });
 
         created++;
+
+        // Yield to prevent DB timeout on large imports
+        if (created % 50 === 0 && created > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         errors.push({ row: rowNum, customerId: customerIdStr, error: message });

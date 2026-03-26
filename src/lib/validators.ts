@@ -5,7 +5,7 @@ import { z } from "zod";
 const emptyToNull = z.string().optional().nullable().transform(v => v === '' ? null : v ?? null);
 
 export const customerSchema = z.object({
-  fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
+  fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים").max(100, "שם ארוך מדי"),
   phone: z.string().min(9, "מספר טלפון לא תקין"),
   whatsappPhone: emptyToNull,
   address: emptyToNull,
@@ -33,7 +33,7 @@ export const customerUpdateSchema = customerSchema.partial().extend({
 // ===== לידים =====
 
 export const leadSchema = z.object({
-  fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
+  fullName: z.string().min(2, "שם חייב להכיל לפחות 2 תווים").max(100, "שם ארוך מדי"),
   phone: z.string().min(9, "מספר טלפון לא תקין"),
   email: z.string().email("כתובת מייל לא תקינה").optional().nullable(),
   organId: z.string().optional().nullable(),
@@ -116,13 +116,21 @@ export const publicOrderSchema = z.object({
   updateVersionId: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 }).refine(
-  (data) => (data.isUpdateOnly ? !!data.updateVersionId : !!data.setTypeId),
-  { message: "יש לבחור סוג סט או גרסת עדכון", path: ["setTypeId"] }
+  (data) => {
+    if (data.isUpdateOnly) return !!data.updateVersionId;
+    return !!data.setTypeId;
+  },
+  (data) => ({
+    message: data.isUpdateOnly
+      ? "יש לבחור גרסת עדכון"
+      : "יש לבחור סוג סט",
+    path: data.isUpdateOnly ? ["updateVersionId"] : ["setTypeId"],
+  })
 );
 
 // ===== Auth =====
 
 export const loginSchema = z.object({
-  email: z.string().email("כתובת מייל לא תקינה"),
-  password: z.string().min(6, "סיסמה חייבת להכיל לפחות 6 תווים"),
+  email: z.string().min(1, "נא להזין כתובת אימייל").email("כתובת אימייל לא תקינה"),
+  password: z.string().min(1, "נא להזין סיסמה").min(6, "הסיסמה חייבת להכיל לפחות 6 תווים"),
 });

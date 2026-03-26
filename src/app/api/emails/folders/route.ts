@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
 
 const DEFAULT_FOLDERS = [
   { key: "update", name: "מיילים של עדכון", color: "blue", iconName: "RefreshCw", order: 0 },
@@ -13,6 +14,11 @@ const DEFAULT_FOLDERS = [
 // GET — fetch all folders, auto-seed defaults if empty
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
+    }
+
     let folders = await prisma.emailFolder.findMany({
       orderBy: { order: "asc" },
       include: { _count: { select: { templates: true } } },

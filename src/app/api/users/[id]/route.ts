@@ -15,7 +15,22 @@ export async function PATCH(
   }
 
   const { id } = await params;
+
+  const existingUser = await prisma.user.findUnique({ where: { id } });
+  if (!existingUser) {
+    return NextResponse.json({ error: "משתמש לא נמצא" }, { status: 404 });
+  }
+
   const body = await request.json();
+  const { name, email, role, password } = body;
+
+  // Check if at least one field was provided
+  if (!name && !email && !role && !password) {
+    return NextResponse.json(
+      { error: "יש לספק לפחות שדה אחד לעדכון" },
+      { status: 400 }
+    );
+  }
 
   const data: Record<string, unknown> = {};
   if (body.isActive !== undefined) data.isActive = body.isActive;
@@ -44,6 +59,43 @@ export async function DELETE(
   }
 
   const { id } = await params;
+
+  if (session.user.id === id) {
+    return NextResponse.json(
+      { error: "לא ניתן למחוק את המשתמש שמחובר כרגע" },
+      { status: 400 }
+    );
+  }
+
+  const userCount = await prisma.user.count();
+  if (userCount <= 1) {
+    return NextResponse.json(
+      { error: "לא ניתן למחוק את המשתמש האחרון במערכת" },
+      { status: 400 }
+    );
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { id } });
+  if (!existingUser) {
+    return NextResponse.json({ error: "משתמש לא נמצא" }, { status: 404 });
+  }
+
+  // Clean up LeadNotes (set userId to null — requires schema change to nullable)
+  await prisma.leadNote.updateMany({
+    where: { userId: id },
+    data: { userId: null },
+  });
+  // Clean up BillingProviders
+  await prisma.billingProvider.updateMany({
+    where: { userId: id },
+    data: { userId: null },
+  });
+  // Clean up CustomerUpdate.sentById
+  await prisma.customerUpdate.updateMany({
+    where: { sentById: id },
+    data: { sentById: null },
+  });
+
   await prisma.user.delete({ where: { id } });
   return NextResponse.json({ message: "המשתמש נמחק" });
 }

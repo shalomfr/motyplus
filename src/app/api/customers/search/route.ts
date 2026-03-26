@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
           { fullName: { contains: q, mode: "insensitive" } },
           { email: { contains: q, mode: "insensitive" } },
           { customerId: { contains: q, mode: "insensitive" } },
+          { phone: { contains: q } },
         ],
       },
       select: {

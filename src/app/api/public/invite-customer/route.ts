@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
 
-const ORDER_FORM_URL = "https://motyplus-order.onrender.com";
+const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://motyplus-order.onrender.com";
 
 export async function POST(request: NextRequest) {
   try {
     const { name, email } = await request.json();
 
-    if (!name || !email || !email.includes("@")) {
-      return NextResponse.json({ error: "שם ומייל הם שדות חובה" }, { status: 400 });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!name || !email || !emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "נתונים חסרים או לא תקינים" },
+        { status: 400 }
+      );
     }
 
     const html = `

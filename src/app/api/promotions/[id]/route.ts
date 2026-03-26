@@ -158,6 +158,30 @@ export async function DELETE(
       );
     }
 
+    // Check if promotion has linked payments or customers
+    const usage = await prisma.promotion.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { payments: true, customers: true },
+        },
+      },
+    });
+    if (!usage) {
+      return NextResponse.json({ error: "מבצע לא נמצא" }, { status: 404 });
+    }
+    if (usage._count.payments > 0 || usage._count.customers > 0) {
+      // Unlink before deleting
+      await prisma.payment.updateMany({
+        where: { promotionId: id },
+        data: { promotionId: null },
+      });
+      await prisma.customer.updateMany({
+        where: { promotionId: id },
+        data: { promotionId: null },
+      });
+    }
+
     await prisma.promotion.delete({
       where: { id },
     });
