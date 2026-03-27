@@ -163,7 +163,7 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
         </Button>
         <Button
           onClick={sendAllQuotes}
-          disabled={sendingAll || readyCount === 0}
+          disabled={sendingAll || creatingAll || readyCount === 0}
           variant="default"
           className="gap-2 bg-green-600 hover:bg-green-700"
         >
