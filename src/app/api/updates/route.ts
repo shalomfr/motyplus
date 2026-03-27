@@ -158,8 +158,7 @@ async function createUpdateFolders(
     }
   }
 
-  // גם תיקיית samples
-  await ensureFolderPath("updates/samples");
+  // תיקיית updates/samples כבר קיימת בדרייב — אין צורך ליצור
 
   console.log(
     `Drive folders created for ${version} (${updateType}): ${organs.length} organs × ${targetSetTypes.length} packageTypes`

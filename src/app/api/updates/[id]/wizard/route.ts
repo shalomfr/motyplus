@@ -209,11 +209,39 @@ export async function GET(
         })
       : notUpdated;
 
+    // Use templates from emailTemplateMap if selected, otherwise fall back to hardcoded names
+    const savedMap = (updateVersion.emailTemplateMap as Record<string, unknown>) || {};
+
+    // For eligible: pick the first organ's template from the map
+    const eligibleMap = (savedMap.eligible || {}) as Record<string, { templateId?: string; subject?: string; body?: string }>;
+    const firstEligibleTemplate = Object.values(eligibleMap)[0];
+
+    const notUpdatedTemplate = savedMap.not_updated as { templateId?: string; subject?: string; body?: string } | undefined;
+    const halfSetTemplate = savedMap.half_set as { templateId?: string; subject?: string; body?: string } | undefined;
+
+    const buildPreviewFromMap = async (
+      saved: { templateId?: string; subject?: string; body?: string } | undefined,
+      fallbackName: string,
+      versionName: string
+    ) => {
+      if (saved?.templateId) {
+        const template = await prisma.emailTemplate.findUnique({ where: { id: saved.templateId } });
+        if (template) {
+          const vars = getSampleVariables(versionName);
+          return {
+            subject: replaceTemplateVariables(template.subject, vars),
+            body: replaceTemplateVariables(template.body, vars),
+          };
+        }
+      }
+      return buildPreview(fallbackName, versionName);
+    };
+
     const [eligiblePreview, notUpdatedPreview, halfSetPreview] =
       await Promise.all([
-        buildPreview("עדכון — Genos / PSR-SX920", version),
-        buildPreview("הצעת מחיר — למי שלא מעודכן", version),
-        buildPreview("הצעה לחצאי סטים", version),
+        buildPreviewFromMap(firstEligibleTemplate, "עדכון חדש — ללקוח מעודכן", version),
+        buildPreviewFromMap(notUpdatedTemplate, "הצעת מחיר — למי שלא מעודכן", version),
+        buildPreviewFromMap(halfSetTemplate, "הצעה לחצאי סטים", version),
       ]);
 
     // Build organ groups for eligible segment
@@ -234,7 +262,7 @@ export async function GET(
         key: "eligible",
         label: "זכאי לעדכון",
         count: eligible.length,
-        templateName: "עדכון חדש — ללקוח מעודכן",
+        templateName: firstEligibleTemplate ? (firstEligibleTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: eligiblePreview.subject,
         previewBody: eligiblePreview.body,
         sampleCustomers: eligible.slice(0, SAMPLE_LIMIT).map(formatCustomer),
@@ -256,7 +284,7 @@ export async function GET(
         key: "not_updated",
         label: "לא מעודכן (סט שלם)",
         count: notUpdatedFiltered.length,
-        templateName: "הצעת מחיר — למי שלא מעודכן",
+        templateName: notUpdatedTemplate ? (notUpdatedTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: notUpdatedPreview.subject,
         previewBody: notUpdatedPreview.body,
         sampleCustomers: notUpdatedFiltered.slice(0, SAMPLE_LIMIT).map(formatCustomer),
@@ -267,7 +295,7 @@ export async function GET(
         key: "half_set",
         label: "חצי סט",
         count: halfSet.length,
-        templateName: "הצעה לחצאי סטים",
+        templateName: halfSetTemplate ? (halfSetTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: halfSetPreview.subject,
         previewBody: halfSetPreview.body,
         sampleCustomers: halfSet.slice(0, SAMPLE_LIMIT).map(formatCustomer),

@@ -65,11 +65,11 @@ export async function GET(
       ],
     });
 
-    // בדיקת קבצי CPI זמינים בתיקיית samples/{version}
+    // בדיקת קבצי CPI זמינים בתיקיית updates/samples (שטוח, בלי תת-תיקייה לגרסה)
     let cpiCustomerIds = new Set<number>();
     try {
       const { listFiles } = await import("@/lib/file-storage");
-      const folder = `samples/${updateVersion.version}`;
+      const folder = "updates/samples";
       const sampleFiles = await listFiles(folder);
       for (const f of sampleFiles) {
         const name = f.path.split("/").pop() || "";
