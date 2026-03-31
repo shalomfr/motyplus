@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { EmailInput } from "@/components/ui/email-input"
 import { Badge } from "@/components/ui/badge"
 import { WorkListTable } from "@/components/updates/work-list-table"
+import { CpiPrepCard } from "@/components/updates/cpi-prep-card"
 import { ArrowRight, Loader2, ListChecks, SendHorizonal, Search, Mail, UserPlus } from "lucide-react"
 
 interface WorkCustomer {
@@ -21,6 +22,7 @@ interface WorkCustomer {
   infoUploaded: boolean
   samplesReady: boolean
   sent: boolean
+  hasUpdateFile?: boolean
 }
 
 interface Organ {
@@ -364,6 +366,13 @@ export default function UpdateWorkPage() {
           </p>
         </div>
       )}
+
+      <CpiPrepCard
+        customers={customers}
+        organs={organs}
+        version={updateVersion}
+        onRefresh={handleRefresh}
+      />
 
       <Card>
         <CardHeader>
