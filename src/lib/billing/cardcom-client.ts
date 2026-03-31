@@ -253,39 +253,38 @@ export class CardComClient implements BillingClient {
     );
 
     const body: Record<string, unknown> = {
-      Amount: totalAmount,
+      SumToBill: totalAmount,
       SuccessRedirectUrl: request.successUrl,
       FailedRedirectUrl: request.cancelUrl,
-      WebHookUrl: request.webhookUrl || "",
+      IndicatorUrl: request.webhookUrl || "",
       ReturnValue: request.metadata ? JSON.stringify(request.metadata) : "",
       Language: request.lang === "en" ? "en" : "he",
       CoinID: CardComClient.mapCurrency(request.currency),
-      MaxNumberOfPayments: 1,
+      MaxNumOfPayments: 1,
     };
 
-    // Auto-create document on payment
+    // Auto-create document on payment — CardCom expects flat InvoiceLines at top level
     if (request.autoCreateDoc !== false) {
-      body.Document = {
-        InvoiceHead: {
-          CustName: request.customer.name,
-          CustAddresLine1: request.customer.address || "",
-          CustCity: request.customer.city || "",
-          Email: request.customer.email || "",
-          CustMobilePH: request.customer.phone || "",
-          Language: request.lang === "en" ? "en" : "he",
-          SendByEmail: true,
-          CoinID: CardComClient.mapCurrency(request.currency),
-        },
-        InvoiceLines: request.items.map((item) => ({
-          Description: item.description,
-          Price: item.unitPrice,
-          Quantity: item.quantity,
-          IsPriceIncludeVAT: true,
-        })),
-        InvoiceType: request.docType
-          ? CardComClient.mapDocType(request.docType)
-          : 305,
-      };
+      body["InvoiceHead.CustName"] = request.customer.name;
+      body["InvoiceHead.CustAddresLine1"] = request.customer.address || "";
+      body["InvoiceHead.CustCity"] = request.customer.city || "";
+      body["InvoiceHead.Email"] = request.customer.email || "";
+      body["InvoiceHead.CustMobilePH"] = request.customer.phone || "";
+      body["InvoiceHead.Language"] = request.lang === "en" ? "en" : "he";
+      body["InvoiceHead.SendByEmail"] = true;
+      body["InvoiceHead.CoinID"] = CardComClient.mapCurrency(request.currency);
+
+      request.items.forEach((item, i) => {
+        const idx = i + 1;
+        body[`InvoiceLines${idx}.Description`] = item.description;
+        body[`InvoiceLines${idx}.Price`] = item.unitPrice;
+        body[`InvoiceLines${idx}.Quantity`] = item.quantity;
+        body[`InvoiceLines${idx}.IsPriceIncludeVAT`] = true;
+      });
+
+      body.InvoiceType = request.docType
+        ? CardComClient.mapDocType(request.docType)
+        : 305;
     }
 
     const result = await this.request<{
