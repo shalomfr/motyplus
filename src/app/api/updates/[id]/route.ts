@@ -181,6 +181,18 @@ export async function DELETE(
       where: { id },
     });
 
+    // עדכון לקוחות שהיו על הגרסה שנמחקה — להעביר לגרסה האחרונה שנשארה
+    const newLatest = await prisma.updateVersion.findFirst({
+      where: { status: { not: "DRAFT" } },
+      orderBy: { sortOrder: "desc" },
+      select: { version: true },
+    });
+
+    await prisma.customer.updateMany({
+      where: { currentUpdateVersion: existing.version },
+      data: { currentUpdateVersion: newLatest?.version || null },
+    });
+
     // מחיקת תיקיות Google Drive — מבנה חדש: updates/beats/{organ}/{package}/{version - organ}
     try {
       const organs = await prisma.organ.findMany({
