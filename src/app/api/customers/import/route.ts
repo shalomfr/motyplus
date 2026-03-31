@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { normalizeOrganName } from "@/lib/organ-utils";
 
 // ===== CSV Parser =====
 // Handles: BOM, quoted fields with commas/newlines, Hebrew text
@@ -200,6 +201,8 @@ export async function POST(request: NextRequest) {
     ]);
 
     const organMap = new Map(organs.map((o) => [o.name, o.id]));
+    // Also map by lowercase for case-insensitive lookup
+    const organMapLower = new Map(organs.map((o) => [o.name.toLowerCase(), o.id]));
     const setTypeMap = new Map(setTypes.map((s) => [s.name, s.id]));
 
     // Get existing customer IDs to skip duplicates (by customerId AND by numeric id)
@@ -247,7 +250,8 @@ export async function POST(request: NextRequest) {
         const blockedFlag = isTruthy(getCell(row, headerMap, "חסימת לקוח"));
         const computerFlag = isTruthy(getCell(row, headerMap, "לקוח מחשב"));
         const activeFlag = isTruthy(getCell(row, headerMap, "פעיל"));
-        const organName = getCell(row, headerMap, "אורגן");
+        const rawOrganName = getCell(row, headerMap, "אורגן");
+        const organName = rawOrganName ? normalizeOrganName(rawOrganName) : rawOrganName;
         const setTypeName = getCell(row, headerMap, "מקצבים");
         const totalAmountStr = getCell(row, headerMap, "סכום");
         const paidAmountStr = getCell(row, headerMap, "שולם");
@@ -265,14 +269,15 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Lookup organ
-        let organId = organMap.get(organName);
+        // Lookup organ (exact match first, then case-insensitive)
+        let organId = organMap.get(organName) || organMapLower.get(organName.toLowerCase());
         if (!organId && organName) {
-          // Try to create the organ
+          // Try to create the organ with normalized name
           const newOrgan = await prisma.organ.create({
             data: { name: organName, supportsUpdates: true },
           });
           organMap.set(organName, newOrgan.id);
+          organMapLower.set(organName.toLowerCase(), newOrgan.id);
           organId = newOrgan.id;
         }
         if (!organId) {
