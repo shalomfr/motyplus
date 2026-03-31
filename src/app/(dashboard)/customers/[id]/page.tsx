@@ -428,6 +428,8 @@ export default function EditCustomerPage() {
             sampleType={customer.sampleType}
             amountPaid={customer.amountPaid}
             balance={customer.balance}
+            includesUpdates={customer.includesUpdates}
+            currentUpdateVersion={customer.currentUpdateVersion}
             infoFileUrl={customer.infoFileUrl}
             additionalInfoFileUrl={customer.additionalInfoFileUrl}
             linkedCustomer={customer.linkedCustomer}

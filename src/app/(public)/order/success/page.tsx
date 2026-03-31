@@ -24,19 +24,19 @@ export default function OrderSuccessPage() {
         <p className="text-sm text-gray-600">
           חשבונית/קבלה נשלחה לכתובת המייל שהזנת.
         </p>
-        <p className="text-sm text-gray-600">
-          ניצור איתך קשר בהקדם עם פרטים נוספים לגבי ההזמנה.
+        <p className="text-sm text-gray-800 font-medium">
+          ההזמנה תסופק עד 3 ימי עסקים.
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
         <a
-          href="https://wa.me/972500000000"
+          href="https://wa.me/972508377756"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
         >
-          צרו קשר בוואטסאפ
+          צרו קשר בוואטסאפ 050-8377756
         </a>
       </div>
 

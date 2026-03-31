@@ -97,6 +97,8 @@ interface CustomerActionsProps {
   sampleType: "CPI" | "CPF"
   amountPaid: number
   balance: number | null
+  includesUpdates: boolean
+  currentUpdateVersion: string | null
   infoFileUrl: string | null
   additionalInfoFileUrl: string | null
   linkedCustomer: LinkedCustomer | null
@@ -115,6 +117,8 @@ export function CustomerActions({
   sampleType,
   amountPaid,
   balance,
+  includesUpdates,
+  currentUpdateVersion,
   infoFileUrl,
   additionalInfoFileUrl,
   linkedCustomer,
@@ -217,8 +221,8 @@ export function CustomerActions({
   }
 
   const handleApprove = () => {
-    handleAction("approve", `/api/customers/${customerId}`, "PUT", {
-      status: "ACTIVE",
+    handleAction("approve", `/api/customers/${customerId}`, "PATCH", {
+      action: "approve",
     })
   }
 
@@ -312,21 +316,49 @@ export function CustomerActions({
 
   return (
     <div className="space-y-4">
-      {/* שליחת הזמנה סופית ללקוח */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          <Button
-            className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => setSendOrderOpen(true)}
-          >
-            <Package className="h-4 w-4" />
-            שלח הזמנה ללקוח
-          </Button>
-          <p className="text-[11px] text-muted-foreground text-center mt-2">
-            שליחת הזמנה סופית עם תבנית מתיקיית שליחות פרטיות
-          </p>
-        </CardContent>
-      </Card>
+      {/* כפתורי פעולה מהירים — מוצגים כשלקוח מצפה לקבל משלוח */}
+      {(status === "PENDING_APPROVAL" || status === "ACTIVE") && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-2">
+            <Button variant="outline" className="w-full justify-start" onClick={() => {
+              navigator.clipboard.writeText(customerId.toString())
+              setCopiedId(true)
+              toast({ title: "מזהה הועתק ללוח", variant: "success" as "default" })
+              setTimeout(() => setCopiedId(false), 2000)
+            }}>
+              {copiedId ? <CheckCircle className="h-4 w-4 ml-2 text-green-600" /> : <Copy className="h-4 w-4 ml-2" />}
+              {copiedId ? `הועתק! (${customerId})` : `העתקת מזהה (${customerId})`}
+            </Button>
+            <Button variant="outline" className="w-full justify-start"
+              onClick={async () => {
+                setLoadingAction("checkSamplesTop")
+                try {
+                  const res = await fetch(`/api/customers/${customerId}/updates`)
+                  const data = await res.json()
+                  const hasSamples = data?.some?.((u: { downloadedAt: string | null }) => u.downloadedAt)
+                  if (hasSamples) {
+                    toast({ title: "נמצאו דגימות!", variant: "success" as "default" })
+                  } else {
+                    toast({ title: "אין דגימות ללקוח", description: "הלקוח לא הוריד דגימות", variant: "destructive" })
+                  }
+                } catch {
+                  toast({ title: "שגיאה בבדיקה", variant: "destructive" })
+                } finally {
+                  setLoadingAction(null)
+                }
+              }}
+              disabled={loadingAction === "checkSamplesTop"}
+            >
+              {loadingAction === "checkSamplesTop" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Headphones className="h-4 w-4 ml-2" />}
+              בדוק דגימות
+            </Button>
+            <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSendUpdateEmail} disabled={loadingAction === "sendUpdate"}>
+              {loadingAction === "sendUpdate" ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Music className="h-4 w-4 ml-2" />}
+              שלח מקצבים
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* #16: תפריט שליחות — 9 אפשרויות */}
       <Card>

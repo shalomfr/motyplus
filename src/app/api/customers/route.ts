@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const missingDetails = searchParams.get("missingDetails");
+    const missingField = searchParams.get("missingField");
+    const maxUpdateVersion = searchParams.get("maxUpdateVersion");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "25");
     const sortBy = searchParams.get("sortBy") || "createdAt";
@@ -65,16 +67,26 @@ export async function GET(request: NextRequest) {
     }
 
     if (missingDetails === "true") {
-      const missingCondition = {
-        OR: [
-          { address: null },
-          { address: "" },
-          { whatsappPhone: null },
-          { whatsappPhone: "" },
-        ],
+      // Specific field or any missing
+      const fieldMap: Record<string, Prisma.CustomerWhereInput[]> = {
+        email: [{ email: null }, { email: "" }],
+        phone: [{ phone: null }, { phone: "" }],
+        address: [{ address: null }, { address: "" }],
+        infoFile: [{ infoFileUrl: null }, { infoFileUrl: "" }],
+        whatsapp: [{ whatsappPhone: null }, { whatsappPhone: "" }],
       };
 
-      // If both search and missingDetails are active, combine them with AND
+      const missingCondition: Prisma.CustomerWhereInput = missingField && fieldMap[missingField]
+        ? { OR: fieldMap[missingField] }
+        : {
+            OR: [
+              { address: null },
+              { address: "" },
+              { whatsappPhone: null },
+              { whatsappPhone: "" },
+            ],
+          };
+
       if (search) {
         const searchCondition = {
           OR: [
@@ -84,9 +96,25 @@ export async function GET(request: NextRequest) {
           ],
         };
         where.AND = [searchCondition, missingCondition];
-        delete where.OR; // Remove since we're using AND now
+        delete where.OR;
       } else {
-        where.OR = missingCondition.OR;
+        Object.assign(where, missingCondition);
+      }
+    }
+
+    // סינון לפי גרסת עדכון מקסימלית — מראה רק לקוחות שלא מעודכנים לגרסה זו ומעלה
+    if (maxUpdateVersion) {
+      const versionCondition: Prisma.CustomerWhereInput = {
+        OR: [
+          { currentUpdateVersion: null },
+          { currentUpdateVersion: "" },
+          { currentUpdateVersion: { lt: maxUpdateVersion } },
+        ],
+      };
+      if (where.AND) {
+        (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
+      } else {
+        where.AND = [versionCondition];
       }
     }
 

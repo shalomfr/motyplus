@@ -41,8 +41,11 @@ export default function CustomersListPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [filters, setFilters] = useState<CustomerFilters>(defaultFilters)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Import state
   const [importDialogOpen, setImportDialogOpen] = useState(false)
@@ -55,8 +58,12 @@ export default function CustomersListPage() {
   const [latestVersion, setLatestVersion] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const fetchCustomers = useCallback(async () => {
-    setIsLoading(true)
+  const fetchCustomers = useCallback(async (append = false) => {
+    if (append) {
+      setIsLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
     try {
       const params = new URLSearchParams()
       params.set("page", page.toString())
@@ -73,13 +80,16 @@ export default function CustomersListPage() {
       if (filters.dateTo) params.set("dateTo", filters.dateTo)
       if (filters.missingDetails)
         params.set("missingDetails", "true")
+      if (filters.missingField)
+        params.set("missingField", filters.missingField)
+      if (filters.maxUpdateVersion && filters.maxUpdateVersion !== "all")
+        params.set("maxUpdateVersion", filters.maxUpdateVersion)
 
       const res = await fetch(`/api/customers?${params.toString()}`)
       if (!res.ok) throw new Error("שגיאה בטעינת הנתונים")
 
       const data = await res.json()
-      setCustomers(
-        (data.customers || []).map((c: {
+      const mapped = (data.customers || []).map((c: {
           id: number; fullName: string; phone: string; email: string;
           amountPaid?: number;
           organ?: { name: string; supportsUpdates?: boolean }; setType?: { name: string; price?: number; includesUpdates?: boolean };
@@ -99,9 +109,14 @@ export default function CustomersListPage() {
           infoFileUrl: c.infoFileUrl || null,
           discountPercent: c.promotion?.discountPercent || null,
         }))
-      )
+      if (append) {
+        setCustomers(prev => [...prev, ...mapped])
+      } else {
+        setCustomers(mapped)
+      }
       setLatestVersion(data.latestVersion || null)
       setTotalCount(data.pagination?.total || 0)
+      setHasMore(page * PAGE_SIZE < (data.pagination?.total || 0))
     } catch (error) {
       toast({
         title: "שגיאה",
@@ -110,21 +125,45 @@ export default function CustomersListPage() {
       })
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
   }, [page, filters, toast])
 
   useEffect(() => {
-    fetchCustomers()
+    if (page === 1) {
+      fetchCustomers(false)
+    } else {
+      fetchCustomers(true)
+    }
   }, [fetchCustomers])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          setPage(prev => prev + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, isLoadingMore])
 
   const handleFiltersChange = (newFilters: CustomerFilters) => {
     setFilters(newFilters)
     setPage(1)
+    setCustomers([])
+    setHasMore(true)
   }
 
   const handleClearFilters = () => {
     setFilters(defaultFilters)
     setPage(1)
+    setCustomers([])
+    setHasMore(true)
   }
 
   const handleExportExcel = async () => {
@@ -593,7 +632,7 @@ export default function CustomersListPage() {
       {/* Results Table */}
       <CustomerTable
         customers={customers}
-        isLoading={isLoading}
+        isLoading={isLoading && page === 1}
         onToggleSuspend={handleToggleSuspend}
         onDelete={handleDelete}
         onApprove={async (id) => {
@@ -601,19 +640,31 @@ export default function CustomersListPage() {
             const res = await fetch(`/api/customers/${id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "ACTIVE" }),
+              body: JSON.stringify({ action: "approve" }),
             })
             if (res.ok) {
-              fetchCustomers()
+              setPage(1)
+              setCustomers([])
+              fetchCustomers(false)
             }
           } catch { /* */ }
         }}
         totalCount={totalCount}
-        page={page}
-        pageSize={PAGE_SIZE}
+        page={1}
+        pageSize={customers.length || PAGE_SIZE}
         latestVersion={latestVersion}
-        onPageChange={setPage}
+        onPageChange={() => {}}
       />
+
+      {/* Infinite scroll sentinel */}
+      <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+        {isLoadingMore && (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        )}
+        {!hasMore && customers.length > 0 && (
+          <p className="text-sm text-muted-foreground">הוצגו כל {totalCount} הלקוחות</p>
+        )}
+      </div>
 
       <NewOrderWizardDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen} />
     </div>

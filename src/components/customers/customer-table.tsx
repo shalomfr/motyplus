@@ -408,59 +408,14 @@ export function CustomerTable({
         </DialogContent>
       </Dialog>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          מציג {(page - 1) * pageSize + 1}-
-          {Math.min(page * pageSize, totalCount)} מתוך {totalCount} לקוחות
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-          >
-            <ChevronRight className="h-4 w-4" />
-            הקודם
-          </Button>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              let pageNum: number
-              if (totalPages <= 5) {
-                pageNum = i + 1
-              } else if (page <= 3) {
-                pageNum = i + 1
-              } else if (page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i
-              } else {
-                pageNum = page - 2 + i
-              }
-
-              return (
-                <Button
-                  key={pageNum}
-                  variant={pageNum === page ? "default" : "outline"}
-                  size="sm"
-                  className="w-9"
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              )
-            })}
+      {/* Pagination — hidden when using infinite scroll */}
+      {totalPages > 1 && page > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            מציג {customers.length} מתוך {totalCount} לקוחות
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-          >
-            הבא
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
         </div>
-      </div>
+      )}
     </div>
   )
 }

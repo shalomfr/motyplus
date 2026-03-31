@@ -24,6 +24,8 @@ export interface CustomerFilters {
   dateFrom: string
   dateTo: string
   missingDetails: boolean
+  missingField: string
+  maxUpdateVersion: string
 }
 
 interface Organ {
@@ -34,6 +36,11 @@ interface Organ {
 interface SetType {
   id: string
   name: string
+}
+
+interface UpdateVersion {
+  id: string
+  version: string
 }
 
 interface CustomerFiltersProps {
@@ -50,6 +57,8 @@ const defaultFilters: CustomerFilters = {
   dateFrom: "",
   dateTo: "",
   missingDetails: false,
+  missingField: "",
+  maxUpdateVersion: "",
 }
 
 export function CustomerFiltersPanel({
@@ -60,13 +69,15 @@ export function CustomerFiltersPanel({
   const [isOpen, setIsOpen] = useState(false)
   const [organs, setOrgans] = useState<Organ[]>([])
   const [setTypes, setSetTypes] = useState<SetType[]>([])
+  const [updateVersions, setUpdateVersions] = useState<UpdateVersion[]>([])
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [organsRes, setsRes] = await Promise.all([
+        const [organsRes, setsRes, versionsRes] = await Promise.all([
           fetch("/api/data/organs"),
           fetch("/api/data/sets"),
+          fetch("/api/data/update-versions"),
         ])
         if (organsRes.ok) {
           const organsData = await organsRes.json()
@@ -75,6 +86,10 @@ export function CustomerFiltersPanel({
         if (setsRes.ok) {
           const setsData = await setsRes.json()
           setSetTypes(setsData)
+        }
+        if (versionsRes.ok) {
+          const versionsData = await versionsRes.json()
+          setUpdateVersions(versionsData)
         }
       } catch (error) {
         console.error("Error fetching filter data:", error)
@@ -105,7 +120,9 @@ export function CustomerFiltersPanel({
     filters.status !== "" ||
     filters.dateFrom !== "" ||
     filters.dateTo !== "" ||
-    filters.missingDetails
+    filters.missingDetails ||
+    filters.missingField !== "" ||
+    filters.maxUpdateVersion !== ""
 
   return (
     <Card>
@@ -207,41 +224,73 @@ export function CustomerFiltersPanel({
               </Select>
             </div>
 
-            {/* Date From */}
+            {/* Date Range — same row */}
             <div className="space-y-2">
-              <Label>מתאריך</Label>
-              <Input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => updateFilter("dateFrom", e.target.value)}
-              />
+              <Label>טווח תאריכים</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => updateFilter("dateFrom", e.target.value)}
+                  className="flex-1"
+                />
+                <span className="text-muted-foreground text-sm shrink-0">עד</span>
+                <Input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => updateFilter("dateTo", e.target.value)}
+                  className="flex-1"
+                />
+              </div>
             </div>
 
-            {/* Date To */}
+            {/* Update Version Filter */}
             <div className="space-y-2">
-              <Label>עד תאריך</Label>
-              <Input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => updateFilter("dateTo", e.target.value)}
-              />
+              <Label>מעודכן עד גרסה</Label>
+              <Select
+                value={filters.maxUpdateVersion}
+                onValueChange={(value) => updateFilter("maxUpdateVersion", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="כל הגרסאות" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הגרסאות</SelectItem>
+                  {updateVersions.map((v) => (
+                    <SelectItem key={v.id} value={v.version}>
+                      {v.version}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Missing Details */}
             <div className="space-y-2">
-              <Label>&nbsp;</Label>
-              <div className="flex items-center gap-2 h-10">
-                <Checkbox
-                  id="missingDetails"
-                  checked={filters.missingDetails}
-                  onCheckedChange={(checked) =>
-                    updateFilter("missingDetails", checked === true)
+              <Label>חסרי פרטים</Label>
+              <Select
+                value={filters.missingDetails ? (filters.missingField || "any") : ""}
+                onValueChange={(value) => {
+                  if (!value || value === "none") {
+                    onFiltersChange({ ...filters, missingDetails: false, missingField: "" })
+                  } else {
+                    onFiltersChange({ ...filters, missingDetails: true, missingField: value === "any" ? "" : value })
                   }
-                />
-                <Label htmlFor="missingDetails" className="cursor-pointer">
-                  חסרי פרטים
-                </Label>
-              </div>
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="הכל" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">הכל</SelectItem>
+                  <SelectItem value="any">כל חסר</SelectItem>
+                  <SelectItem value="email">חסר מייל</SelectItem>
+                  <SelectItem value="phone">חסר טלפון</SelectItem>
+                  <SelectItem value="address">חסר כתובת</SelectItem>
+                  <SelectItem value="infoFile">חסר אינפו</SelectItem>
+                  <SelectItem value="whatsapp">חסר WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
