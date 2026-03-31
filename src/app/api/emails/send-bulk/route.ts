@@ -165,21 +165,8 @@ export async function POST(request: NextRequest) {
               ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
               : 0;
 
-            let paymentLink = "";
-            if (billing && remainingForFullSet > 0) {
-              try {
-                const page = await billing.client.createPaymentPage({
-                  customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-                  items: [{ description: "עדכון תוכנה", quantity: 1, unitPrice: remainingForFullSet }],
-                  successUrl: `${baseUrl}/order/success`,
-                  cancelUrl: `${baseUrl}/order/cancel`,
-                  autoCreateDoc: true,
-                  docType: "invoice_receipt",
-                  metadata: { customerId: String(customer.id), source: "bulk_quote" },
-                });
-                paymentLink = page.url;
-              } catch { /* continue without link */ }
-            }
+            // Use redirect URL — creates fresh payment link when customer clicks
+            const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
 
             const variables = {
               fullName: customer.fullName,
@@ -281,21 +268,8 @@ export async function POST(request: NextRequest) {
               ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
               : 0;
 
-            let paymentLink = "";
-            if (billing && remainingForFullSet > 0) {
-              try {
-                const page = await billing.client.createPaymentPage({
-                  customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-                  items: [{ description: "שדרוג לסט שלם", quantity: 1, unitPrice: remainingForFullSet }],
-                  successUrl: `${baseUrl}/order/success`,
-                  cancelUrl: `${baseUrl}/order/cancel`,
-                  autoCreateDoc: true,
-                  docType: "invoice_receipt",
-                  metadata: { customerId: String(customer.id), source: "bulk_quote_half" },
-                });
-                paymentLink = page.url;
-              } catch { /* continue without link */ }
-            }
+            // Use redirect URL — creates fresh payment link when customer clicks
+            const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
 
             const variables = {
               fullName: customer.fullName,

@@ -235,28 +235,9 @@ export async function POST(
             const paid = Number(customer.amountPaid || 0);
             const remaining = Math.max(0, fullSetPrice - paid);
 
-            let paymentLink = "";
-            const needsPaymentLink = (emailBody || "").includes("{{paymentLink}}") || (emailSubject || "").includes("{{paymentLink}}");
-            if (needsPaymentLink && remaining > 0) {
-              const billing = await getBillingClient();
-              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-              if (billing) {
-                try {
-                  const page = await billing.client.createPaymentPage({
-                    customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-                    items: [{ description: `השלמת תשלום — ${customer.setType?.name || ""}`, quantity: 1, unitPrice: remaining }],
-                    successUrl: `${baseUrl}/order/success`,
-                    cancelUrl: `${baseUrl}/order/cancel`,
-                    autoCreateDoc: true,
-                    docType: "invoice_receipt",
-                    metadata: { customerId: String(customer.id), source: "email_send_all" },
-                  });
-                  paymentLink = page.url;
-                } catch (err) {
-                  console.error(`Failed to create payment link for customer ${customer.id}:`, err);
-                }
-              }
-            }
+            // Use redirect URL — creates fresh payment link when customer clicks
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+            const paymentLink = remaining > 0 ? `${baseUrl}/pay/${customer.id}` : "";
 
             const templateVars = {
               customerName: customer.fullName,

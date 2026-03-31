@@ -134,28 +134,9 @@ async function sendToEligible(
         const fullSetPrice = customer.setType.price ? Number(customer.setType.price) : 0;
         const remaining = Math.max(0, fullSetPrice - Number(customer.amountPaid || 0));
 
-        let paymentLink = "";
-        const needsPaymentLink = (emailBody || "").includes("{{paymentLink}}") || (emailSubject || "").includes("{{paymentLink}}");
-        if (needsPaymentLink && remaining > 0) {
-          const billing = await getBillingClient();
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-          if (billing) {
-            try {
-              const page = await billing.client.createPaymentPage({
-                customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-                items: [{ description: `השלמת תשלום — ${customer.setType.name}`, quantity: 1, unitPrice: remaining }],
-                successUrl: `${baseUrl}/order/success`,
-                cancelUrl: `${baseUrl}/order/cancel`,
-                autoCreateDoc: true,
-                docType: "invoice_receipt",
-                metadata: { customerId: String(customer.id), source: "email_eligible" },
-              });
-              paymentLink = page.url;
-            } catch (err) {
-              console.error(`Failed to create payment link for customer ${customer.id}:`, err);
-            }
-          }
-        }
+        // Use redirect URL — creates fresh payment link when customer clicks
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
+        const paymentLink = remaining > 0 ? `${baseUrl}/pay/${customer.id}` : "";
 
         const vars = {
           customerName: customer.fullName, fullName: customer.fullName,
@@ -245,23 +226,8 @@ async function sendBulkTemplate(
     const remainingForFullSet = fullSetPrice
       ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid)) : 0;
 
-    let paymentLink = "";
-    if (needsPaymentLink && billing && remainingForFullSet > 0) {
-      try {
-        const page = await billing.client.createPaymentPage({
-          customer: { name: customer.fullName, email: customer.email, phone: customer.phone },
-          items: [{ description: `השלמת תשלום — ${customer.setType.name}`, quantity: 1, unitPrice: remainingForFullSet }],
-          successUrl: `${baseUrl}/order/success`,
-          cancelUrl: `${baseUrl}/order/cancel`,
-          autoCreateDoc: true,
-          docType: "invoice_receipt",
-          metadata: { customerId: String(customer.id), source: "email_bulk" },
-        });
-        paymentLink = page.url;
-      } catch (err) {
-        console.error(`Failed to create payment link for customer ${customer.id}:`, err);
-      }
-    }
+    // Use redirect URL — creates fresh payment link when customer clicks
+    const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
 
     const vars = {
       fullName: customer.fullName, firstName: customer.fullName.split(" ")[0],
