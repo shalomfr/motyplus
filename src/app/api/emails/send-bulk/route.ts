@@ -72,10 +72,12 @@ export async function POST(request: NextRequest) {
     const {
       type,
       notUpdatedTemplateId,
+      notUpdatedTemplateMap,
       halfSetTemplateId,
     } = body as {
       type: "not_updated" | "half_set" | "both";
       notUpdatedTemplateId?: string;
+      notUpdatedTemplateMap?: Record<string, string>; // { organId: templateId }
       halfSetTemplateId?: string;
     };
 
@@ -116,14 +118,21 @@ export async function POST(request: NextRequest) {
       return null;
     }
 
-    // Send to not_updated customers
+    // Send to not_updated customers — per organ template
     if (type === "not_updated" || type === "both") {
-      const template = await findTemplate(
-        notUpdatedTemplateId,
-        "הצעת מחיר — למי שלא מעודכן"
-      );
+      // Pre-load all organ templates
+      const organTemplates = new Map<string, Awaited<ReturnType<typeof findTemplate>>>();
+      if (notUpdatedTemplateMap && Object.keys(notUpdatedTemplateMap).length > 0) {
+        for (const [organId, templateId] of Object.entries(notUpdatedTemplateMap)) {
+          organTemplates.set(organId, await findTemplate(templateId));
+        }
+      } else {
+        // Legacy: single template fallback
+        const fallback = await findTemplate(notUpdatedTemplateId, "הצעת מחיר — למי שלא מעודכן");
+        if (fallback) organTemplates.set("_fallback", fallback);
+      }
 
-      if (!template) {
+      if (organTemplates.size === 0) {
         return NextResponse.json({
           error: "לא נמצאה תבנית למי שלא מעודכן",
         }, { status: 400 });
@@ -148,11 +157,14 @@ export async function POST(request: NextRequest) {
       for (const chunk of notUpdatedChunks) {
         await Promise.all(
           chunk.map(async (customer) => {
+            // Find template for this customer's organ, fallback to _fallback
+            const template = organTemplates.get(customer.organId) || organTemplates.get("_fallback");
+            if (!template) return; // No template for this organ — skip
+
             const remainingForFullSet = fullSetPrice
               ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid))
               : 0;
 
-            // Create payment link if billing is available and there's a balance
             let paymentLink = "";
             if (billing && remainingForFullSet > 0) {
               try {
@@ -212,7 +224,7 @@ export async function POST(request: NextRequest) {
                   data: {
                     customerId: customer.id,
                     toEmail: customer.email,
-                    subject: subject,
+                    subject,
                     body: html,
                     status: "FAILED",
                     templateId: template.id,
@@ -226,7 +238,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   customerId: customer.id,
                   toEmail: customer.email,
-                  subject: subject,
+                  subject,
                   body: html,
                   status: "FAILED",
                   templateId: template.id,

@@ -46,6 +46,11 @@ interface EmailFolder {
   order: number
 }
 
+interface OrganInfo {
+  id: string
+  name: string
+}
+
 interface BulkQuoteWizardDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -85,8 +90,9 @@ export function BulkQuoteWizardDialog({
   // Templates
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [folders, setFolders] = useState<EmailFolder[]>([])
+  const [organs, setOrgans] = useState<OrganInfo[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(false)
-  const [notUpdatedTemplate, setNotUpdatedTemplate] = useState<EmailTemplate | null>(null)
+  const [notUpdatedTemplateMap, setNotUpdatedTemplateMap] = useState<Record<string, EmailTemplate>>({})
   const [halfSetTemplate, setHalfSetTemplate] = useState<EmailTemplate | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
@@ -102,7 +108,7 @@ export function BulkQuoteWizardDialog({
     if (open) {
       setStep("summary")
       setStats(null)
-      setNotUpdatedTemplate(null)
+      setNotUpdatedTemplateMap({})
       setHalfSetTemplate(null)
       setExpandedSections(new Set())
       setExpandedFolders(new Set())
@@ -136,9 +142,10 @@ export function BulkQuoteWizardDialog({
   const fetchTemplates = async () => {
     setLoadingTemplates(true)
     try {
-      const [templatesRes, foldersRes] = await Promise.all([
+      const [templatesRes, foldersRes, organsRes] = await Promise.all([
         fetch("/api/emails/templates"),
         fetch("/api/emails/folders"),
+        fetch("/api/public/organs"),
       ])
       if (templatesRes.ok) {
         const data = await templatesRes.json()
@@ -149,6 +156,14 @@ export function BulkQuoteWizardDialog({
         const data = await foldersRes.json()
         setFolders(
           (data as EmailFolder[]).sort((a, b) => a.order - b.order)
+        )
+      }
+      if (organsRes.ok) {
+        const data = await organsRes.json()
+        setOrgans(
+          data
+            .filter((o: { supportsUpdates: boolean }) => o.supportsUpdates)
+            .map((o: { id: string; name: string }) => ({ id: o.id, name: o.name }))
         )
       }
     } catch {
@@ -187,6 +202,30 @@ export function BulkQuoteWizardDialog({
     return groups
   }, [templates, folders])
 
+  // Filter templates by folder name per segment
+  const segmentFolderMap = useMemo(() => {
+    const map: Record<string, Set<string>> = {
+      not_updated: new Set<string>(),
+      half_set: new Set<string>(),
+    }
+    for (const f of folders) {
+      const name = f.name.trim()
+      if (name === "לא מעודכנים") {
+        map.not_updated.add(f.id)
+      } else if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
+        map.not_updated.add(f.id)
+        map.half_set.add(f.id)
+      }
+    }
+    return map
+  }, [folders])
+
+  const filterGroupsBySegment = (groups: typeof groupedTemplates, segmentKey: string) => {
+    const allowedIds = segmentFolderMap[segmentKey]
+    if (!allowedIds || allowedIds.size === 0) return groups
+    return groups.filter((g) => g.folderId != null && allowedIds.has(g.folderId))
+  }
+
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev)
@@ -212,12 +251,18 @@ export function BulkQuoteWizardDialog({
         : sendNotUpdated ? "not_updated"
         : "half_set"
 
+      // Build per-organ template map: { organId: templateId }
+      const organTemplateMap: Record<string, string> = {}
+      for (const [organId, tpl] of Object.entries(notUpdatedTemplateMap)) {
+        organTemplateMap[organId] = tpl.id
+      }
+
       const res = await fetch("/api/emails/send-bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: sendType,
-          notUpdatedTemplateId: notUpdatedTemplate?.id,
+          notUpdatedTemplateMap: organTemplateMap,
           halfSetTemplateId: halfSetTemplate?.id,
         }),
       })
@@ -251,11 +296,14 @@ export function BulkQuoteWizardDialog({
   const canProceedFromSummary = (sendNotUpdated && stats && stats.notUpdatedCount > 0) ||
     (sendHalfSet && stats && stats.halfSetCount > 0)
 
+  const allOrgansHaveTemplate = organs.length > 0 && organs.every((o) => notUpdatedTemplateMap[o.id])
+
   const canProceedFromTemplates =
-    (!sendNotUpdated || notUpdatedTemplate) &&
+    (!sendNotUpdated || allOrgansHaveTemplate) &&
     (!sendHalfSet || halfSetTemplate)
 
-  const activePreviewTemplate = previewType === "not_updated" ? notUpdatedTemplate : halfSetTemplate
+  const firstNotUpdatedTemplate = Object.values(notUpdatedTemplateMap)[0] || null
+  const activePreviewTemplate = previewType === "not_updated" ? firstNotUpdatedTemplate : halfSetTemplate
 
   // Sample variables for preview
   const sampleVars: Record<string, string> = {
@@ -291,9 +339,10 @@ export function BulkQuoteWizardDialog({
   const renderFolderedTemplates = (
     selectedId: string | undefined,
     onSelect: (t: EmailTemplate) => void,
+    filteredGroups?: typeof groupedTemplates,
   ) => (
     <div className="space-y-2">
-      {groupedTemplates.map((group) => {
+      {(filteredGroups ?? groupedTemplates).map((group) => {
         const folderKey = group.folderId || "_unfiled"
         const isOpen = expandedFolders.has(folderKey)
         const hasSelected = group.templates.some((t) => t.id === selectedId)
@@ -497,7 +546,7 @@ export function BulkQuoteWizardDialog({
                 </div>
               ) : (
                 <>
-                  {/* Not updated template selection */}
+                  {/* Not updated template selection — per organ */}
                   {sendNotUpdated && (
                     <div className={cn("border rounded-lg overflow-hidden", "border-red-200 bg-red-50/30")}>
                       <button
@@ -509,21 +558,46 @@ export function BulkQuoteWizardDialog({
                           <AlertTriangle className="h-4 w-4 text-red-600" />
                           <span className="font-semibold text-gray-800">לא מעודכנים</span>
                           <Badge variant="secondary">{stats?.notUpdatedCount || 0}</Badge>
-                          {notUpdatedTemplate && (
+                          {allOrgansHaveTemplate && (
                             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
                               <Check className="h-3 w-3 ml-1" />
-                              {notUpdatedTemplate.name}
+                              כל {organs.length} האורגנים מוגדרים
                             </Badge>
+                          )}
+                          {!allOrgansHaveTemplate && Object.keys(notUpdatedTemplateMap).length > 0 && (
+                            <span className="text-xs text-gray-500">
+                              {Object.keys(notUpdatedTemplateMap).length}/{organs.length} אורגנים מוגדרים
+                            </span>
                           )}
                         </div>
                         {expandedSections.has("not_updated") ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </button>
                       {expandedSections.has("not_updated") && (
-                        <div className="px-4 pb-4">
-                          {renderFolderedTemplates(
-                            notUpdatedTemplate?.id,
-                            (t) => setNotUpdatedTemplate(t)
-                          )}
+                        <div className="px-4 pb-4 space-y-4">
+                          {organs.map((organ) => {
+                            const selected = notUpdatedTemplateMap[organ.id]
+                            return (
+                              <div key={organ.id} className="space-y-2">
+                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                  <Users className="h-4 w-4" />
+                                  <span>{organ.name}</span>
+                                  {selected && (
+                                    <span className="text-xs text-green-600 flex items-center gap-1">
+                                      <Check className="h-3 w-3" />
+                                      {selected.name}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mr-6">
+                                  {renderFolderedTemplates(
+                                    selected?.id,
+                                    (t) => setNotUpdatedTemplateMap((prev) => ({ ...prev, [organ.id]: t })),
+                                    filterGroupsBySegment(groupedTemplates, "not_updated"),
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -554,7 +628,8 @@ export function BulkQuoteWizardDialog({
                         <div className="px-4 pb-4">
                           {renderFolderedTemplates(
                             halfSetTemplate?.id,
-                            (t) => setHalfSetTemplate(t)
+                            (t) => setHalfSetTemplate(t),
+                            filterGroupsBySegment(groupedTemplates, "half_set"),
                           )}
                         </div>
                       )}
@@ -626,10 +701,20 @@ export function BulkQuoteWizardDialog({
               <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
                 <p className="font-medium">סיכום שליחה:</p>
                 {sendNotUpdated && (
-                  <p>
-                    <AlertTriangle className="h-3.5 w-3.5 inline ml-1 text-red-600" />
-                    לא מעודכנים: {stats?.notUpdatedCount || 0} לקוחות — תבנית: {notUpdatedTemplate?.name || "ברירת מחדל"}
-                  </p>
+                  <div>
+                    <p>
+                      <AlertTriangle className="h-3.5 w-3.5 inline ml-1 text-red-600" />
+                      לא מעודכנים: {stats?.notUpdatedCount || 0} לקוחות
+                    </p>
+                    {organs.map((organ) => {
+                      const tpl = notUpdatedTemplateMap[organ.id]
+                      return tpl ? (
+                        <p key={organ.id} className="text-xs text-muted-foreground mr-5">
+                          {organ.name}: {tpl.name}
+                        </p>
+                      ) : null
+                    })}
+                  </div>
                 )}
                 {sendHalfSet && (
                   <p>
