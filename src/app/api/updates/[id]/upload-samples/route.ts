@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { uploadFile, listFiles, deleteFile } from "@/lib/file-storage"
+import { parseCpiFilename } from "@/lib/cpi-filename"
 
 const MAX_SIZE = 50 * 1024 * 1024 // 50MB
 const ALLOWED_EXTENSIONS = ["cpi"]
@@ -95,18 +96,14 @@ export async function GET(
 
     const files = rawFiles.map((f) => {
       const name = f.path.split("/").pop() || ""
-      const baseName = name.replace(/\.cpi$/i, "")
-      const isAdditional = baseName.includes("_")
-      const customerId = isAdditional
-        ? parseInt(baseName.split("_")[0])
-        : parseInt(baseName)
+      const parsed = parseCpiFilename(name)
 
       return {
         path: f.path,
         name,
         size: f.size,
-        customerId: isNaN(customerId) ? null : customerId,
-        isAdditional,
+        customerId: parsed.customerId,
+        isAdditional: parsed.isAdditional,
       }
     })
 

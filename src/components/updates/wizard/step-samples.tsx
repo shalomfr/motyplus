@@ -8,11 +8,12 @@ import { SamplesUploader } from "@/components/updates/samples-uploader"
 
 interface StepSamplesProps {
   updateId: string
+  version: string
   cpiReady: number
   cpiTotal: number
 }
 
-export function StepSamples({ updateId, cpiReady, cpiTotal }: StepSamplesProps) {
+export function StepSamples({ updateId, version, cpiReady, cpiTotal }: StepSamplesProps) {
   const percentage = cpiTotal > 0 ? Math.round((cpiReady / cpiTotal) * 100) : 0
 
   return (
@@ -40,7 +41,7 @@ export function StepSamples({ updateId, cpiReady, cpiTotal }: StepSamplesProps) 
       </Card>
 
       {/* Existing SamplesUploader */}
-      <SamplesUploader updateId={updateId} hideSendButton />
+      <SamplesUploader updateId={updateId} version={version} hideSendButton />
     </div>
   )
 }

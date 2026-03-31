@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { parseCpiFilename } from "@/lib/cpi-filename";
 
 // GET /api/updates/[id]/work-list - רשימת לקוחות זכאים לעדכון זה
 export async function GET(
@@ -73,10 +74,8 @@ export async function GET(
       const sampleFiles = await listFiles(folder);
       for (const f of sampleFiles) {
         const name = f.path.split("/").pop() || "";
-        const baseName = name.replace(/\.cpi$/i, "");
-        const isAdditional = baseName.includes("_");
-        const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName);
-        if (!isNaN(custId)) cpiCustomerIds.add(custId);
+        const parsed = parseCpiFilename(name);
+        if (parsed.customerId !== null) cpiCustomerIds.add(parsed.customerId);
       }
     } catch {
       // folder may not exist yet

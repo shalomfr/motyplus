@@ -14,7 +14,7 @@ import {
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { Progress } from "@/components/ui/progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
-import { Upload, Trash2, Loader2, Music, Users, FileText, Send, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
+import { Upload, Trash2, Loader2, Music, Users, FileText, Send, CheckCircle2, AlertCircle, RefreshCw, PenLine } from "lucide-react"
 
 interface SampleFile {
   path: string
@@ -37,7 +37,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
-export function SamplesUploader({ updateId, hideSendButton = false }: { updateId: string; hideSendButton?: boolean }) {
+export function SamplesUploader({ updateId, version, hideSendButton = false }: { updateId: string; version?: string; hideSendButton?: boolean }) {
   const [files, setFiles] = useState<SampleFile[]>([])
   const [totalCustomers, setTotalCustomers] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -53,6 +53,12 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
     alreadyReceived: number
   } | null>(null)
   const [sendError, setSendError] = useState("")
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameResult, setRenameResult] = useState<{
+    renamed: number
+    skipped: number
+    failed: number
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchFiles = useCallback(async () => {
@@ -158,6 +164,28 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
     }
   }
 
+  const handleRename = async () => {
+    if (!version) return
+    if (!confirm(`להוסיף את שם הגרסה ${version} לכל שמות הקבצים?`)) return
+    setIsRenaming(true)
+    setRenameResult(null)
+
+    try {
+      const res = await fetch(`/api/updates/${updateId}/rename-samples`, {
+        method: "POST",
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "שגיאה בשינוי שמות")
+      setRenameResult({ renamed: data.renamed, skipped: data.skipped, failed: data.failed })
+      fetchFiles()
+    } catch (err) {
+      console.error("Error renaming samples:", err)
+    } finally {
+      setIsRenaming(false)
+      setTimeout(() => setRenameResult(null), 5000)
+    }
+  }
+
   const handleSendUpdate = async () => {
     if (!confirm(`לשלוח את העדכון ל-${totalCustomers} לקוחות?`)) return
     setIsSending(true)
@@ -219,6 +247,20 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
             קבצי דגימות CPI
           </CardTitle>
           <div className="flex gap-2">
+            {version && files.length > 0 && (
+              <Button
+                variant="outline"
+                disabled={isRenaming || isUploading}
+                onClick={handleRename}
+              >
+                {isRenaming ? (
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                ) : (
+                  <PenLine className="h-4 w-4 ml-2" />
+                )}
+                {isRenaming ? "משנה שמות..." : `הוסף ${version} לשמות`}
+              </Button>
+            )}
             <Button
               variant="outline"
               disabled={isSyncing || isUploading}
@@ -304,6 +346,21 @@ export function SamplesUploader({ updateId, hideSendButton = false }: { updateId
                   colorScheme={i % 2 === 0 ? "blue" : "green"}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rename Result */}
+        {renameResult && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-1">
+            <div className="flex items-center gap-2 text-blue-700 font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>שינוי שמות הושלם</span>
+            </div>
+            <div className="flex gap-4 text-blue-600">
+              <span>שונו: <strong>{renameResult.renamed}</strong></span>
+              {renameResult.skipped > 0 && <span>דולגו: <strong>{renameResult.skipped}</strong></span>}
+              {renameResult.failed > 0 && <span className="text-red-600">נכשלו: <strong>{renameResult.failed}</strong></span>}
             </div>
           </div>
         )}

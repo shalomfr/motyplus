@@ -5,6 +5,7 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
+import { parseCpiFilename } from "@/lib/cpi-filename";
 import { getBillingClient } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
@@ -30,13 +31,11 @@ function buildCpiMap(sampleFiles: { path: string }[]): Map<number, { main?: stri
   const map = new Map<number, { main?: string; additional?: string }>();
   for (const f of sampleFiles) {
     const name = f.path.split("/").pop() || "";
-    const baseName = name.replace(/\.cpi$/i, "");
-    const isAdditional = baseName.includes("_");
-    const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName);
-    if (isNaN(custId)) continue;
-    if (!map.has(custId)) map.set(custId, {});
-    const entry = map.get(custId)!;
-    if (isAdditional) entry.additional = f.path;
+    const parsed = parseCpiFilename(name);
+    if (parsed.customerId === null) continue;
+    if (!map.has(parsed.customerId)) map.set(parsed.customerId, {});
+    const entry = map.get(parsed.customerId)!;
+    if (parsed.isAdditional) entry.additional = f.path;
     else entry.main = f.path;
   }
   return map;

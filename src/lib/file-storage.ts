@@ -196,21 +196,30 @@ export async function deleteFolder(folderPath: string): Promise<void> {
   folderCache.delete(folderPath);
 }
 
-export async function listFiles(prefix: string): Promise<{ path: string; size: number }[]> {
+export async function listFiles(prefix: string): Promise<{ path: string; size: number; id: string }[]> {
   const drive = getDrive();
   const folderId = await ensureFolderPath(prefix).catch(() => null);
   if (!folderId) return [];
 
   const res = await drive.files.list({
     q: `'${folderId}' in parents and mimeType!='application/vnd.google-apps.folder' and trashed=false`,
-    fields: "files(name, size)",
+    fields: "files(id, name, size)",
     spaces: "drive",
   });
 
   return (res.data.files || []).map((f) => ({
     path: `${prefix}/${f.name}`,
     size: parseInt(f.size || "0"),
+    id: f.id!,
   }));
+}
+
+export async function renameFile(fileId: string, newName: string): Promise<void> {
+  const drive = getDrive();
+  await drive.files.update({
+    fileId,
+    requestBody: { name: newName },
+  });
 }
 
 // === Sharing & Permissions ===

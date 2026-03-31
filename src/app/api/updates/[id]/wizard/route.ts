@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { listFiles } from "@/lib/file-storage";
+import { parseCpiFilename } from "@/lib/cpi-filename";
 import { replaceTemplateVariables } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -100,10 +101,8 @@ async function countCpiFiles(): Promise<Set<number>> {
     const sampleFiles = await listFiles("updates/samples");
     for (const f of sampleFiles) {
       const name = f.path.split("/").pop() || "";
-      const baseName = name.replace(/\.cpi$/i, "");
-      const isAdditional = baseName.includes("_");
-      const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName);
-      if (!isNaN(custId)) customerIdsWithCpi.add(custId);
+      const parsed = parseCpiFilename(name);
+      if (parsed.customerId !== null) customerIdsWithCpi.add(parsed.customerId);
     }
   } catch {
     // folder may not exist

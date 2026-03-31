@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activity-logger"
 import { sendEmail, replaceTemplateVariables } from "@/lib/email"
 import { sendWhatsApp } from "@/lib/whatsapp"
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
+import { parseCpiFilename } from "@/lib/cpi-filename"
 import { getBillingClient } from "@/lib/billing"
 
 // POST /api/updates/[id]/send — שיתוף קבצי CPI ושליחת מייל + WhatsApp ללקוחות זכאים
@@ -189,14 +190,12 @@ export async function POST(
     const cpiMap = new Map<number, { main?: string; additional?: string }>()
     for (const f of sampleFiles) {
       const name = f.path.split("/").pop() || ""
-      const baseName = name.replace(/\.cpi$/i, "")
-      const isAdditional = baseName.includes("_")
-      const custId = parseInt(isAdditional ? baseName.split("_")[0] : baseName)
-      if (isNaN(custId)) continue
+      const parsed = parseCpiFilename(name)
+      if (parsed.customerId === null) continue
 
-      if (!cpiMap.has(custId)) cpiMap.set(custId, {})
-      const entry = cpiMap.get(custId)!
-      if (isAdditional) {
+      if (!cpiMap.has(parsed.customerId)) cpiMap.set(parsed.customerId, {})
+      const entry = cpiMap.get(parsed.customerId)!
+      if (parsed.isAdditional) {
         entry.additional = f.path
       } else {
         entry.main = f.path
