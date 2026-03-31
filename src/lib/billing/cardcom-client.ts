@@ -252,39 +252,45 @@ export class CardComClient implements BillingClient {
       0
     );
 
-    const body: Record<string, unknown> = {
-      SumToBill: totalAmount,
-      SuccessRedirectUrl: request.successUrl,
-      FailedRedirectUrl: request.cancelUrl,
-      IndicatorUrl: request.webhookUrl || "",
-      ReturnValue: request.metadata ? JSON.stringify(request.metadata) : "",
-      Language: request.lang === "en" ? "en" : "he",
-      CoinID: CardComClient.mapCurrency(request.currency),
-      MaxNumOfPayments: 1,
+    const docTypeMap: Record<string, string> = {
+      tax_invoice: "InvoiceOnly",
+      invoice_receipt: "InvoiceReceipt",
+      receipt: "Receipt",
+      credit_note: "CreditNote",
+      quote: "Order",
     };
 
-    // Auto-create document on payment — CardCom expects flat InvoiceLines at top level
+    const body: Record<string, unknown> = {
+      Amount: totalAmount,
+      SuccessRedirectUrl: request.successUrl,
+      FailedRedirectUrl: request.cancelUrl,
+      WebHookUrl: request.webhookUrl || "",
+      ReturnValue: request.metadata ? JSON.stringify(request.metadata) : "",
+      Language: request.lang === "en" ? "he" : "en",
+      CoinID: CardComClient.mapCurrency(request.currency),
+      MaxNumberOfPayments: 1,
+      Operation: "ChargeAndCreateToken",
+    };
+
+    // Auto-create document on payment
     if (request.autoCreateDoc !== false) {
-      body["InvoiceHead.CustName"] = request.customer.name;
-      body["InvoiceHead.CustAddresLine1"] = request.customer.address || "";
-      body["InvoiceHead.CustCity"] = request.customer.city || "";
-      body["InvoiceHead.Email"] = request.customer.email || "";
-      body["InvoiceHead.CustMobilePH"] = request.customer.phone || "";
-      body["InvoiceHead.Language"] = request.lang === "en" ? "en" : "he";
-      body["InvoiceHead.SendByEmail"] = true;
-      body["InvoiceHead.CoinID"] = CardComClient.mapCurrency(request.currency);
-
-      request.items.forEach((item, i) => {
-        const idx = i + 1;
-        body[`InvoiceLines${idx}.Description`] = item.description;
-        body[`InvoiceLines${idx}.Price`] = item.unitPrice;
-        body[`InvoiceLines${idx}.Quantity`] = item.quantity;
-        body[`InvoiceLines${idx}.IsPriceIncludeVAT`] = true;
-      });
-
-      body.InvoiceType = request.docType
-        ? CardComClient.mapDocType(request.docType)
-        : 305;
+      body.Document = {
+        Name: request.customer.name,
+        To: request.customer.name,
+        Email: request.customer.email || "",
+        Phone: request.customer.phone || "",
+        Address: request.customer.address || "",
+        City: request.customer.city || "",
+        DocumentTypeToCreate: request.docType
+          ? (docTypeMap[request.docType] || "InvoiceReceipt")
+          : "InvoiceReceipt",
+        Products: request.items.map((item) => ({
+          Description: item.description,
+          UnitCost: item.unitPrice,
+          Quantity: item.quantity,
+          IsPriceIncludeVAT: true,
+        })),
+      };
     }
 
     const result = await this.request<{
