@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 // POST /api/public/validate-coupon — אימות קוד קופון (ציבורי, ללא auth)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { couponCode } = body as { couponCode: string };
+    const formData = await request.formData();
+    const couponCode = formData.get("couponCode") as string | null;
 
     if (!couponCode) {
       return NextResponse.json(
