@@ -38,12 +38,12 @@ export async function PATCH(
     const { isActive, isPrimary, settings } = body;
 
     if (body.isPrimary === true) {
+      // כשמגדירים ספק כראשי — כל השאר מפסיקים להיות ראשיים ונכבים
       await prisma.billingProvider.updateMany({
         where: {
-          isPrimary: true,
           id: { not: id },
         },
-        data: { isPrimary: false },
+        data: { isPrimary: false, isActive: false },
       });
     }
 
@@ -53,6 +53,8 @@ export async function PATCH(
         ...(isActive !== undefined ? { isActive } : {}),
         ...(isPrimary !== undefined ? { isPrimary } : {}),
         ...(settings !== undefined ? { settings } : {}),
+        // אם מגדירים כראשי — מפעילים אותו אוטומטית
+        ...(body.isPrimary === true ? { isActive: true } : {}),
       },
     });
 

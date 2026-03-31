@@ -148,6 +148,7 @@ export async function PUT(
       where: { id: customerId },
       data: {
         ...data,
+        organId: data.organId || undefined,
         additionalOrganId: data.additionalOrganId || null,
         whatsappPhone: data.whatsappPhone || null,
         address: data.address || null,

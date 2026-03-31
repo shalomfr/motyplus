@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       firstName: name.trim().split(" ")[0],
       email,
       orderFormUrl: ORDER_FORM_URL,
+      orderFormLink: ORDER_FORM_URL,
       paymentLink: ORDER_FORM_URL,
       newCustomerName: name.trim(),
       todayDate: new Date().toLocaleDateString("he-IL"),

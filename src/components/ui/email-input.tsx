@@ -5,17 +5,6 @@ import { cn } from "@/lib/utils"
 
 const DOMAIN_SUGGESTIONS = [
   "gmail.com",
-  "yahoo.com",
-  "hotmail.com",
-  "outlook.com",
-  "walla.co.il",
-  "walla.com",
-  "013.net",
-  "bezeqint.net",
-  "netvision.net.il",
-  "zahav.net.il",
-  "icloud.com",
-  "live.com",
 ]
 
 export interface EmailInputProps

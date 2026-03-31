@@ -530,7 +530,7 @@ export function CustomerForm({
             {/* Phone */}
             <div className="space-y-2">
               <Label htmlFor="phone">
-                פלאפון ראשי <span className="text-destructive">*</span>
+                פלאפון <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="phone"
@@ -542,23 +542,6 @@ export function CustomerForm({
               {errors.phone && (
                 <p className="text-sm text-destructive">
                   {errors.phone.message}
-                </p>
-              )}
-            </div>
-
-            {/* WhatsApp */}
-            <div className="space-y-2">
-              <Label htmlFor="whatsappPhone">פלאפון משני</Label>
-              <Input
-                id="whatsappPhone"
-                {...register("whatsappPhone")}
-                placeholder="050-0000000"
-                dir="ltr"
-                className="text-right"
-              />
-              {errors.whatsappPhone && (
-                <p className="text-sm text-destructive">
-                  {errors.whatsappPhone.message}
                 </p>
               )}
             </div>
@@ -591,69 +574,33 @@ export function CustomerForm({
               )}
             </div>
 
-            {/* Organ */}
+            {/* Organ — detected from info file */}
             <div className="space-y-2">
-              <Label>
-                אורגן <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={watchedOrganId}
-                onValueChange={(value) => setValue("organId", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר אורגן" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organs.map((organ) => (
-                    <SelectItem key={organ.id} value={organ.id}>
-                      {organ.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.organId && (
-                <p className="text-sm text-destructive">
-                  {errors.organId.message}
-                </p>
-              )}
+              <Label>אורגן</Label>
+              <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-gray-50 text-sm">
+                {watchedOrganId ? (
+                  <span className="text-green-700 font-medium">{organs.find(o => o.id === watchedOrganId)?.name || "זוהה"}</span>
+                ) : (
+                  <span className="text-muted-foreground">יזוהה אוטומטית מקובץ אינפו</span>
+                )}
+              </div>
             </div>
 
-            {/* #5: Additional Organ — כפתור הפעלה */}
+            {/* Additional Organ — detected from additional info file */}
             <div className="space-y-2">
               <Label>אורגן נוסף</Label>
-              {watch("additionalOrganId") ? (
-                <div className="flex gap-2">
-                  <Select
-                    value={watch("additionalOrganId") || ""}
-                    onValueChange={(value) =>
-                      setValue("additionalOrganId", value === "none" ? null : value)
-                    }
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="ללא" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">ללא</SelectItem>
-                      {organs.map((organ) => (
-                        <SelectItem key={organ.id} value={organ.id}>{organ.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setValue("additionalOrganId", null)} className="shrink-0 text-red-500 hover:text-red-700">
-                    <XIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start text-muted-foreground"
-                  onClick={() => setValue("additionalOrganId", organs[0]?.id || "")}
-                >
-                  <Upload className="h-4 w-4 ml-2" />
-                  הוסף אורגן נוסף
-                </Button>
-              )}
+              <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-gray-50 text-sm">
+                {watch("additionalOrganId") ? (
+                  <>
+                    <span className="text-green-700 font-medium">{organs.find(o => o.id === watch("additionalOrganId"))?.name || "זוהה"}</span>
+                    <button type="button" onClick={() => { setValue("additionalOrganId", null); setPendingAdditionalInfoFile(null); setAdditionalInfoFileName("") }} className="mr-auto text-gray-400 hover:text-red-500">
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">יזוהה אוטומטית מקובץ אינפו נוסף</span>
+                )}
+              </div>
             </div>
 
             {/* Set Type */}
@@ -671,7 +618,7 @@ export function CustomerForm({
                 <SelectContent>
                   {setTypes.map((set) => (
                     <SelectItem key={set.id} value={set.id}>
-                      {set.name}
+                      {set.name === "סכום חופשי" ? "אחר" : set.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -730,15 +677,6 @@ export function CustomerForm({
               )}
             </div>
 
-            {/* Discount Reason */}
-            <div className="space-y-2">
-              <Label htmlFor="discountReason">סיבת הנחה / מבצע</Label>
-              <Input
-                id="discountReason"
-                {...register("discountReason" as keyof (CustomerFormData | CustomerUpdateFormData))}
-                placeholder="לדוגמה: מבצע חנוכה 2025"
-              />
-            </div>
 
             {/* Purchase Date */}
             <div className="space-y-2">
@@ -926,11 +864,10 @@ export function CustomerForm({
             )}
           </div>
 
-          {/* Additional Info File Upload - only when additional organ selected */}
-          {watch("additionalOrganId") && (
+          {/* Additional Info File Upload */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label>קובץ אינפו של האורגן הנוסף</Label>
+              <Label>קובץ אינפו לאורגן נוסף</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -1031,7 +968,6 @@ export function CustomerForm({
               </div>
             )}
           </div>
-          )}
 
           {/* Submit */}
           <div className="flex justify-start">

@@ -143,6 +143,7 @@ export function NewOrderWizardDialog({
         firstName: name.split(" ")[0],
         email,
         orderFormUrl,
+        orderFormLink: orderFormUrl,
         paymentLink: orderFormUrl,
         newCustomerName: name,
       }

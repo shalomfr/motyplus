@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, CheckCircle, XCircle, Plug, TestTube } from "lucide-react"
+import { Loader2, CheckCircle, XCircle, Plug, TestTube, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDateTime } from "@/lib/utils"
 
@@ -162,6 +162,26 @@ function ProviderCard({
     }
   }
 
+  const handleSetPrimary = async () => {
+    if (!provider) return
+    if (!confirm(`להגדיר את ${label} כספק ראשי? כל שאר הספקים יכובו.`)) return
+    try {
+      const res = await fetch(`/api/integrations/billing/${provider.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPrimary: true }),
+      })
+      if (res.ok) {
+        toast({ title: `${label} הוגדר כספק ראשי` })
+        onRefresh()
+      } else {
+        toast({ title: "שגיאה", variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "שגיאה בהגדרת ספק ראשי", variant: "destructive" })
+    }
+  }
+
   const handleDelete = async () => {
     if (!provider) return
     if (!confirm(`למחוק את חיבור ${label}?`)) return
@@ -237,7 +257,13 @@ function ProviderCard({
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {!provider.isPrimary && (
+                <Button variant="outline" className="text-amber-600 border-amber-300 hover:bg-amber-50" onClick={handleSetPrimary}>
+                  <Star className="h-4 w-4 ml-2" />
+                  הגדר כראשי
+                </Button>
+              )}
               <Button variant="outline" onClick={handleTest} disabled={testing}>
                 {testing ? (
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" />
