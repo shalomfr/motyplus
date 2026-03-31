@@ -123,7 +123,7 @@ export async function POST(
 
       if (!cpiMap.has(parsed.customerId)) cpiMap.set(parsed.customerId, {})
       const entry = cpiMap.get(parsed.customerId)!
-      if (isAdditional) {
+      if (parsed.isAdditional) {
         entry.additional = f.path
       } else {
         entry.main = f.path
