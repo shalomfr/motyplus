@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, Send } from "lucide-react"
+import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, CheckCircle2 } from "lucide-react"
 import { WizardShell } from "@/components/updates/wizard/wizard-shell"
 import { StepDetails, type UpdateDetailsData } from "@/components/updates/wizard/step-details"
 
@@ -12,7 +12,7 @@ const WIZARD_STEPS = [
   { key: "rhythms", label: "מקצבים", icon: <FolderOpen className="h-4 w-4" /> },
   { key: "samples", label: "דגימות", icon: <Music className="h-4 w-4" /> },
   { key: "emails", label: "מיילים", icon: <Mail className="h-4 w-4" /> },
-  { key: "send", label: "שליחה", icon: <Send className="h-4 w-4" /> },
+  { key: "summary", label: "סיכום ושמירה", icon: <CheckCircle2 className="h-4 w-4" /> },
 ]
 
 export default function NewUpdateWizardPage() {

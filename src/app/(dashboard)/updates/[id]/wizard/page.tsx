@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2, CreditCard, Send } from "lucide-react"
+import { Loader2, ArrowRight, FileText, FolderOpen, Music, Mail, MailCheck, CheckCircle2, CreditCard } from "lucide-react"
 import { WizardShell } from "@/components/updates/wizard/wizard-shell"
 import { StepDetails, type UpdateDetailsData } from "@/components/updates/wizard/step-details"
 import { StepRhythms } from "@/components/updates/wizard/step-rhythms"
@@ -12,7 +12,6 @@ import { StepEmailSelect } from "@/components/updates/wizard/step-email-select"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
 import { StepQuotes } from "@/components/updates/wizard/step-quotes"
-import { StepSend } from "@/components/updates/wizard/step-send"
 
 const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
@@ -21,8 +20,7 @@ const ALL_WIZARD_STEPS = [
   { key: "email_select", label: "בחירת תבנית", icon: <MailCheck className="h-4 w-4" /> },
   { key: "emails", label: "תצוגת מייל", icon: <Mail className="h-4 w-4" /> },
   { key: "quotes", label: "הצעות מחיר", icon: <CreditCard className="h-4 w-4" /> },
-  { key: "summary", label: "סיכום", icon: <CheckCircle2 className="h-4 w-4" /> },
-  { key: "send", label: "שליחה", icon: <Send className="h-4 w-4" /> },
+  { key: "summary", label: "סיכום ושמירה", icon: <CheckCircle2 className="h-4 w-4" /> },
 ]
 
 interface WizardData {
@@ -175,7 +173,7 @@ export default function UpdateWizardPage({
         onStepChange={handleStepChange}
         canGoNext={true}
         completedSteps={completedSteps}
-        hideNavigation={activeStepKey === "summary" || activeStepKey === "send"}
+        hideNavigation={activeStepKey === "summary"}
       >
         {activeStepKey === "details" && (
           <StepDetails
@@ -198,6 +196,7 @@ export default function UpdateWizardPage({
         {activeStepKey === "samples" && (
           <StepSamples
             updateId={id}
+            version={wizardData.updateVersion.version}
             cpiReady={wizardData.cpiStatus.ready}
             cpiTotal={wizardData.cpiStatus.total}
           />
@@ -230,20 +229,6 @@ export default function UpdateWizardPage({
             version={wizardData.updateVersion.version}
             segments={wizardData.segments}
             cpiStatus={wizardData.cpiStatus}
-            alreadySent={wizardData.alreadySent}
-            foldersReady={foldersReady}
-            onGoToSend={() => {
-              const sendIndex = wizardSteps.findIndex((s) => s.key === "send")
-              if (sendIndex >= 0) handleStepChange(sendIndex)
-            }}
-          />
-        )}
-
-        {activeStepKey === "send" && (
-          <StepSend
-            updateId={id}
-            version={wizardData.updateVersion.version}
-            segments={wizardData.segments}
             alreadySent={wizardData.alreadySent}
             foldersReady={foldersReady}
           />

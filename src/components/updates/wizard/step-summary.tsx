@@ -13,7 +13,8 @@ import {
   FolderOpen,
   Music,
   Users,
-  Send,
+  Save,
+  Mail,
 } from "lucide-react"
 
 interface Segment {
@@ -31,7 +32,7 @@ interface StepSummaryProps {
   cpiStatus: { ready: number; total: number }
   foldersReady: boolean
   alreadySent: number
-  onGoToSend: () => void
+  onGoToSend?: () => void
 }
 
 export function StepSummary({
@@ -41,7 +42,6 @@ export function StepSummary({
   cpiStatus,
   foldersReady,
   alreadySent,
-  onGoToSend,
 }: StepSummaryProps) {
   const router = useRouter()
   const [finishing, setFinishing] = useState(false)
@@ -50,30 +50,6 @@ export function StepSummary({
   const eligibleSegment = segments.find((s) => s.key === "eligible")
   const eligibleCount = eligibleSegment?.count || 0
   const totalCustomers = segments.reduce((sum, s) => sum + s.count, 0)
-
-  const handleGoToSend = async () => {
-    setFinishing(true)
-    setError("")
-
-    try {
-      const res = await fetch(`/api/updates/${updateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "READY" }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "שגיאה בעדכון הסטטוס")
-      }
-
-      onGoToSend()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בעדכון הסטטוס")
-    } finally {
-      setFinishing(false)
-    }
-  }
 
   const handleSaveOnly = async () => {
     setFinishing(true)
@@ -202,7 +178,7 @@ export function StepSummary({
       {/* Action Buttons */}
       <div className="border-t pt-4 space-y-3">
         <Button
-          onClick={handleGoToSend}
+          onClick={handleSaveOnly}
           disabled={finishing}
           className="w-full bg-green-600 hover:bg-green-700"
           size="lg"
@@ -210,19 +186,14 @@ export function StepSummary({
           {finishing ? (
             <Loader2 className="h-5 w-5 animate-spin ml-2" />
           ) : (
-            <Send className="h-5 w-5 ml-2" />
+            <Save className="h-5 w-5 ml-2" />
           )}
-          {finishing ? "מסיים..." : "סיום הכנה ומעבר לשליחה"}
+          {finishing ? "שומר..." : "שמור עדכון"}
         </Button>
-        <Button
-          onClick={handleSaveOnly}
-          disabled={finishing}
-          variant="outline"
-          className="w-full"
-          size="lg"
-        >
-          שמור מבלי לשלוח
-        </Button>
+        <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+          <Mail className="h-3.5 w-3.5" />
+          לשליחת העדכון ללקוחות — עבור לתפריט מיילים &gt; שליחת מיילים
+        </p>
       </div>
 
       {/* Error */}
