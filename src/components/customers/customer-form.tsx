@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerSchema, customerUpdateSchema } from "@/lib/validators"
 import { formatDate } from "@/lib/utils"
-import { Loader2, Save, Upload, FileText, X as XIcon, Plus, ArrowUpCircle, Search } from "lucide-react"
+import { Loader2, Save, Upload, FileText, X as XIcon, ArrowUpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileUploadProgress, type UploadStatus } from "@/components/ui/file-upload-progress"
 import { uploadWithProgress } from "@/lib/upload-with-progress"
@@ -768,49 +768,6 @@ export function CustomerForm({
             <div className="flex items-center gap-2">
               <Label>קובץ אינפו של האורגן</Label>
               {infoFileName && <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">יש אינפו</Badge>}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs text-blue-700 border-blue-200 hover:bg-blue-50"
-                onClick={async () => {
-                  if (pendingInfoFile) {
-                    // יש קובץ ממתין בזיכרון — זהה ממנו
-                    detectOrganFromN27(pendingInfoFile, true)
-                  } else if (mode === "edit" && initialData?.id && infoFileName) {
-                    // במצב עריכה — הורד את הקובץ מהשרת וזהה
-                    try {
-                      setDetectResult("מזהה...")
-                      const res = await fetch(`/api/customers/${initialData.id}/download-info`)
-                      if (res.ok) {
-                        const blob = await res.blob()
-                        const file = new File([blob], "info.n27")
-                        detectOrganFromN27(file, true)
-                      } else {
-                        setDetectResult("לא ניתן להוריד את הקובץ")
-                      }
-                    } catch {
-                      setDetectResult("שגיאה בהורדת הקובץ")
-                    }
-                  } else {
-                    // אין קובץ — פתח בחירת קובץ, זהה ממנו, ושמור כ-pending
-                    const input = document.createElement("input")
-                    input.type = "file"
-                    input.accept = ".n27"
-                    input.onchange = async (ev) => {
-                      const file = (ev.target as HTMLInputElement).files?.[0]
-                      if (!file) return
-                      setPendingInfoFile(file)
-                      setInfoFileName(file.name)
-                      detectOrganFromN27(file, true)
-                    }
-                    input.click()
-                  }
-                }}
-              >
-                <Search className="h-3 w-3 ml-1" />
-                זהה אורגן
-              </Button>
               {detectResult && (
                 <span className={cn("text-xs font-medium", detectResult.startsWith("זוהה") ? "text-green-600" : "text-amber-600")}>
                   {detectResult}
@@ -868,61 +825,6 @@ export function CustomerForm({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Label>קובץ אינפו לאורגן נוסף</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs text-green-700 border-green-200 hover:bg-green-50"
-                onClick={async () => {
-                  if (pendingAdditionalInfoFile) {
-                    // זיהוי מהקובץ הממתין — עדכון אורגן נוסף
-                    try {
-                      const buffer = await pendingAdditionalInfoFile.arrayBuffer()
-                      const bytes = new Uint8Array(buffer)
-                      const match = matchOrganFromBytes(bytes)
-                      if (match) {
-                        setValue("additionalOrganId", match.id)
-                        setDetectResult(`זוהה: ${match.name}`)
-                      } else {
-                        setDetectResult("לא זוהה אורגן בקובץ")
-                      }
-                      setTimeout(() => setDetectResult(null), 4000)
-                    } catch { setDetectResult("שגיאה בקריאת הקובץ") }
-                  } else {
-                    // פתח בחירת קובץ
-                    const input = document.createElement("input")
-                    input.type = "file"
-                    input.accept = ".n27"
-                    input.onchange = async (ev) => {
-                      const file = (ev.target as HTMLInputElement).files?.[0]
-                      if (!file) return
-                      setPendingAdditionalInfoFile(file)
-                      setAdditionalInfoFileName(file.name)
-                      try {
-                        const buffer = await file.arrayBuffer()
-                        const bytes = new Uint8Array(buffer)
-                        const match = matchOrganFromBytes(bytes)
-                        if (match) {
-                          setValue("additionalOrganId", match.id)
-                          setDetectResult(`זוהה: ${match.name}`)
-                        } else {
-                          setDetectResult("לא זוהה אורגן בקובץ")
-                        }
-                        setTimeout(() => setDetectResult(null), 4000)
-                      } catch { setDetectResult("שגיאה") }
-                    }
-                    input.click()
-                  }
-                }}
-              >
-                <Search className="h-3 w-3 ml-1" />
-                זהה אורגן
-              </Button>
-              {detectResult && (
-                <span className={cn("text-xs font-medium", detectResult.startsWith("זוהה") ? "text-green-600" : "text-amber-600")}>
-                  {detectResult}
-                </span>
-              )}
             </div>
 
             {additionalUploadStatus !== "idle" && (
