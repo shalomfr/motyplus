@@ -1,4 +1,5 @@
 const SMTP2GO_API_URL = "https://api.smtp2go.com/v3/email/send";
+const RESEND_API_URL = "https://api.resend.com/emails";
 
 interface SendEmailParams {
   to: string;
@@ -7,38 +8,79 @@ interface SendEmailParams {
   from?: string;
 }
 
-export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
-  const apiKey = process.env.SMTP2GO_API_KEY;
+// EMAIL_PROVIDER env var: "resend" | "smtp2go" (default: auto-detect by available key)
+function getProvider(): "resend" | "smtp2go" | null {
+  const explicit = process.env.EMAIL_PROVIDER?.toLowerCase();
+  if (explicit === "resend" && process.env.RESEND_API_KEY) return "resend";
+  if (explicit === "smtp2go" && process.env.SMTP2GO_API_KEY) return "smtp2go";
+  // Auto-detect: prefer Resend if key exists
+  if (process.env.RESEND_API_KEY) return "resend";
+  if (process.env.SMTP2GO_API_KEY) return "smtp2go";
+  return null;
+}
 
-  if (!apiKey) {
-    console.log("Email not sent (no SMTP2GO_API_KEY configured):", { to, subject });
-    return { success: false, error: "No SMTP2GO API key configured" };
+async function sendViaSmtp2go({ to, subject, html, from }: SendEmailParams) {
+  const payload = {
+    api_key: process.env.SMTP2GO_API_KEY,
+    to: [to],
+    sender: from || `מוטי רוזנפלד <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
+    subject,
+    html_body: html,
+  };
+
+  const res = await fetch(SMTP2GO_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok || data.data?.error) {
+    throw new Error(data.data?.error || `HTTP ${res.status}`);
+  }
+  return { success: true, data };
+}
+
+async function sendViaResend({ to, subject, html, from }: SendEmailParams) {
+  const payload = {
+    from: from || `מוטי רוזנפלד <${process.env.RESEND_FROM || "beats@mottirozenfeld.com"}>`,
+    to: [to],
+    subject,
+    html,
+  };
+
+  const res = await fetch(RESEND_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return { success: true, data };
+}
+
+export async function sendEmail(params: SendEmailParams): Promise<{ success: boolean; error?: unknown; data?: unknown }> {
+  const provider = getProvider();
+
+  if (!provider) {
+    console.log("Email not sent (no email provider configured):", { to: params.to, subject: params.subject });
+    return { success: false, error: "No email provider configured" };
   }
 
   try {
-    const payload = {
-      api_key: apiKey,
-      to: [to],
-      sender: from || `מוטי רוזנפלד <${process.env.SMTP_USER || "beats@mottirozenfeld.com"}>`,
-      subject,
-      html_body: html,
-    };
-
-    const res = await fetch(SMTP2GO_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || data.data?.error) {
-      throw new Error(data.data?.error || `HTTP ${res.status}`);
+    if (provider === "resend") {
+      return await sendViaResend(params);
+    } else {
+      return await sendViaSmtp2go(params);
     }
-
-    return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error(`Email send error (${provider}):`, error);
     return { success: false, error };
   }
 }
