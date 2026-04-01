@@ -69,11 +69,11 @@ export async function GET(request: NextRequest) {
     if (missingDetails === "true") {
       // Specific field or any missing
       const fieldMap: Record<string, Prisma.CustomerWhereInput[]> = {
-        email: [{ email: { equals: null as unknown as undefined } }, { email: "" }],
-        phone: [{ phone: { equals: null as unknown as undefined } }, { phone: "" }],
-        address: [{ address: { equals: null as unknown as undefined } }, { address: "" }],
-        infoFile: [{ infoFileUrl: { equals: null as unknown as undefined } }, { infoFileUrl: "" }],
-        whatsapp: [{ whatsappPhone: { equals: null as unknown as undefined } }, { whatsappPhone: "" }],
+        email: [{ email: "" }],
+        phone: [{ phone: "" }],
+        address: [{ address: null }, { address: "" }],
+        infoFile: [{ infoFileUrl: null }, { infoFileUrl: "" }],
+        whatsapp: [{ whatsappPhone: null }, { whatsappPhone: "" }],
       };
 
       const missingCondition: Prisma.CustomerWhereInput = missingField && fieldMap[missingField]

@@ -22,7 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import {
-  Plus, Mail, Loader2, Edit, Info,
+  Plus, Mail, Loader2, Edit,
   RefreshCw, UserPlus, Percent, Gift, Bell, ShoppingBag,
   ChevronDown, ChevronUp, FolderOpen, FolderPlus, Trash2, Pencil,
   Copy, GripVertical, FolderInput, Download, Upload, Eye,
@@ -554,26 +554,6 @@ export default function EmailTemplatesPage() {
           חזרה למיילים
         </Button>
       </div>
-
-      {/* הסבר על תבניות */}
-      <Card className="border-blue-200 bg-orange-50/50">
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-            <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm space-y-1">
-              <p className="font-medium text-blue-800">תבניות קבועות ומשתנות</p>
-              <p className="text-blue-700">
-                <strong>תבניות קבועות</strong> (ברכות, חגים) — התוכן זהה לכל לקוח ולא צריך לשנות אותן.
-              </p>
-              <p className="text-blue-700">
-                <strong>תבניות משתנות</strong> (עדכונים, הצעות מחיר) — משתמשות במשתנים כמו {`{{version}}`}, {`{{downloadLink}}`}, {`{{customerName}}`} שמוחלפים אוטומטית בשליחה.
-                <br />
-                לא צריך לשנות אותן בכל עדכון — המערכת מחליפה את המשתנים לבד.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* כותרת + הרחב/כווץ + הוסף תיקייה */}
       <div className="flex items-center justify-between">

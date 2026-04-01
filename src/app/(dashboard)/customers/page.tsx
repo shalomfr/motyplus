@@ -118,6 +118,7 @@ export default function CustomersListPage() {
       setTotalCount(data.pagination?.total || 0)
       setHasMore(page * PAGE_SIZE < (data.pagination?.total || 0))
     } catch (error) {
+      setHasMore(false)
       toast({
         title: "שגיאה",
         description: "לא ניתן לטעון את רשימת הלקוחות",
