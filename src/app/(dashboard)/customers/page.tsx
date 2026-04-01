@@ -153,6 +153,7 @@ export default function CustomersListPage() {
   }, [hasMore, isLoading, isLoadingMore])
 
   const handleFiltersChange = (newFilters: CustomerFilters) => {
+    setIsLoading(true)
     setFilters(newFilters)
     setPage(1)
     setCustomers([])
@@ -160,6 +161,7 @@ export default function CustomersListPage() {
   }
 
   const handleClearFilters = () => {
+    setIsLoading(true)
     setFilters(defaultFilters)
     setPage(1)
     setCustomers([])

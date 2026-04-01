@@ -102,12 +102,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // סינון לפי גרסת עדכון מקסימלית — מראה רק לקוחות שלא מעודכנים לגרסה זו ומעלה
-    if (maxUpdateVersion) {
+    // סינון לפי גרסת עדכון
+    if (maxUpdateVersion === "not_updated") {
+      // לא מעודכנים — לקוחות בלי עדכון בכלל
       const versionCondition: Prisma.CustomerWhereInput = {
         OR: [
           { currentUpdateVersion: null },
           { currentUpdateVersion: "" },
+        ],
+      };
+      if (where.AND) {
+        (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
+      } else {
+        where.AND = [versionCondition];
+      }
+    } else if (maxUpdateVersion) {
+      // מעודכן עד גרסה — רק לקוחות שיש להם עדכון אבל נמוך מהגרסה שנבחרה
+      const versionCondition: Prisma.CustomerWhereInput = {
+        AND: [
+          { currentUpdateVersion: { not: null } },
+          { currentUpdateVersion: { not: "" } },
           { currentUpdateVersion: { lt: maxUpdateVersion } },
         ],
       };
