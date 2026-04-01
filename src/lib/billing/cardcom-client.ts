@@ -260,11 +260,16 @@ export class CardComClient implements BillingClient {
       quote: "Order",
     };
 
+    // Build product name from items for display on payment page
+    const productName = request.items.map((item) => item.description).join(", ");
+
     const body: Record<string, unknown> = {
       Amount: totalAmount,
+      ProductName: productName,
       SuccessRedirectUrl: request.successUrl,
       FailedRedirectUrl: request.cancelUrl,
       WebHookUrl: request.webhookUrl || "",
+      IndicatorUrl: request.webhookUrl || "",
       ReturnValue: request.metadata ? JSON.stringify(request.metadata) : "",
       Language: request.lang === "en" ? "en" : "he",
       CoinID: CardComClient.mapCurrency(request.currency),
