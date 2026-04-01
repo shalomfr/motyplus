@@ -266,10 +266,9 @@ export class CardComClient implements BillingClient {
       FailedRedirectUrl: request.cancelUrl,
       WebHookUrl: request.webhookUrl || "",
       ReturnValue: request.metadata ? JSON.stringify(request.metadata) : "",
-      Language: request.lang === "en" ? "he" : "en",
+      Language: request.lang === "en" ? "en" : "he",
       CoinID: CardComClient.mapCurrency(request.currency),
       MaxNumberOfPayments: 1,
-      Operation: "ChargeAndCreateToken",
     };
 
     // Auto-create document on payment
