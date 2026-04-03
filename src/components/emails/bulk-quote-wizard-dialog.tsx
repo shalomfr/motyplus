@@ -173,6 +173,39 @@ export function BulkQuoteWizardDialog({
     }
   }
 
+  // Auto-select templates when data loads
+  useEffect(() => {
+    if (loadingTemplates || templates.length === 0 || folders.length === 0 || organs.length === 0) return
+    // Skip if already selected
+    if (Object.keys(notUpdatedTemplateMap).length > 0 || halfSetTemplate) return
+
+    const notUpdatedFolderIds = new Set<string>()
+    const halfSetFolderIds = new Set<string>()
+    for (const f of folders) {
+      const name = f.name.trim()
+      if (name === "לא זכאים לעדכון" || name === "לא מעודכנים" || name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
+        notUpdatedFolderIds.add(f.id)
+      }
+      if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
+        halfSetFolderIds.add(f.id)
+      }
+    }
+
+    // Auto-select not_updated templates per organ
+    const notUpdatedTemplates = templates.filter((t) => t.folderId && notUpdatedFolderIds.has(t.folderId))
+    const autoMap: Record<string, EmailTemplate> = {}
+    for (const organ of organs) {
+      const match = notUpdatedTemplates.find((t) => t.name.includes(organ.name))
+      if (match) autoMap[organ.id] = match
+    }
+    if (Object.keys(autoMap).length > 0) setNotUpdatedTemplateMap(autoMap)
+
+    // Auto-select half_set template
+    const halfSetTemplates = templates.filter((t) => t.folderId && halfSetFolderIds.has(t.folderId))
+    const halfMatch = halfSetTemplates.find((t) => t.name.includes("חצאי סטים") || t.name.includes("חצי סט") || t.name.includes("הצעה"))
+    if (halfMatch) setHalfSetTemplate(halfMatch)
+  }, [loadingTemplates, templates, folders, organs, notUpdatedTemplateMap, halfSetTemplate])
+
   const groupedTemplates = useMemo(() => {
     const groups: { folderId: string | null; folderName: string; templates: EmailTemplate[] }[] = []
     const folderMap = new Map<string, EmailTemplate[]>()

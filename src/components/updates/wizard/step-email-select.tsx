@@ -118,6 +118,42 @@ export function StepEmailSelect({
     if (emailTemplateMap) setTemplateMap(emailTemplateMap)
   }, [emailTemplateMap])
 
+  // Auto-select templates when data loads — only if no templates were previously selected
+  useEffect(() => {
+    if (loading || templates.length === 0 || folders.length === 0) return
+    if (emailTemplateMap && Object.keys(emailTemplateMap).length > 0) return // Already has saved selections
+
+    const eligibleFolderIds = new Set<string>()
+    for (const f of folders) {
+      const name = f.name.trim()
+      if (name === "זכאים לעדכון" || name === "מעודכנים") eligibleFolderIds.add(f.id)
+    }
+
+    const eligibleTemplates = templates.filter((t) => t.folderId && eligibleFolderIds.has(t.folderId))
+
+    // Auto-select for each organ — find template whose name contains the organ name
+    const organsToMatch = organGroups.length > 0 ? organGroups : allOrgans
+    const autoEligible: Record<string, TemplateEntry> = {}
+
+    for (const organ of organsToMatch) {
+      const match = eligibleTemplates.find((t) =>
+        t.name.includes(organ.organName) || organ.organName.includes(t.name.replace(/עדכון.*—\s*/, "").trim())
+      )
+      if (match) {
+        autoEligible[organ.organId] = {
+          templateId: match.id,
+          templateName: match.name,
+          subject: match.subject,
+          body: match.body,
+        }
+      }
+    }
+
+    if (Object.keys(autoEligible).length > 0) {
+      setTemplateMap((prev) => ({ ...prev, eligible: { ...prev.eligible, ...autoEligible } }))
+    }
+  }, [loading, templates, folders, organGroups, allOrgans, emailTemplateMap])
+
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev)
