@@ -179,28 +179,27 @@ export function BulkQuoteWizardDialog({
     // Skip if already selected
     if (Object.keys(notUpdatedTemplateMap).length > 0 || halfSetTemplate) return
 
-    // Both not_updated and half_set use the same folder: "לא מעודכנים" / "לא זכאים לעדכון"
-    const folderIds = new Set<string>()
+    const notUpdatedFolderIds = new Set<string>()
+    const halfSetFolderIds = new Set<string>()
     for (const f of folders) {
       const name = f.name.trim()
-      if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
-        folderIds.add(f.id)
-      }
+      if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") notUpdatedFolderIds.add(f.id)
+      if (name === "חצי סט") halfSetFolderIds.add(f.id)
     }
 
-    const folderTemplates = templates.filter((t) => t.folderId && folderIds.has(t.folderId))
-
-    // Auto-select per organ — same template for both not_updated and half_set
+    // Auto-select not_updated per organ from "לא מעודכנים" folder
+    const notUpdatedTemplates = templates.filter((t) => t.folderId && notUpdatedFolderIds.has(t.folderId))
     const autoMap: Record<string, EmailTemplate> = {}
     for (const organ of organs) {
-      const match = folderTemplates.find((t) => t.name.includes(organ.name))
+      const match = notUpdatedTemplates.find((t) => t.name.includes(organ.name))
       if (match) autoMap[organ.id] = match
     }
     if (Object.keys(autoMap).length > 0) setNotUpdatedTemplateMap(autoMap)
 
-    // Half set gets the same first template
-    const firstMatch = Object.values(autoMap)[0] || folderTemplates[0]
-    if (firstMatch) setHalfSetTemplate(firstMatch)
+    // Auto-select half_set per organ from "חצי סט" folder
+    const halfSetTemplates = templates.filter((t) => t.folderId && halfSetFolderIds.has(t.folderId))
+    const halfMatch = halfSetTemplates.find((t) => t.name.includes("גינוס") || t.name.includes("Genos")) || halfSetTemplates[0]
+    if (halfMatch) setHalfSetTemplate(halfMatch)
   }, [loadingTemplates, templates, folders, organs, notUpdatedTemplateMap, halfSetTemplate])
 
   const groupedTemplates = useMemo(() => {
@@ -242,7 +241,9 @@ export function BulkQuoteWizardDialog({
       const name = f.name.trim()
       if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
         map.not_updated.add(f.id)
-        map.half_set.add(f.id) // Same folder for both
+      }
+      if (name === "חצי סט") {
+        map.half_set.add(f.id)
       }
     }
     return map
