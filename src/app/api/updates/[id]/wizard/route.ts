@@ -204,6 +204,9 @@ export async function GET(
           if (alreadyReceivedIds.has(c.id)) return false;
           if (!c.organ?.supportsUpdates) return false;
           if (!c.setType?.includesUpdates) return false;
+          // Only include customers whose update period EXPIRED — not those still in period
+          const inDate = c.updateExpiryDate >= now || c.status === "EXCEPTION";
+          if (inDate) return false;
           if (!currentVersion) return c.currentUpdateVersion === null;
           return c.currentUpdateVersion !== currentVersion;
         })
