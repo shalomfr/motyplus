@@ -326,6 +326,8 @@ export async function POST(
           organ: { supportsUpdates: true },
           setType: { includesUpdates: true },
           OR: [{ updateExpiryDate: { gte: now } }, { status: "EXCEPTION" }],
+          // Exclude customers already on the latest version
+          NOT: { currentUpdateVersion: updateVersion.version },
         },
         include: customerInclude,
       });
