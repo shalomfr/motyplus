@@ -131,13 +131,22 @@ export function StepEmailSelect({
 
     const eligibleTemplates = templates.filter((t) => t.folderId && eligibleFolderIds.has(t.folderId))
 
-    // Auto-select for each organ — find template whose name contains the organ name
+    // Auto-select for each organ — direct mapping
+    const ORGAN_TEMPLATE_MATCH: Record<string, string[]> = {
+      "Genos": ["Genos"],
+      "Genos 2": ["Genos"],
+      "Psr-SX920": ["Genos", "Psr-SX", "SX920"],
+      "Tyros5-1G": ["Tyros5-1G"],
+      "Tyros5-2G": ["Tyros5-2G"],
+    }
+
     const organsToMatch = organGroups.length > 0 ? organGroups : allOrgans
     const autoEligible: Record<string, TemplateEntry> = {}
 
     for (const organ of organsToMatch) {
+      const keywords = ORGAN_TEMPLATE_MATCH[organ.organName] || [organ.organName]
       const match = eligibleTemplates.find((t) =>
-        t.name.includes(organ.organName) || organ.organName.startsWith("Genos") && t.name.includes("Genos") || organ.organName.startsWith("Tyros5") && t.name.includes("Tyros5") || organ.organName.startsWith("Psr-SX") && t.name.includes("Psr-SX")
+        keywords.some((kw) => t.name.includes(kw))
       )
       if (match) {
         autoEligible[organ.organId] = {
