@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
           // Only customers whose update period EXPIRED
           updateExpiryDate: { lt: now },
         },
-        include: { organ: true, setType: true },
+        include: { organ: true, setType: { select: { name: true, includesUpdates: true, price: true } } },
       });
 
       // Filter: only those NOT on the latest published version (or higher)
@@ -201,6 +201,10 @@ export async function POST(request: NextRequest) {
               orderFormLink: `${ORDER_FORM_URL}/`,
               termsLink: TERMS_URL,
               todayDate: new Date().toLocaleDateString("he-IL"),
+              updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "—",
+              amountPaid: String(customer.amountPaid || 0),
+              purchaseDate: customer.purchaseDate ? new Date(customer.purchaseDate).toLocaleDateString("he-IL") : "—",
+              customerName: customer.fullName,
             };
 
             const html = replaceTemplateVariables(template.body, variables);
@@ -304,6 +308,10 @@ export async function POST(request: NextRequest) {
               orderFormLink: `${ORDER_FORM_URL}/`,
               termsLink: TERMS_URL,
               todayDate: new Date().toLocaleDateString("he-IL"),
+              updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "—",
+              amountPaid: String(customer.amountPaid || 0),
+              purchaseDate: customer.purchaseDate ? new Date(customer.purchaseDate).toLocaleDateString("he-IL") : "—",
+              customerName: customer.fullName,
             };
 
             const html = replaceTemplateVariables(template.body, variables);
