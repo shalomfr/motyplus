@@ -137,7 +137,7 @@ export function StepEmailSelect({
 
     for (const organ of organsToMatch) {
       const match = eligibleTemplates.find((t) =>
-        t.name.includes(organ.organName) || organ.organName.includes(t.name.replace(/עדכון.*—\s*/, "").trim())
+        t.name.includes(organ.organName) || organ.organName.startsWith("Genos") && t.name.includes("Genos") || organ.organName.startsWith("Tyros5") && t.name.includes("Tyros5") || organ.organName.startsWith("Psr-SX") && t.name.includes("Psr-SX")
       )
       if (match) {
         autoEligible[organ.organId] = {

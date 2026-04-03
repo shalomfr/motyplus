@@ -191,7 +191,7 @@ export function BulkQuoteWizardDialog({
     const notUpdatedTemplates = templates.filter((t) => t.folderId && notUpdatedFolderIds.has(t.folderId))
     const autoMap: Record<string, EmailTemplate> = {}
     for (const organ of organs) {
-      const match = notUpdatedTemplates.find((t) => t.name.includes(organ.name))
+      const match = notUpdatedTemplates.find((t) => t.name.includes(organ.name) || organ.name.startsWith("Genos") && t.name.includes("Genos") || organ.name.startsWith("Tyros5") && t.name.includes("Tyros5") || organ.name.startsWith("Psr-SX") && t.name.includes("Psr-SX"))
       if (match) autoMap[organ.id] = match
     }
     if (Object.keys(autoMap).length > 0) setNotUpdatedTemplateMap(autoMap)
