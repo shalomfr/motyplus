@@ -55,11 +55,13 @@ export async function POST(
       },
     });
 
-    // Build message history for Claude
-    const allMessages = conversation.messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // Build message history for Claude — skip _init_ placeholder messages
+    const allMessages = conversation.messages
+      .filter((m) => m.content !== "_init_")
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
     // Add current message — with image support for Claude Vision
     if (image) {

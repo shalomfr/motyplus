@@ -134,21 +134,25 @@ export default function FixRequestsPage() {
   }, [selected?.messages])
 
   const createConversation = async () => {
-    if (!input.trim()) return
+    if (!input.trim() && !pastedImage) return
     setSending(true)
+    const msg = input.trim()
+    const img = pastedImage
+    setInput("")
+    setPastedImage(null)
     try {
+      // Create empty conversation first
       const res = await fetch("/api/fix-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify({ message: "_init_" }),
       })
       if (res.ok) {
         const data = await res.json()
         setConversations((prev) => [data.conversation, ...prev])
         setSelectedId(data.conversation.id)
-        setInput("")
-        // Immediately send to AI for first response
-        await sendChatMessage(data.conversation.id, input.trim())
+        // Send the real message through chat (which saves + gets AI response)
+        await sendChatMessage(data.conversation.id, msg || "צילום מסך מצורף", img)
       }
     } finally {
       setSending(false)
