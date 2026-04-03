@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 import { getShareableLink } from "@/lib/file-storage";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 // POST /api/customers/[id]/send-update-email — שליחת מקצבים/דגימות + שדרוג אוטומטי
 export async function POST(
@@ -98,8 +99,8 @@ export async function POST(
       setType: customer.setType.name,
       customerId: String(customer.id),
       customLink: "",
-      orderFormLink: "https://motyplus-order.onrender.com/",
-      termsLink: "https://motyplus-order.onrender.com/terms",
+      orderFormLink: `${ORDER_FORM_URL}/`,
+      termsLink: TERMS_URL,
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 

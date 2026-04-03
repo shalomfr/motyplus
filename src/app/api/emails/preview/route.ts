@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { replaceTemplateVariables } from "@/lib/email";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 interface PreviewBody {
   templateId?: string;
@@ -84,8 +85,8 @@ export async function POST(request: NextRequest) {
         updateExpiryDate: customer.updateExpiryDate.toLocaleDateString("he-IL"),
         currentVersion: customer.currentUpdateVersion || "לא עודכן",
         updateVersion: latestUpdateVersion?.version || "—",
-        orderFormLink: "https://motyplus-order.onrender.com/",
-        termsLink: "https://motyplus-order.onrender.com/terms",
+        orderFormLink: `${ORDER_FORM_URL}/`,
+        termsLink: TERMS_URL,
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else if (leadId) {
@@ -105,8 +106,8 @@ export async function POST(request: NextRequest) {
         firstName: lead.fullName.split(" ")[0],
         email: lead.email || "",
         phone: lead.phone,
-        orderFormLink: "https://motyplus-order.onrender.com/",
-        termsLink: "https://motyplus-order.onrender.com/terms",
+        orderFormLink: `${ORDER_FORM_URL}/`,
+        termsLink: TERMS_URL,
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     } else {
@@ -124,8 +125,8 @@ export async function POST(request: NextRequest) {
         ).toLocaleDateString("he-IL"),
         currentVersion: "V4",
         updateVersion: latestUpdateVersion?.version || "V5",
-        orderFormLink: "https://motyplus-order.onrender.com/",
-        termsLink: "https://motyplus-order.onrender.com/terms",
+        orderFormLink: `${ORDER_FORM_URL}/`,
+        termsLink: TERMS_URL,
         todayDate: new Date().toLocaleDateString("he-IL"),
       };
     }

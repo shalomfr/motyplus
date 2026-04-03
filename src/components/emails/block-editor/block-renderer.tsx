@@ -3,6 +3,7 @@
 import type { EmailBlock } from "./types"
 import { blocksToHtml } from "./blocks-to-html"
 import { useRef, useEffect } from "react"
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils"
 
 const SAMPLE_VARS: Record<string, string> = {
   fullName: "ישראל ישראלי",
@@ -29,8 +30,8 @@ const SAMPLE_VARS: Record<string, string> = {
   customLink: "#",
   customerId: "12345",
   paymentLink: "https://pay.example.com/link/demo",
-  orderFormLink: "https://motyplus-order.onrender.com/",
-  termsLink: "https://motyplus-order.onrender.com/terms",
+  orderFormLink: `${ORDER_FORM_URL}/`,
+  termsLink: TERMS_URL,
   additionalOrganName: "",
   additionalOrganLine: "",
   todayDate: new Date().toLocaleDateString("he-IL"),

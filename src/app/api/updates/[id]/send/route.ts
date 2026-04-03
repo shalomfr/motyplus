@@ -7,6 +7,7 @@ import { sendWhatsApp } from "@/lib/whatsapp"
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
 import { parseCpiFilename } from "@/lib/cpi-filename"
 import { getBillingClient } from "@/lib/billing"
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils"
 
 // POST /api/updates/[id]/send — שיתוף קבצי CPI ושליחת מייל + WhatsApp ללקוחות זכאים
 export async function POST(
@@ -79,8 +80,8 @@ export async function POST(
           rhythmsLink: updateVersion.rhythmsFileUrl || "",
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           customLink: "",
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
+          orderFormLink: `${ORDER_FORM_URL}/`,
+          termsLink: TERMS_URL,
           todayDate: new Date().toLocaleDateString("he-IL"),
         }
         const html = replaceTemplateVariables(updateVersion.emailBody, templateVars)
@@ -321,8 +322,8 @@ export async function POST(
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
               releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
               customLink: "",
-              orderFormLink: "https://motyplus-order.onrender.com/",
-              termsLink: "https://motyplus-order.onrender.com/terms",
+              orderFormLink: `${ORDER_FORM_URL}/`,
+              termsLink: TERMS_URL,
               updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "",
               currentVersion: customer.currentUpdateVersion || "—",
               amountPaid: String(paid),

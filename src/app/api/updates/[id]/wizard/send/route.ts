@@ -7,6 +7,7 @@ import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
 import { parseCpiFilename } from "@/lib/cpi-filename";
 import { getBillingClient } from "@/lib/billing";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -149,8 +150,8 @@ async function sendToEligible(
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           downloadLink, downloadLink2,
           customLink: "",
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
+          orderFormLink: `${ORDER_FORM_URL}/`,
+          termsLink: TERMS_URL,
           updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "",
           currentVersion: customer.currentUpdateVersion || "—",
           amountPaid: String(customer.amountPaid || 0),
@@ -235,8 +236,8 @@ async function sendBulkTemplate(
       remainingAmount: String(remainingForFullSet),
       remainingForFullSet: `₪${remainingForFullSet}`,
       paymentLink,
-      orderFormLink: "https://motyplus-order.onrender.com/",
-      termsLink: "https://motyplus-order.onrender.com/terms",
+      orderFormLink: `${ORDER_FORM_URL}/`,
+      termsLink: TERMS_URL,
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 

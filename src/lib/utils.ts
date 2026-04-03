@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://motyplus-order.onrender.com";
+export const TERMS_URL = `${ORDER_FORM_URL}/terms`;
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("he-IL", {
     style: "currency",

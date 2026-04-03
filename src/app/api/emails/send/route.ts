@@ -6,6 +6,7 @@ import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { parseCpiFilename } from "@/lib/cpi-filename";
 import { getBillingClient } from "@/lib/billing";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 interface SendEmailBody {
   templateId?: string;
@@ -183,8 +184,8 @@ export async function POST(request: NextRequest) {
           customLink: "",
           paymentLink,
           customerId: String(customer.id),
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
+          orderFormLink: `${ORDER_FORM_URL}/`,
+          termsLink: TERMS_URL,
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 
@@ -236,8 +237,8 @@ export async function POST(request: NextRequest) {
           firstName: lead.fullName.split(" ")[0],
           email: lead.email,
           phone: lead.phone,
-          orderFormLink: "https://motyplus-order.onrender.com/",
-          termsLink: "https://motyplus-order.onrender.com/terms",
+          orderFormLink: `${ORDER_FORM_URL}/`,
+          termsLink: TERMS_URL,
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
 

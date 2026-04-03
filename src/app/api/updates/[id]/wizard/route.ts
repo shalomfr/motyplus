@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { listFiles } from "@/lib/file-storage";
 import { parseCpiFilename } from "@/lib/cpi-filename";
 import { replaceTemplateVariables } from "@/lib/email";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,8 @@ function getSampleVariables(version: string): Record<string, string> {
     additionalOrganName: "",
     additionalOrganLine: "",
     customerId: "12345",
-    orderFormLink: "https://motyplus-order.onrender.com/",
-    termsLink: "https://motyplus-order.onrender.com/terms",
+    orderFormLink: `${ORDER_FORM_URL}/`,
+    termsLink: TERMS_URL,
     todayDate: new Date().toLocaleDateString("he-IL"),
   };
 }

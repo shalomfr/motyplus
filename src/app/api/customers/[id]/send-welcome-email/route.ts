@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { logActivity } from "@/lib/activity-logger";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 // POST /api/customers/[id]/send-welcome-email - שליחת מייל ברכה לאחר רכישה / עדכון
 export async function POST(
@@ -47,8 +48,8 @@ export async function POST(
       setType: customer.setType.name,
       organName: customer.organ.name,
       customerId: String(customer.id),
-      orderFormLink: "https://motyplus-order.onrender.com/",
-      termsLink: "https://motyplus-order.onrender.com/terms",
+      orderFormLink: `${ORDER_FORM_URL}/`,
+      termsLink: TERMS_URL,
       todayDate: new Date().toLocaleDateString("he-IL"),
     };
 

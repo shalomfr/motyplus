@@ -7,6 +7,7 @@ import { sendWhatsApp } from "@/lib/whatsapp"
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
 import { parseCpiFilename } from "@/lib/cpi-filename"
 import { getBillingClient } from "@/lib/billing"
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils"
 
 // POST /api/updates/[id]/send-all — שליחת העדכון לכל הלקוחות הזכאים
 export async function POST(
@@ -255,8 +256,8 @@ export async function POST(
               downloadLink,
               downloadLink2,
               customLink: "",
-              orderFormLink: "https://motyplus-order.onrender.com/",
-              termsLink: "https://motyplus-order.onrender.com/terms",
+              orderFormLink: `${ORDER_FORM_URL}/`,
+              termsLink: TERMS_URL,
               updateExpiryDate: customer.updateExpiryDate ? new Date(customer.updateExpiryDate).toLocaleDateString("he-IL") : "",
               currentVersion: customer.currentUpdateVersion || "—",
               amountPaid: String(paid),

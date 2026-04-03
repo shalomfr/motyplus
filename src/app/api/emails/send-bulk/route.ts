@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 import { getBillingClient } from "@/lib/billing";
+import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -181,8 +182,8 @@ export async function POST(request: NextRequest) {
               driveLink: "",
               youtubeLink: "",
               customLink: "",
-              orderFormLink: "https://motyplus-order.onrender.com/",
-              termsLink: "https://motyplus-order.onrender.com/terms",
+              orderFormLink: `${ORDER_FORM_URL}/`,
+              termsLink: TERMS_URL,
               todayDate: new Date().toLocaleDateString("he-IL"),
             };
 
@@ -284,8 +285,8 @@ export async function POST(request: NextRequest) {
               driveLink: "",
               youtubeLink: "",
               customLink: "",
-              orderFormLink: "https://motyplus-order.onrender.com/",
-              termsLink: "https://motyplus-order.onrender.com/terms",
+              orderFormLink: `${ORDER_FORM_URL}/`,
+              termsLink: TERMS_URL,
               todayDate: new Date().toLocaleDateString("he-IL"),
             };
 

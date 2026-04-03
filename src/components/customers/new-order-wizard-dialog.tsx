@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EmailInput } from "@/components/ui/email-input"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+import { cn, ORDER_FORM_URL } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import DOMPurify from "dompurify"
 import {
@@ -134,7 +134,7 @@ export function NewOrderWizardDialog({
       setSelectedTemplate(template)
 
       // Generate preview
-      const orderFormUrl = "https://motyplus-order.onrender.com"
+      const orderFormUrl = ORDER_FORM_URL
       let body = template.body
       let subject = template.subject
 

@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { sendEmail, replaceTemplateVariables } from "@/lib/email"
 import { logActivity } from "@/lib/activity-logger"
-
-const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://motyplus-order.onrender.com"
+import { ORDER_FORM_URL } from "@/lib/utils"
 
 // POST /api/customers/invite-new-order — שליחת הזמנה ללקוח חדש (לפני רכישה)
 export async function POST(request: NextRequest) {
