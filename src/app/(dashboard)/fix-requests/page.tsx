@@ -277,7 +277,7 @@ export default function FixRequestsPage() {
     e.stopPropagation()
     if (!confirm("למחוק את השיחה?")) return
     try {
-      const res = await fetch(`/api/fix-requests/${convId}`, { method: "DELETE" })
+      const res = await fetch(`/api/fix-requests/${convId}/delete`, { method: "POST" })
       if (res.ok) {
         setConversations((prev) => prev.filter((c) => c.id !== convId))
         if (selectedId === convId) {
