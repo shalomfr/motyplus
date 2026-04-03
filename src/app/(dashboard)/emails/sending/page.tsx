@@ -108,7 +108,7 @@ export default function EmailSendingPage() {
         ) : (
           <div className="space-y-3">
             {pendingUpdates.map((update) => (
-              <Card key={update.id} className="border-r-4 border-r-orange-400 hover:shadow-md transition-shadow">
+              <Card key={update.id} className={`border-r-4 hover:shadow-md transition-shadow ${update.sentCount >= update.totalCustomers && update.totalCustomers > 0 ? "border-r-blue-400" : "border-r-orange-400"}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -136,18 +136,20 @@ export default function EmailSendingPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant={update.status === "READY" ? "default" : "secondary"}
-                        className={update.status === "READY" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
+                        variant={update.sentCount >= update.totalCustomers && update.totalCustomers > 0 ? "default" : update.status === "READY" ? "default" : "secondary"}
+                        className={update.sentCount >= update.totalCustomers && update.totalCustomers > 0 ? "bg-blue-100 text-blue-800" : update.status === "READY" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
                       >
-                        {update.status === "READY" ? "מוכן לשליחה" : "בשליחה"}
+                        {update.sentCount >= update.totalCustomers && update.totalCustomers > 0 ? "נשלח ✓" : update.status === "READY" ? "מוכן לשליחה" : "בשליחה"}
                       </Badge>
-                      <Button
-                        onClick={() => router.push(`/updates/${update.id}/wizard`)}
-                        className="gap-2 bg-green-600 hover:bg-green-700"
-                      >
-                        <Send className="h-4 w-4" />
-                        שלח עדכון
-                      </Button>
+                      {update.sentCount < update.totalCustomers && (
+                        <Button
+                          onClick={() => router.push(`/updates/${update.id}/wizard`)}
+                          className="gap-2 bg-green-600 hover:bg-green-700"
+                        >
+                          <Send className="h-4 w-4" />
+                          שלח עדכון
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
