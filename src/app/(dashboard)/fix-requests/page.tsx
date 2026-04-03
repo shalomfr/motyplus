@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Image,
   ChevronLeft,
+  Trash2,
 } from "lucide-react"
 
 interface ChatMessage {
@@ -272,10 +273,26 @@ export default function FixRequestsPage() {
     setTimeout(() => clearInterval(poll), 600000)
   }
 
+  const deleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm("למחוק את השיחה?")) return
+    try {
+      const res = await fetch(`/api/fix-requests/${convId}`, { method: "DELETE" })
+      if (res.ok) {
+        setConversations((prev) => prev.filter((c) => c.id !== convId))
+        if (selectedId === convId) {
+          setSelectedId(null)
+          setProgressLog([])
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
   const startNewChat = () => {
     setSelectedId(null)
     setInput("")
     setReadyToConfirm(false)
+    setProgressLog([])
   }
 
   const isActiveChat = selected?.status === "CLARIFYING"
@@ -300,7 +317,7 @@ export default function FixRequestsPage() {
             return (
               <Card
                 key={conv.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
+                className={`cursor-pointer transition-all hover:shadow-md group ${
                   isSelected ? "ring-2 ring-blue-500 shadow-md" : ""
                 }`}
                 onClick={() => {
@@ -319,7 +336,7 @@ export default function FixRequestsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {firstMsg.slice(0, 50)}
+                        {firstMsg.replace(/\[screenshot:.*?\]\n?/, "").slice(0, 50) || "צילום מסך"}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-xs ${statusCfg.color}`}>
@@ -332,6 +349,13 @@ export default function FixRequestsPage() {
                         )}
                       </div>
                     </div>
+                    <button
+                      onClick={(e) => deleteConversation(conv.id, e)}
+                      className="p-1 rounded hover:bg-red-100 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      title="מחק שיחה"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </CardContent>
               </Card>
