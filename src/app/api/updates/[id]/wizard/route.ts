@@ -285,7 +285,7 @@ export async function GET(
       },
       {
         key: "not_updated",
-        label: "לא מעודכן (סט שלם)",
+        label: "לא זכאי לעדכון (סט שלם)",
         count: notUpdatedFiltered.length,
         templateName: notUpdatedTemplate ? (notUpdatedTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: notUpdatedPreview.subject,

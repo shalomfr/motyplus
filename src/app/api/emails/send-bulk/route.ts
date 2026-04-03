@@ -61,7 +61,7 @@ export async function GET() {
   }
 }
 
-// POST /api/emails/send-bulk — שליחה קבוצתית: למי שלא מעודכן / חצאי סטים
+// POST /api/emails/send-bulk — שליחה קבוצתית: למי שלא זכאי לעדכון / חצאי סטים
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
       if (organTemplates.size === 0) {
         return NextResponse.json({
-          error: "לא נמצאה תבנית למי שלא מעודכן",
+          error: "לא נמצאה תבנית למי שלא זכאי לעדכון",
         }, { status: 400 });
       }
 

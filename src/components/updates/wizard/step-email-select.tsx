@@ -174,8 +174,8 @@ export function StepEmailSelect({
     }
     for (const f of folders) {
       const name = f.name.trim()
-      // Exact matching to avoid "לא מעודכנים" being included in "מעודכנים"
-      if (name === "מעודכנים") {
+      // Exact matching — support both new name "זכאים לעדכון" and legacy "מעודכנים"
+      if (name === "זכאים לעדכון" || name === "מעודכנים") {
         map.eligible.add(f.id)
       } else if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
         map.not_updated.add(f.id)

@@ -132,7 +132,7 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <CheckCircle2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
-        <p>כל הלקוחות מעודכנים — אין הצעות מחיר לשלוח</p>
+        <p>כל הלקוחות זכאים לעדכון — אין הצעות מחיר לשלוח</p>
       </div>
     )
   }

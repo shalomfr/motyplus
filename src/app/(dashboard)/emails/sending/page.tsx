@@ -173,7 +173,7 @@ export default function EmailSendingPage() {
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">שלח למי שלא מעודכן</p>
+                  <p className="font-medium text-sm">שלח למי שלא זכאי לעדכון</p>
                   <p className="text-xs text-muted-foreground">מייל עם הצעת מחיר לעדכון</p>
                 </div>
               </div>
