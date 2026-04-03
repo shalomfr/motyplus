@@ -256,7 +256,7 @@ export function CustomerFiltersPanel({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">כל הגרסאות</SelectItem>
-                  <SelectItem value="not_updated">לא מעודכנים</SelectItem>
+                  <SelectItem value="not_updated">לא זכאים לעדכון</SelectItem>
                   {updateVersions.map((v) => (
                     <SelectItem key={v.id} value={v.version}>
                       {v.version}

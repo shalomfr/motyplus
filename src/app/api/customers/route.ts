@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     // סינון לפי גרסת עדכון
     if (maxUpdateVersion === "not_updated") {
-      // לא מעודכנים — לקוחות בלי עדכון בכלל
+      // לא זכאים לעדכון — לקוחות בלי עדכון בכלל
       const versionCondition: Prisma.CustomerWhereInput = {
         OR: [
           { currentUpdateVersion: null },

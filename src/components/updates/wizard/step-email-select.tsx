@@ -177,7 +177,7 @@ export function StepEmailSelect({
       // Exact matching to avoid "לא מעודכנים" being included in "מעודכנים"
       if (name === "מעודכנים") {
         map.eligible.add(f.id)
-      } else if (name === "לא מעודכנים") {
+      } else if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
         map.not_updated.add(f.id)
       } else if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
         map.not_updated.add(f.id)

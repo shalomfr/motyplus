@@ -58,7 +58,7 @@ const MIDDLE_ROW: StatCardConfig[] = [
   },
   {
     key: "notUpdated",
-    label: "לא מעודכנים",
+    label: "לא זכאים לעדכון",
     icon: RefreshCw,
     borderColor: "border-r-red-400",
     iconBg: "bg-red-100",

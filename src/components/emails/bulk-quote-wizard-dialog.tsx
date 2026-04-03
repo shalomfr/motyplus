@@ -210,7 +210,7 @@ export function BulkQuoteWizardDialog({
     }
     for (const f of folders) {
       const name = f.name.trim()
-      if (name === "לא מעודכנים") {
+      if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
         map.not_updated.add(f.id)
       } else if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
         map.not_updated.add(f.id)
@@ -463,7 +463,7 @@ export function BulkQuoteWizardDialog({
                           <AlertTriangle className={cn("h-5 w-5", sendNotUpdated ? "text-red-600" : "text-gray-400")} />
                         </div>
                         <div>
-                          <p className="font-medium">לקוחות לא מעודכנים</p>
+                          <p className="font-medium">לקוחות לא זכאים לעדכון</p>
                           <p className="text-xs text-muted-foreground">
                             סט שלם, לא בגרסה האחרונה
                             {stats.latestVersion && ` (${stats.latestVersion})`}
@@ -556,7 +556,7 @@ export function BulkQuoteWizardDialog({
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <span className="font-semibold text-gray-800">לא מעודכנים</span>
+                          <span className="font-semibold text-gray-800">לא זכאים לעדכון</span>
                           <Badge variant="secondary">{stats?.notUpdatedCount || 0}</Badge>
                           {allOrgansHaveTemplate && (
                             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
@@ -653,7 +653,7 @@ export function BulkQuoteWizardDialog({
                     className="gap-1"
                   >
                     <AlertTriangle className="h-3.5 w-3.5" />
-                    לא מעודכנים ({stats?.notUpdatedCount})
+                    לא זכאים לעדכון ({stats?.notUpdatedCount})
                   </Button>
                   <Button
                     variant={previewType === "half_set" ? "default" : "outline"}
@@ -704,7 +704,7 @@ export function BulkQuoteWizardDialog({
                   <div>
                     <p>
                       <AlertTriangle className="h-3.5 w-3.5 inline ml-1 text-red-600" />
-                      לא מעודכנים: {stats?.notUpdatedCount || 0} לקוחות
+                      לא זכאים לעדכון: {stats?.notUpdatedCount || 0} לקוחות
                     </p>
                     {organs.map((organ) => {
                       const tpl = notUpdatedTemplateMap[organ.id]

@@ -140,7 +140,7 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-800">הצעות מחיר — לקוחות לא מעודכנים</h3>
+        <h3 className="text-lg font-semibold text-gray-800">הצעות מחיר — לקוחות לא זכאים לעדכון</h3>
         <p className="text-sm text-muted-foreground mt-1">
           צור לינקי תשלום אישיים ושלח הצעות מחיר ללקוחות שצריכים עדכון או השלמת סט
         </p>
