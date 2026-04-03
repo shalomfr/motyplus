@@ -133,15 +133,9 @@ export default function FixRequestsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [selected?.messages])
 
-  const createConversation = async () => {
-    if (!input.trim() && !pastedImage) return
+  const createConversation = async (msg: string, img?: string | null) => {
     setSending(true)
-    const msg = input.trim()
-    const img = pastedImage
-    setInput("")
-    setPastedImage(null)
     try {
-      // Create empty conversation first
       const res = await fetch("/api/fix-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -151,8 +145,7 @@ export default function FixRequestsPage() {
         const data = await res.json()
         setConversations((prev) => [data.conversation, ...prev])
         setSelectedId(data.conversation.id)
-        // Send the real message through chat (which saves + gets AI response)
-        await sendChatMessage(data.conversation.id, msg || "צילום מסך מצורף", img)
+        await sendChatMessage(data.conversation.id, msg, img)
       }
     } finally {
       setSending(false)
@@ -198,14 +191,14 @@ export default function FixRequestsPage() {
 
   const handleSend = async () => {
     if ((!input.trim() && !pastedImage) || sending) return
+    const msg = input.trim() || (pastedImage ? "צילום מסך מצורף" : "")
     const img = pastedImage
+    setInput("")
     setPastedImage(null)
 
     if (!selectedId) {
-      await createConversation()
+      await createConversation(msg, img)
     } else {
-      const msg = input.trim() || (img ? "צילום מסך מצורף" : "")
-      setInput("")
       await sendChatMessage(selectedId, msg, img)
     }
   }
