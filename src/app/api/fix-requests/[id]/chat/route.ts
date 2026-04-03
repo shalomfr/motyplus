@@ -16,9 +16,9 @@ export async function POST(
 
     const { id } = await params;
     const body = await request.json();
-    const { message } = body;
+    const { message, image } = body;
 
-    if (!message || typeof message !== "string" || message.trim().length < 1) {
+    if ((!message || typeof message !== "string" || message.trim().length < 1) && !image) {
       return NextResponse.json(
         { error: "נא לכתוב הודעה" },
         { status: 400 }
@@ -42,26 +42,51 @@ export async function POST(
       );
     }
 
-    // Save user message
+    // Save user message (include screenshot marker if image present)
+    const userContent = image
+      ? `[screenshot:${image}]\n${(message || "").trim()}`
+      : (message || "").trim();
+
     await prisma.chatMessage.create({
       data: {
         conversationId: id,
         role: "user",
-        content: message.trim(),
+        content: userContent,
       },
     });
 
     // Build message history for Claude
-    const allMessages = [
-      ...conversation.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      { role: "user", content: message.trim() },
-    ];
+    const allMessages = conversation.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // Add current message — with image support for Claude Vision
+    if (image) {
+      // Extract base64 data from data URL
+      const base64Match = image.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (base64Match) {
+        allMessages.push({
+          role: "user",
+          content: JSON.stringify([
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: base64Match[1],
+                data: base64Match[2],
+              },
+            },
+            { type: "text", text: (message || "").trim() || "צילום מסך — מה צריך לתקן כאן?" },
+          ]),
+        });
+      }
+    } else {
+      allMessages.push({ role: "user", content: (message || "").trim() });
+    }
 
     // Call Claude API
-    const aiResponse = await callClaudeChat(allMessages);
+    const aiResponse = await callClaudeChat(allMessages, !!image);
 
     // Save AI response
     await prisma.chatMessage.create({

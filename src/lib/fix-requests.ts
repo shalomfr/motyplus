@@ -61,10 +61,31 @@ export function extractSummary(content: string): {
 }
 
 export async function callClaudeChat(
-  messages: { role: string; content: string }[]
+  messages: { role: string; content: string }[],
+  hasImage = false
 ) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+
+  // Build messages — parse JSON content blocks for vision messages
+  const apiMessages = messages.map((m) => {
+    if (m.role === "user" && m.content.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(m.content);
+        if (Array.isArray(parsed)) {
+          return { role: "user" as const, content: parsed };
+        }
+      } catch {
+        // not JSON, use as text
+      }
+    }
+    // Strip screenshot markers from stored messages
+    const cleanContent = m.content.replace(/\[screenshot:.*?\]\n?/, "");
+    return {
+      role: m.role as "user" | "assistant",
+      content: cleanContent || m.content,
+    };
+  });
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -77,10 +98,7 @@ export async function callClaudeChat(
       model: "claude-opus-4-6",
       max_tokens: 1024,
       system: FIX_SYSTEM_PROMPT,
-      messages: messages.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+      messages: apiMessages,
     }),
   });
 

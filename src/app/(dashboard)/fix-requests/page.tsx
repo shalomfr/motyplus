@@ -84,6 +84,7 @@ export default function FixRequestsPage() {
   const [sending, setSending] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [readyToConfirm, setReadyToConfirm] = useState(false)
+  const [pastedImage, setPastedImage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const selected = conversations.find((c) => c.id === selectedId)
@@ -154,14 +155,14 @@ export default function FixRequestsPage() {
     }
   }
 
-  const sendChatMessage = async (convId: string, message: string) => {
+  const sendChatMessage = async (convId: string, message: string, image?: string | null) => {
     setSending(true)
     setReadyToConfirm(false)
     try {
       const res = await fetch(`/api/fix-requests/${convId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, image: image || undefined }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -173,15 +174,35 @@ export default function FixRequestsPage() {
     }
   }
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = () => {
+          setPastedImage(reader.result as string)
+        }
+        reader.readAsDataURL(file)
+        return
+      }
+    }
+  }
+
   const handleSend = async () => {
-    if (!input.trim() || sending) return
+    if ((!input.trim() && !pastedImage) || sending) return
+    const img = pastedImage
+    setPastedImage(null)
 
     if (!selectedId) {
       await createConversation()
     } else {
-      const msg = input.trim()
+      const msg = input.trim() || (img ? "צילום מסך מצורף" : "")
       setInput("")
-      await sendChatMessage(selectedId, msg)
+      await sendChatMessage(selectedId, msg, img)
     }
   }
 
@@ -410,8 +431,16 @@ export default function FixRequestsPage() {
                     : "bg-gray-100 text-gray-800 rounded-br-sm"
                 }`}
               >
+                {msg.content.startsWith("[screenshot:") && (
+                  <img
+                    src={msg.content.match(/\[screenshot:(.*?)\]/)?.[1] || ""}
+                    alt="צילום מסך"
+                    className="max-w-full rounded-lg mb-2 cursor-pointer"
+                    onClick={(e) => window.open((e.target as HTMLImageElement).src)}
+                  />
+                )}
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                  {msg.content}
+                  {msg.content.replace(/\[screenshot:.*?\]\n?/, "")}
                 </p>
               </div>
             </div>
@@ -449,10 +478,23 @@ export default function FixRequestsPage() {
         {/* Input */}
         {(isActiveChat || !selected) && (
           <div className="px-6 py-4 border-t border-[#e8ecf4]">
+            {/* Pasted image preview */}
+            {pastedImage && (
+              <div className="mb-2 relative inline-block">
+                <img
+                  src={pastedImage}
+                  alt="צילום מסך"
+                  className="max-h-32 rounded-lg border border-gray-200"
+                />
+                <button
+                  onClick={() => setPastedImage(null)}
+                  className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-gray-400" disabled>
-                <Image className="w-5 h-5" />
-              </Button>
               <input
                 type="text"
                 value={input}
@@ -463,14 +505,15 @@ export default function FixRequestsPage() {
                     handleSend()
                   }
                 }}
-                placeholder="כתוב הודעה..."
+                onPaste={handlePaste}
+                placeholder={pastedImage ? "הוסף תיאור לצילום המסך..." : "כתוב הודעה או הדבק צילום מסך (Ctrl+V)..."}
                 className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 dir="rtl"
                 disabled={sending}
               />
               <Button
                 onClick={handleSend}
-                disabled={!input.trim() || sending}
+                disabled={(!input.trim() && !pastedImage) || sending}
                 size="icon"
                 className="gradient-blue-btn rounded-xl"
               >
