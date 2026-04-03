@@ -398,6 +398,7 @@ export class GreenInvoiceClient implements BillingClient {
       })),
       successUrl: request.successUrl,
       failureUrl: request.cancelUrl,
+      minPayments: 1,
       maxPayments: 6,
       allowBit: true,
       allowApplePay: true,
