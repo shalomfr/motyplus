@@ -206,15 +206,36 @@ export default function FixRequestsPage() {
 
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [progressLog, setProgressLog] = useState<string[]>([])
+  const lastStatusRef = useRef<string>("")
+  const pollCountRef = useRef(0)
 
-  const addLog = (msg: string) => setProgressLog((prev) => [...prev, `${new Date().toLocaleTimeString("he-IL")} — ${msg}`])
+  const addLog = (msg: string) => setProgressLog((prev) => {
+    const time = new Date().toLocaleTimeString("he-IL")
+    const line = `${time}  ${msg}`
+    if (prev.length > 0 && prev[prev.length - 1].includes(msg)) return prev
+    return [...prev, line]
+  })
+
+  const WORKING_MESSAGES = [
+    "הבקשה שלך בטיפול... המערכת קוראת את הקוד",
+    "סורקים את הקבצים הרלוונטיים...",
+    "מנתחים את המבנה של האתר...",
+    "מזהים את המקום שצריך לשנות...",
+    "כותבים את הקוד החדש...",
+    "בודקים שהשינוי לא שובר דברים אחרים...",
+    "מריצים בדיקות על הקוד...",
+    "עוד רגע... מסיימים את העבודה...",
+    "כמעט מוכן! בודקים פעם אחרונה...",
+  ]
 
   const handleConfirm = async () => {
     if (!selectedId) return
     setConfirming(true)
     setConfirmError(null)
     setProgressLog([])
-    addLog("שולח בקשה...")
+    lastStatusRef.current = ""
+    pollCountRef.current = 0
+    addLog("📤 שולחים את הבקשה שלך...")
     try {
       const res = await fetch(`/api/fix-requests/${selectedId}/confirm`, {
         method: "POST",
@@ -223,18 +244,18 @@ export default function FixRequestsPage() {
       const data = await res.json()
       if (res.ok) {
         setReadyToConfirm(false)
-        addLog(`Issue נוצר ב-GitHub: #${data.issueNumber}`)
-        addLog("Claude Code מתחיל לעבוד על התיקון...")
+        addLog("✅ הבקשה נשלחה בהצלחה!")
+        addLog("🤖 המערכת מתחילה לעבוד על התיקון...")
+        addLog("⏳ זה יכול לקחת כמה דקות — שבו בנוח")
         await fetchConversations()
-        // Start polling for status updates
         startStatusPolling(selectedId)
       } else {
         setConfirmError(data.error || "שגיאה באישור הבקשה")
-        addLog(`שגיאה: ${data.error || "לא ידוע"}`)
+        addLog("❌ משהו השתבש — " + (data.error || "נסו שוב"))
       }
-    } catch (err) {
+    } catch {
       setConfirmError("שגיאת רשת")
-      addLog("שגיאת רשת — נסה שוב")
+      addLog("❌ בעיית תקשורת — בדקו את החיבור לאינטרנט ונסו שוב")
     } finally {
       setConfirming(false)
     }
@@ -242,6 +263,9 @@ export default function FixRequestsPage() {
 
   const startStatusPolling = (convId: string) => {
     const poll = setInterval(async () => {
+      pollCountRef.current += 1
+      const count = pollCountRef.current
+
       try {
         const res = await fetch(`/api/fix-requests/${convId}/status`)
         if (!res.ok) return
@@ -251,26 +275,45 @@ export default function FixRequestsPage() {
           prev.map((c) => (c.id === convId ? { ...c, ...data } : c))
         )
 
-        if (data.status === "PROCESSING" && !progressLog.includes("Claude Code עובד...")) {
-          addLog("Claude Code עובד על התיקון...")
+        const status = data.status
+
+        if (status !== lastStatusRef.current) {
+          lastStatusRef.current = status
+
+          if (status === "CONFIRMED") {
+            addLog("📋 הבקשה התקבלה — מחכים שהמערכת תתחיל")
+          }
+          if (status === "PROCESSING") {
+            addLog("🔧 המערכת קוראת את הבקשה ומתחילה לעבוד!")
+          }
+          if (status === "PR_READY") {
+            addLog("📦 השינוי בקוד מוכן!")
+            addLog("🚀 מעלים את השינוי לאתר...")
+          }
+          if (status === "PREVIEW_LIVE") {
+            addLog("🎉 מוכן! האתר עודכן בהצלחה!")
+            addLog("👀 אפשר לפתוח את האתר ולראות את השינוי")
+            clearInterval(poll)
+            return
+          }
+          if (status === "FAILED") {
+            addLog("⚠️ נתקלנו בבעיה — " + (data.errorMessage || ""))
+            addLog("🔄 המערכת מנסה לתקן את זה אוטומטית...")
+          }
         }
-        if (data.status === "PR_READY") {
-          addLog(`PR נוצר: ${data.prUrl || ""}`)
-          addLog("ממתין לדיפלוי...")
-        }
-        if (data.status === "PREVIEW_LIVE") {
-          addLog("האתר עלה! אפשר לבדוק.")
-          clearInterval(poll)
-        }
-        if (data.status === "FAILED") {
-          addLog(`נכשל: ${data.errorMessage || ""}`)
-          clearInterval(poll)
+
+        // Show progress messages while working
+        if (status === "CONFIRMED" || status === "PROCESSING") {
+          const msgIdx = Math.min(Math.floor(count / 3), WORKING_MESSAGES.length - 1)
+          if (count % 3 === 0) {
+            addLog("⚙️ " + WORKING_MESSAGES[msgIdx])
+          }
         }
       } catch { /* ignore */ }
-    }, 8000)
+    }, 3000)
 
-    // Stop polling after 10 minutes
-    setTimeout(() => clearInterval(poll), 600000)
+    // Stop after 6 hours (match GitHub Action timeout)
+    setTimeout(() => clearInterval(poll), 6 * 60 * 60 * 1000)
   }
 
   const deleteConversation = async (convId: string, e: React.MouseEvent) => {
