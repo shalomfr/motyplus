@@ -31,8 +31,10 @@ interface StepEmailPreviewProps {
 export function StepEmailPreview({ segments }: StepEmailPreviewProps) {
   const [previewSegment, setPreviewSegment] = useState<Segment | null>(null)
 
-  const sendableSegments = segments.filter((s) => s.canSend && s.count > 0)
-  const infoSegments = segments.filter((s) => !s.canSend || s.count === 0)
+  // Exclude not_updated and half_set — handled in email wizard
+  const filtered = segments.filter((s) => s.key !== "not_updated" && s.key !== "half_set")
+  const sendableSegments = filtered.filter((s) => s.canSend && s.count > 0)
+  const infoSegments = filtered.filter((s) => !s.canSend || s.count === 0)
 
   return (
     <div className="space-y-6">
