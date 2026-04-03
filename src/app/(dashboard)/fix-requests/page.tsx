@@ -551,20 +551,25 @@ export default function FixRequestsPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Confirm button */}
-        {readyToConfirm && selected?.status === "CLARIFYING" && (
+        {/* Confirm button — shows when AI has responded at least once */}
+        {selected?.status === "CLARIFYING" &&
+          selected.messages.some((m) => m.role === "assistant") && (
           <div className="px-6 py-3 border-t border-[#e8ecf4] bg-green-50">
             <Button
               onClick={handleConfirm}
               disabled={confirming}
-              className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3"
+              className={`w-full gap-2 text-white font-bold py-3 ${
+                readyToConfirm
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
               {confirming ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <CheckCircle2 className="w-5 h-5" />
               )}
-              אשר ושלח לתיקון
+              {readyToConfirm ? "אשר ושלח לתיקון" : "שלח לתיקון"}
             </Button>
           </div>
         )}

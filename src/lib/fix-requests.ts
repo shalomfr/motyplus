@@ -61,6 +61,7 @@ export function extractSummary(content: string): {
   repo?: RepoKey;
   summary?: string;
 } {
+  // Try structured format first
   const repoMatch = content.match(/🎯\s*ריפו:\s*(motyplus-whatsapp|motyplus-order|motyplus)/);
   const descMatch = content.match(/📋\s*תיאור:\s*(.+)/);
   const locationMatch = content.match(/📍\s*מיקום:\s*(.+)/);
@@ -70,6 +71,13 @@ export function extractSummary(content: string): {
     const summary = `${descMatch[1].trim()}${locationMatch ? ` | מיקום: ${locationMatch[1].trim()}` : ""}`;
     return { ready: true, repo, summary };
   }
+
+  // Fallback: detect repo mentions without full format
+  const repoMentions = content.match(/(?:ריפו|repo|אתר)[\s:]*(?:ה)?(motyplus-whatsapp|motyplus-order|motyplus)/i);
+  if (repoMentions) {
+    return { ready: true, repo: repoMentions[1] as RepoKey, summary: content.slice(0, 200) };
+  }
+
   return { ready: false };
 }
 

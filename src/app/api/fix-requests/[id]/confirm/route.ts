@@ -25,14 +25,24 @@ export async function POST(
       return NextResponse.json({ error: "שיחה לא נמצאה" }, { status: 404 });
     }
 
+    // Default to motyplus if no repo detected, use chat history as summary
+    const repoKey = (conversation.targetRepo || "motyplus") as RepoKey;
+    const summary = conversation.summary ||
+      conversation.messages
+        .filter((m) => m.role === "user" && m.content !== "_init_")
+        .map((m) => m.content.replace(/\[screenshot:.*?\]\n?/, ""))
+        .join(" | ")
+        .slice(0, 300) ||
+      "בקשת תיקון";
+
+    // Update conversation with defaults if missing
     if (!conversation.targetRepo || !conversation.summary) {
-      return NextResponse.json(
-        { error: "השיחה עדיין לא מוכנה לאישור — חסר סיכום או ריפו" },
-        { status: 400 }
-      );
+      await prisma.fixConversation.update({
+        where: { id },
+        data: { targetRepo: repoKey, summary },
+      });
     }
 
-    const repoKey = conversation.targetRepo as RepoKey;
     const repoConfig = REPOS[repoKey];
 
     if (!repoConfig) {
@@ -49,7 +59,7 @@ export async function POST(
 
     const issueBody = `## בקשת תיקון אוטומטית
 
-**סיכום:** ${conversation.summary}
+**סיכום:** ${summary}
 **ריפו:** ${repoKey} (${repoConfig.label})
 **שיחה:** #${conversation.id}
 
@@ -66,7 +76,7 @@ ${chatHistory}
     // Create GitHub Issue in staging repo
     const issue = await createGitHubIssue(
       repoConfig.staging,
-      `🔧 ${conversation.summary}`,
+      `🔧 ${summary}`,
       issueBody
     );
 
