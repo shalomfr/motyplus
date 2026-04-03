@@ -206,21 +206,73 @@ export default function FixRequestsPage() {
     }
   }
 
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+  const [progressLog, setProgressLog] = useState<string[]>([])
+
+  const addLog = (msg: string) => setProgressLog((prev) => [...prev, `${new Date().toLocaleTimeString("he-IL")} — ${msg}`])
+
   const handleConfirm = async () => {
     if (!selectedId) return
     setConfirming(true)
+    setConfirmError(null)
+    setProgressLog([])
+    addLog("שולח בקשה...")
     try {
       const res = await fetch(`/api/fix-requests/${selectedId}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       })
+      const data = await res.json()
       if (res.ok) {
         setReadyToConfirm(false)
+        addLog(`Issue נוצר ב-GitHub: #${data.issueNumber}`)
+        addLog("Claude Code מתחיל לעבוד על התיקון...")
         await fetchConversations()
+        // Start polling for status updates
+        startStatusPolling(selectedId)
+      } else {
+        setConfirmError(data.error || "שגיאה באישור הבקשה")
+        addLog(`שגיאה: ${data.error || "לא ידוע"}`)
       }
+    } catch (err) {
+      setConfirmError("שגיאת רשת")
+      addLog("שגיאת רשת — נסה שוב")
     } finally {
       setConfirming(false)
     }
+  }
+
+  const startStatusPolling = (convId: string) => {
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/fix-requests/${convId}/status`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        setConversations((prev) =>
+          prev.map((c) => (c.id === convId ? { ...c, ...data } : c))
+        )
+
+        if (data.status === "PROCESSING" && !progressLog.includes("Claude Code עובד...")) {
+          addLog("Claude Code עובד על התיקון...")
+        }
+        if (data.status === "PR_READY") {
+          addLog(`PR נוצר: ${data.prUrl || ""}`)
+          addLog("ממתין לדיפלוי...")
+        }
+        if (data.status === "PREVIEW_LIVE") {
+          addLog("האתר עלה! אפשר לבדוק.")
+          clearInterval(poll)
+        }
+        if (data.status === "FAILED") {
+          addLog(`נכשל: ${data.errorMessage || ""}`)
+          clearInterval(poll)
+        }
+      } catch { /* ignore */ }
+    }, 8000)
+
+    // Stop polling after 10 minutes
+    setTimeout(() => clearInterval(poll), 600000)
   }
 
   const startNewChat = () => {
@@ -406,6 +458,27 @@ export default function FixRequestsPage() {
                   {selected.errorMessage}
                 </div>
               )}
+          </div>
+        )}
+
+        {/* Progress log */}
+        {progressLog.length > 0 && (
+          <div className="px-6 py-3 border-b border-[#e8ecf4] bg-gray-900 text-green-400 font-mono text-xs max-h-40 overflow-y-auto">
+            {progressLog.map((log, i) => (
+              <div key={i} className="py-0.5">
+                {log}
+                {i === progressLog.length - 1 && !log.includes("נכשל") && !log.includes("עלה!") && (
+                  <span className="inline-block w-2 h-3 bg-green-400 ml-1 animate-pulse" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Confirm error */}
+        {confirmError && (
+          <div className="px-6 py-2 bg-red-50 border-b border-red-200 text-red-700 text-sm text-center">
+            {confirmError}
           </div>
         )}
 
