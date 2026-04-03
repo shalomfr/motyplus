@@ -75,6 +75,7 @@ export interface CreatePaymentPageRequest {
   currency?: string;
   lang?: string;
   metadata?: Record<string, string>;
+  group?: number; // Grow payment method: 100=credit, 120=bit, 150=google, 160=apple
 }
 
 export interface PaymentPageResponse {

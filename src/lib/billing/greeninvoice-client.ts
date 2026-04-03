@@ -406,6 +406,10 @@ export class GreenInvoiceClient implements BillingClient {
       body.pluginId = pluginId;
     }
 
+    if (request.group) {
+      body.group = request.group;
+    }
+
     // Webhook URL — only include if provided (empty string causes validation error)
     if (request.webhookUrl) {
       body.notifyUrl = request.webhookUrl;
