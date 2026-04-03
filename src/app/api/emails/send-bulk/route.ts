@@ -139,11 +139,14 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
+      const now = new Date();
       const customers = await prisma.customer.findMany({
         where: {
           status: { in: ["ACTIVE"] },
           setType: { includesUpdates: true },
           isCasual: false,
+          // Only customers whose update period EXPIRED — not those still in period
+          updateExpiryDate: { lt: now },
           OR: [
             { currentUpdateVersion: null },
             latestVersion
