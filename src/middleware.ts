@@ -23,7 +23,7 @@ export default auth((req) => {
   }
 
   // Allow public routes
-  const publicPaths = ["/login", "/api/auth", "/order", "/upload-info", "/api/public", "/api/webhooks"];
+  const publicPaths = ["/login", "/api/auth", "/order", "/upload-info", "/api/public", "/api/webhooks", "/pay"];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   if (isPublicPath) {
