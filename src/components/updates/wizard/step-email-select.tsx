@@ -380,26 +380,6 @@ export function StepEmailSelect({
         </SegmentSection>
       )}
 
-      {/* Not Updated */}
-      {notUpdatedSegment && (
-        <SegmentSection
-          title="לא מעודכן (סט שלם)"
-          count={notUpdatedSegment.count}
-          color="orange"
-          expanded={expandedSections.has("not_updated")}
-          onToggle={() => toggleSection("not_updated")}
-          allSelected={!!templateMap.not_updated}
-          selectedSummary={templateMap.not_updated?.templateName}
-        >
-          {renderFolderedTemplates(
-            templateMap.not_updated?.templateId,
-            "not_updated",
-            (t) => selectForSegment("not_updated", t),
-            filterGroupsBySegment(groupedTemplates, "not_updated"),
-          )}
-        </SegmentSection>
-      )}
-
       {/* Half Set */}
       {halfSetSegment && (
         <SegmentSection

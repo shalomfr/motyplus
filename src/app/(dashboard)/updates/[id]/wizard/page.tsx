@@ -11,7 +11,6 @@ import { StepSamples } from "@/components/updates/wizard/step-samples"
 import { StepEmailSelect } from "@/components/updates/wizard/step-email-select"
 import { StepEmailPreview } from "@/components/updates/wizard/step-email-preview"
 import { StepSummary } from "@/components/updates/wizard/step-summary"
-import { StepQuotes } from "@/components/updates/wizard/step-quotes"
 
 const ALL_WIZARD_STEPS = [
   { key: "details", label: "פרטי עדכון", icon: <FileText className="h-4 w-4" /> },
@@ -19,7 +18,6 @@ const ALL_WIZARD_STEPS = [
   { key: "samples", label: "דגימות", icon: <Music className="h-4 w-4" /> },
   { key: "email_select", label: "בחירת תבנית", icon: <MailCheck className="h-4 w-4" /> },
   { key: "emails", label: "תצוגת מייל", icon: <Mail className="h-4 w-4" /> },
-  { key: "quotes", label: "הצעות מחיר", icon: <CreditCard className="h-4 w-4" /> },
   { key: "summary", label: "סיכום ושמירה", icon: <CheckCircle2 className="h-4 w-4" /> },
 ]
 
@@ -123,7 +121,7 @@ export default function UpdateWizardPage({
 
   const handleStepChange = (step: number) => {
     const stepKey = wizardSteps[step]?.key
-    if (stepKey === "emails" || stepKey === "quotes" || stepKey === "summary" || stepKey === "send") {
+    if (stepKey === "emails" || stepKey === "summary" || stepKey === "send") {
       fetchWizardData()
       fetchFolderStatus()
     }
@@ -214,13 +212,6 @@ export default function UpdateWizardPage({
 
         {activeStepKey === "emails" && (
           <StepEmailPreview segments={wizardData.segments} />
-        )}
-
-        {activeStepKey === "quotes" && (
-          <StepQuotes
-            updateId={id}
-            quoteCustomers={wizardData.quoteCustomers || []}
-          />
         )}
 
         {activeStepKey === "summary" && (
