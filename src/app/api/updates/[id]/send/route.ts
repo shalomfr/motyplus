@@ -303,7 +303,7 @@ export async function POST(
 
             // Use redirect URL — creates fresh payment link when customer clicks
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-            const paymentLink = remaining > 0 ? `${baseUrl}/pay/${customer.id}` : "";
+            const paymentLink = remaining > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
 
             const templateVars = {
               customerName: customer.fullName,

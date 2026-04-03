@@ -7,6 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://motyplus-order.onrender.com";
 export const TERMS_URL = `${ORDER_FORM_URL}/terms`;
+export const PAYMENT_BASE_URL = process.env.PAYMENT_BASE_URL || process.env.AUTH_URL || "";
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("he-IL", {

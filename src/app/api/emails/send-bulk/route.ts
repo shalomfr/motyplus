@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
               : 0;
 
             // Use redirect URL — creates fresh payment link when customer clicks
-            const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
+            const paymentLink = remainingForFullSet > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
 
             const variables = {
               fullName: customer.fullName,
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
               : 0;
 
             // Use redirect URL — creates fresh payment link when customer clicks
-            const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
+            const paymentLink = remainingForFullSet > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
 
             const variables = {
               fullName: customer.fullName,

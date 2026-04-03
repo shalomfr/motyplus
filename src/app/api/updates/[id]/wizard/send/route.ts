@@ -136,7 +136,7 @@ async function sendToEligible(
 
         // Use redirect URL — creates fresh payment link when customer clicks
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-        const paymentLink = remaining > 0 ? `${baseUrl}/pay/${customer.id}` : "";
+        const paymentLink = remaining > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
 
         const vars = {
           customerName: customer.fullName, fullName: customer.fullName,
@@ -227,7 +227,7 @@ async function sendBulkTemplate(
       ? Math.max(0, Number(fullSetPrice.price) - Number(customer.amountPaid)) : 0;
 
     // Use redirect URL — creates fresh payment link when customer clicks
-    const paymentLink = remainingForFullSet > 0 ? `${baseUrl}/pay/${customer.id}` : "";
+    const paymentLink = remainingForFullSet > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
 
     const vars = {
       fullName: customer.fullName, firstName: customer.fullName.split(" ")[0],
