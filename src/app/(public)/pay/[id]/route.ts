@@ -120,22 +120,22 @@ function paymentSelectionPage(
   </div>
   <div class="methods">
     ${urls.credit ? `<a href="${urls.credit}" class="method credit">
-      <img class="icon-img" src="https://cdn-icons-png.flaticon.com/512/196/196578.png" alt="credit card">
+      <img class="icon-img" src="${process.env.AUTH_URL || ""}/payment-icons/credit-card.png" alt="credit card">
       <span class="label">כרטיס אשראי <span class="installments">עד 6 תשלומים</span></span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.bit ? `<a href="${urls.bit}" class="method bit">
-      <img class="icon-img" src="https://play-lh.googleusercontent.com/Ob9H0wWbDjTSMcqjiVOag8aFmQTqDOynYpElx4DIdnGBsNGZtfaFPK4sd_DZRBhjAw=w480-h960" alt="bit">
+      <img class="icon-img" src="${process.env.AUTH_URL || ""}/payment-icons/bit.svg" alt="bit">
       <span class="label">ביט</span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.applePay ? `<a href="${urls.applePay}" class="method">
-      <img class="icon-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/512px-Apple_Pay_logo.svg.png" alt="Apple Pay">
+      <img class="icon-img" src="${process.env.AUTH_URL || ""}/payment-icons/apple-pay.svg" alt="Apple Pay">
       <span class="label">Apple Pay</span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.googlePay ? `<a href="${urls.googlePay}" class="method">
-      <img class="icon-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="Google Pay">
+      <img class="icon-img" src="${process.env.AUTH_URL || ""}/payment-icons/google-pay.svg" alt="Google Pay">
       <span class="label">Google Pay</span>
       <span class="arrow">←</span>
     </a>` : ""}
