@@ -101,6 +101,7 @@ function paymentSelectionPage(
   .method { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 12px; border: 2px solid #e8ecf4; text-decoration: none; color: #333; font-size: 1rem; font-weight: 600; transition: all 0.2s; }
   .method:hover { border-color: #2563eb; background: #f8faff; transform: translateY(-1px); }
   .method .icon { font-size: 1.5rem; width: 36px; text-align: center; }
+  .icon-img { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; }
   .method .label { flex: 1; }
   .method .arrow { color: #ccc; font-size: 1.2rem; }
   .method.credit { border-color: #2563eb; background: #f8faff; }
@@ -119,22 +120,22 @@ function paymentSelectionPage(
   </div>
   <div class="methods">
     ${urls.credit ? `<a href="${urls.credit}" class="method credit">
-      <span class="icon">💳</span>
+      <img class="icon-img" src="https://cdn-icons-png.flaticon.com/512/196/196578.png" alt="credit card">
       <span class="label">כרטיס אשראי <span class="installments">עד 6 תשלומים</span></span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.bit ? `<a href="${urls.bit}" class="method bit">
-      <span class="icon">📱</span>
+      <img class="icon-img" src="https://play-lh.googleusercontent.com/Ob9H0wWbDjTSMcqjiVOag8aFmQTqDOynYpElx4DIdnGBsNGZtfaFPK4sd_DZRBhjAw=w480-h960" alt="bit">
       <span class="label">ביט</span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.applePay ? `<a href="${urls.applePay}" class="method">
-      <span class="icon">🍎</span>
+      <img class="icon-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/512px-Apple_Pay_logo.svg.png" alt="Apple Pay">
       <span class="label">Apple Pay</span>
       <span class="arrow">←</span>
     </a>` : ""}
     ${urls.googlePay ? `<a href="${urls.googlePay}" class="method">
-      <span class="icon">G</span>
+      <img class="icon-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="Google Pay">
       <span class="label">Google Pay</span>
       <span class="arrow">←</span>
     </a>` : ""}
