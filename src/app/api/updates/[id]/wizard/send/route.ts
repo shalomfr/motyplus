@@ -130,13 +130,8 @@ async function sendToEligible(
         const additionalOrganLine = additionalOrganName && downloadLink2
           ? `<p>בנוסף, העדכון כולל גם קבצים עבור ה-${additionalOrganName} שלך.</p>` : "";
 
-        // חישוב יתרה ולינק תשלום
-        const fullSetPrice = customer.setType.price ? Number(customer.setType.price) : 0;
-        const remaining = Math.max(0, fullSetPrice - Number(customer.amountPaid || 0));
-
-        // Use redirect URL — creates fresh payment link when customer clicks
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.AUTH_URL || "";
-        const paymentLink = remaining > 0 ? `${ORDER_FORM_URL}/pay/${customer.id}` : "";
+        // Eligible customers are IN PERIOD — they don't need to pay, no payment link
+        const paymentLink = "";
 
         const vars = {
           customerName: customer.fullName, fullName: customer.fullName,
@@ -156,8 +151,8 @@ async function sendToEligible(
           currentVersion: customer.currentUpdateVersion || "—",
           amountPaid: String(customer.amountPaid || 0),
           purchaseDate: customer.purchaseDate ? new Date(customer.purchaseDate).toLocaleDateString("he-IL") : "",
-          remainingAmount: String(remaining),
-          remainingForFullSet: remaining > 0 ? `₪${remaining}` : "₪0",
+          remainingAmount: "0",
+          remainingForFullSet: "₪0",
           paymentLink,
           todayDate: new Date().toLocaleDateString("he-IL"),
         };
