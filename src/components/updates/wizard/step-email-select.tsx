@@ -380,25 +380,7 @@ export function StepEmailSelect({
         </SegmentSection>
       )}
 
-      {/* Half Set */}
-      {halfSetSegment && (
-        <SegmentSection
-          title="חצי סט"
-          count={halfSetSegment.count}
-          color="blue"
-          expanded={expandedSections.has("half_set")}
-          onToggle={() => toggleSection("half_set")}
-          allSelected={!!templateMap.half_set}
-          selectedSummary={templateMap.half_set?.templateName}
-        >
-          {renderFolderedTemplates(
-            templateMap.half_set?.templateId,
-            "half_set",
-            (t) => selectForSegment("half_set", t),
-            filterGroupsBySegment(groupedTemplates, "half_set"),
-          )}
-        </SegmentSection>
-      )}
+      {/* Half Set — removed from update wizard, handled in email wizard */}
     </div>
   )
 }
