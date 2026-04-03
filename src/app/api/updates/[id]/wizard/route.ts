@@ -199,16 +199,26 @@ export async function GET(
     }
 
     const currentVersion = latestVersion?.version;
+    // Build set of all published versions — customers with unpublished versions (DRAFT) are ahead, not behind
+    const allPublishedVersions = await prisma.updateVersion.findMany({
+      where: { status: { not: "DRAFT" } },
+      select: { version: true },
+    });
+    const publishedVersionSet = new Set(allPublishedVersions.map((v) => v.version));
+
     const notUpdatedFiltered = notUpdated.length === 0
       ? allActive.filter((c) => {
           if (alreadyReceivedIds.has(c.id)) return false;
           if (!c.organ?.supportsUpdates) return false;
           if (!c.setType?.includesUpdates) return false;
-          // Only include customers whose update period EXPIRED — not those still in period
+          // Only include customers whose update period EXPIRED
           const inDate = c.updateExpiryDate >= now || c.status === "EXCEPTION";
           if (inDate) return false;
-          if (!currentVersion) return c.currentUpdateVersion === null;
-          return c.currentUpdateVersion !== currentVersion;
+          if (!c.currentUpdateVersion) return true; // Never received any update
+          if (c.currentUpdateVersion === currentVersion) return false; // On latest
+          // If version is NOT in published list (e.g. draft), customer is ahead — skip
+          if (!publishedVersionSet.has(c.currentUpdateVersion)) return false;
+          return true;
         })
       : notUpdated;
 

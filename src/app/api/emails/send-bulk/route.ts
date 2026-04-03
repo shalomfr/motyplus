@@ -140,24 +140,37 @@ export async function POST(request: NextRequest) {
       }
 
       const now = new Date();
+
+      // Get all published versions to find which customers are behind
+      const allPublishedVersions = await prisma.updateVersion.findMany({
+        where: { status: { not: "DRAFT" } },
+        select: { version: true },
+      });
+      const publishedVersionSet = new Set(allPublishedVersions.map((v) => v.version));
+      // Latest published version
+      const latestPublishedVersion = latestVersion?.version;
+
       const customers = await prisma.customer.findMany({
         where: {
           status: { in: ["ACTIVE"] },
           setType: { includesUpdates: true },
           isCasual: false,
-          // Only customers whose update period EXPIRED — not those still in period
+          // Only customers whose update period EXPIRED
           updateExpiryDate: { lt: now },
-          OR: [
-            { currentUpdateVersion: null },
-            latestVersion
-              ? { currentUpdateVersion: { not: latestVersion.version } }
-              : {},
-          ],
         },
         include: { organ: true, setType: true },
       });
 
-      const notUpdatedChunks = chunkArray(customers, 10);
+      // Filter: only those NOT on the latest published version (or higher)
+      const filteredCustomers = customers.filter((c) => {
+        if (!c.currentUpdateVersion) return true; // Never received any update
+        if (c.currentUpdateVersion === latestPublishedVersion) return false; // On latest
+        // If customer has a version that's NOT in published list (e.g. V5 draft), they're ahead — skip
+        if (!publishedVersionSet.has(c.currentUpdateVersion)) return false;
+        return true;
+      });
+
+      const notUpdatedChunks = chunkArray(filteredCustomers, 10);
       for (const chunk of notUpdatedChunks) {
         await Promise.all(
           chunk.map(async (customer) => {
