@@ -238,6 +238,7 @@ export async function POST(request: NextRequest) {
         additionalOrganId: data.additionalOrganId || null,
         setTypeId: data.setTypeId,
         amountPaid: data.amountPaid,
+        discountReason: data.discountReason || null,
         purchaseDate,
         updateExpiryDate,
         notes: data.notes || null,

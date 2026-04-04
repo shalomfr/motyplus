@@ -15,6 +15,7 @@ export const customerSchema = z.object({
   setTypeId: z.string().min(1, "יש לבחור סוג סט"),
   customerId: emptyToNull,
   amountPaid: z.number().min(0, "סכום לא תקין"),
+  discountReason: emptyToNull,
   purchaseDate: z.string().optional(),
   notes: emptyToNull,
   infoFileUrl: emptyToNull,

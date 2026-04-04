@@ -324,6 +324,10 @@ export async function POST(request: NextRequest) {
 
         // Parse amounts — use paid amount (שולם) as amountPaid
         const amountPaid = parseAmount(paidAmountStr) || parseAmount(totalAmountStr) || 0;
+        const totalAmount = parseAmount(totalAmountStr) || 0;
+        const discountReason = totalAmount > 0 && amountPaid > 0 && amountPaid < totalAmount
+          ? `הנחה ${Math.round(totalAmount - amountPaid)} ₪`
+          : null;
 
         // Determine currentUpdateVersion from V columns
         let currentUpdateVersion: string | null = null;
@@ -351,6 +355,7 @@ export async function POST(request: NextRequest) {
             organId,
             setTypeId,
             amountPaid,
+            discountReason,
             status,
             sampleType,
             currentUpdateVersion,

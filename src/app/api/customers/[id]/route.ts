@@ -153,6 +153,7 @@ export async function PUT(
         whatsappPhone: data.whatsappPhone || null,
         address: data.address || null,
         notes: data.notes || null,
+        discountReason: data.discountReason !== undefined ? (data.discountReason || null) : undefined,
         infoFileUrl: data.infoFileUrl || null,
         amountPaid: data.amountPaid !== undefined ? data.amountPaid : undefined,
         purchaseDate: data.purchaseDate

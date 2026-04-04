@@ -141,6 +141,7 @@ export function CustomerForm({
       additionalOrganId: initialData?.additionalOrganId || "",
       setTypeId: initialData?.setTypeId || "",
       amountPaid: initialData?.amountPaid || 0,
+      discountReason: initialData?.discountReason || "",
       purchaseDate:
         initialData?.purchaseDate?.split("T")[0] ||
         new Date().toISOString().split("T")[0],
@@ -677,6 +678,16 @@ export function CustomerForm({
               )}
             </div>
 
+
+            {/* Discount Reason */}
+            <div className="space-y-2">
+              <Label htmlFor="discountReason">סיבת הנחה</Label>
+              <Input
+                id="discountReason"
+                {...register("discountReason")}
+                placeholder="לדוגמה: הנחה 500 ₪ — לקוח ותיק"
+              />
+            </div>
 
             {/* Purchase Date */}
             <div className="space-y-2">

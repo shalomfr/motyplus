@@ -96,6 +96,7 @@ export default function CustomersListPage() {
           promotion?: { discountPercent: number; couponCode: string } | null;
           status: "ACTIVE" | "BLOCKED" | "FROZEN" | "EXCEPTION"; updatedAt: string;
           currentUpdateVersion?: string | null; infoFileUrl?: string | null;
+          discountReason?: string | null;
         }) => ({
           ...c,
           organName: c.organ?.name || "",
@@ -108,6 +109,7 @@ export default function CustomersListPage() {
           organSupportsUpdates: c.organ?.supportsUpdates ?? false,
           infoFileUrl: c.infoFileUrl || null,
           discountPercent: c.promotion?.discountPercent || null,
+          discountReason: c.discountReason || null,
         }))
       if (append) {
         setCustomers(prev => [...prev, ...mapped])

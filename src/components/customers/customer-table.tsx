@@ -42,6 +42,7 @@ export interface CustomerRow {
   organSupportsUpdates: boolean
   infoFileUrl: string | null
   discountPercent: number | null
+  discountReason: string | null
 }
 
 interface CustomerTableProps {
@@ -255,6 +256,11 @@ export function CustomerTable({
                       {customer.discountPercent != null && customer.discountPercent > 0 && (
                         <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200 shrink-0">
                           {customer.discountPercent}% הנחה
+                        </Badge>
+                      )}
+                      {customer.discountReason && (
+                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200 shrink-0">
+                          הנחה
                         </Badge>
                       )}
                     </div>
