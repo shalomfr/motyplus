@@ -158,141 +158,125 @@ export function CustomerFiltersPanel({
           )}
         </div>
 
-        {/* פילטרים מתקדמים — מוסתרים כברירת מחדל */}
+        {/* פילטרים מתקדמים — שורה אחת */}
         {isOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">
             {/* Organ Type */}
-            <div className="space-y-2">
-              <Label>סוג אורגן</Label>
-              <Select
-                value={filters.organId}
-                onValueChange={(value) => updateFilter("organId", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="כל האורגנים" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל האורגנים</SelectItem>
-                  {organs.map((organ) => (
-                    <SelectItem key={organ.id} value={organ.id}>
-                      {organ.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={filters.organId}
+              onValueChange={(value) => updateFilter("organId", value)}
+            >
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="כל האורגנים" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל האורגנים</SelectItem>
+                {organs.map((organ) => (
+                  <SelectItem key={organ.id} value={organ.id}>
+                    {organ.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Set Type */}
-            <div className="space-y-2">
-              <Label>סוג סט</Label>
-              <Select
-                value={filters.setTypeId}
-                onValueChange={(value) => updateFilter("setTypeId", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="כל הסטים" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הסטים</SelectItem>
-                  {setTypes.map((set) => (
-                    <SelectItem key={set.id} value={set.id}>
-                      {set.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={filters.setTypeId}
+              onValueChange={(value) => updateFilter("setTypeId", value)}
+            >
+              <SelectTrigger className="w-[110px] h-8 text-xs text-blue-700">
+                <SelectValue placeholder="כל הסטים" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל הסטים</SelectItem>
+                {setTypes.map((set) => (
+                  <SelectItem key={set.id} value={set.id}>
+                    {set.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Status */}
-            <div className="space-y-2">
-              <Label>מצב</Label>
-              <Select
-                value={filters.status}
-                onValueChange={(value) => updateFilter("status", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="כל המצבים" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל המצבים</SelectItem>
-                  <SelectItem value="PENDING_APPROVAL">ממתין לאישור</SelectItem>
-                  <SelectItem value="ACTIVE">פעיל</SelectItem>
-                  <SelectItem value="BLOCKED">חסום</SelectItem>
-                  <SelectItem value="FROZEN">מוקפא</SelectItem>
-                  <SelectItem value="EXCEPTION">חריג</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={filters.status}
+              onValueChange={(value) => updateFilter("status", value)}
+            >
+              <SelectTrigger className="w-[110px] h-8 text-xs text-purple-700">
+                <SelectValue placeholder="כל המצבים" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל המצבים</SelectItem>
+                <SelectItem value="PENDING_APPROVAL">ממתין לאישור</SelectItem>
+                <SelectItem value="ACTIVE">פעיל</SelectItem>
+                <SelectItem value="BLOCKED">חסום</SelectItem>
+                <SelectItem value="FROZEN">מוקפא</SelectItem>
+                <SelectItem value="EXCEPTION">חריג</SelectItem>
+              </SelectContent>
+            </Select>
 
-            {/* Date Range — same row */}
-            <div className="space-y-2">
-              <Label>טווח תאריכים</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => updateFilter("dateFrom", e.target.value)}
-                  className="flex-1"
-                />
-                <span className="text-muted-foreground text-sm shrink-0">עד</span>
-                <Input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => updateFilter("dateTo", e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </div>
+            <span className="text-muted-foreground text-[10px]">|</span>
 
-            {/* Update Version Filter */}
-            <div className="space-y-2">
-              <Label>מעודכן עד גרסה</Label>
-              <Select
-                value={filters.maxUpdateVersion}
-                onValueChange={(value) => updateFilter("maxUpdateVersion", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="כל הגרסאות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הגרסאות</SelectItem>
-                  <SelectItem value="not_updated">לא זכאים לעדכון</SelectItem>
-                  {updateVersions.map((v) => (
-                    <SelectItem key={v.id} value={v.version}>
-                      {v.version}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Date Range */}
+            <Input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => updateFilter("dateFrom", e.target.value)}
+              className="w-[120px] h-8 text-xs text-emerald-700"
+            />
+            <span className="text-muted-foreground text-xs">עד</span>
+            <Input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => updateFilter("dateTo", e.target.value)}
+              className="w-[120px] h-8 text-xs text-emerald-700"
+            />
+
+            <span className="text-muted-foreground text-[10px]">|</span>
+
+            {/* Update Version */}
+            <Select
+              value={filters.maxUpdateVersion}
+              onValueChange={(value) => updateFilter("maxUpdateVersion", value)}
+            >
+              <SelectTrigger className="w-[120px] h-8 text-xs text-orange-700">
+                <SelectValue placeholder="כל הגרסאות" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל הגרסאות</SelectItem>
+                <SelectItem value="not_updated">לא זכאים</SelectItem>
+                {updateVersions.map((v) => (
+                  <SelectItem key={v.id} value={v.version}>
+                    {v.version}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Missing Details */}
-            <div className="space-y-2">
-              <Label>חסרי פרטים</Label>
-              <Select
-                value={filters.missingDetails ? (filters.missingField || "any") : ""}
-                onValueChange={(value) => {
-                  if (!value || value === "none") {
-                    onFiltersChange({ ...filters, missingDetails: false, missingField: "" })
-                  } else {
-                    onFiltersChange({ ...filters, missingDetails: true, missingField: value === "any" ? "" : value })
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="הכל" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">הכל</SelectItem>
-                  <SelectItem value="any">כל חסר</SelectItem>
-                  <SelectItem value="email">חסר מייל</SelectItem>
-                  <SelectItem value="phone">חסר טלפון</SelectItem>
-                  <SelectItem value="address">חסר כתובת</SelectItem>
-                  <SelectItem value="infoFile">חסר אינפו</SelectItem>
-                  <SelectItem value="whatsapp">חסר WhatsApp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={filters.missingDetails ? (filters.missingField || "any") : ""}
+              onValueChange={(value) => {
+                if (!value || value === "none") {
+                  onFiltersChange({ ...filters, missingDetails: false, missingField: "" })
+                } else {
+                  onFiltersChange({ ...filters, missingDetails: true, missingField: value === "any" ? "" : value })
+                }
+              }}
+            >
+              <SelectTrigger className="w-[110px] h-8 text-xs text-rose-700">
+                <SelectValue placeholder="חסרי פרטים" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">הכל</SelectItem>
+                <SelectItem value="any">כל חסר</SelectItem>
+                <SelectItem value="email">חסר מייל</SelectItem>
+                <SelectItem value="phone">חסר טלפון</SelectItem>
+                <SelectItem value="address">חסר כתובת</SelectItem>
+                <SelectItem value="infoFile">חסר אינפו</SelectItem>
+                <SelectItem value="whatsapp">חסר WhatsApp</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
       </CardContent>
