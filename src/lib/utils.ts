@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://motyplus-order.onrender.com";
+export const ORDER_FORM_URL = process.env.ORDER_FORM_URL || "https://order.mottycrm.com";
 export const TERMS_URL = `${ORDER_FORM_URL}/terms`;
 export const PAYMENT_BASE_URL = process.env.PAYMENT_BASE_URL || process.env.AUTH_URL || "";
 
