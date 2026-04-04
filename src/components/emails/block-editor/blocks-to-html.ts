@@ -192,12 +192,8 @@ function wrapEmail(bodyContent: string): string {
 <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#EEF3FB" dir="rtl">
 <tr><td align="center" style="padding:10px;">
 <div style="max-width:680px;margin:0 auto;padding:28px;border:1px solid #C5D5EA;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.08);background-color:#ffffff;font-size:16px;line-height:1.8;color:#124F90;" dir="rtl">
-<div style="background-color:#F6F9FE;border-radius:0;padding:20px 20px 0 20px;margin:0;">
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;"><tr><td width="50%" align="right" style="font-size:12px;font-weight:bold;color:#8fa3b9;" dir="rtl">בס&quot;ד</td><td width="50%" align="left" style="font-size:12px;font-weight:bold;color:#8fa3b9;" dir="ltr">{{todayDate}}</td></tr></table>
-<!-- BODY_START -->
 ${bodyContent}
-<!-- BODY_END -->
-</div>
 </div>
 </td></tr>
 </table>
@@ -207,9 +203,9 @@ ${bodyContent}
 
 export function blocksToHtml(blocks: EmailBlock[]): string {
   const bodyParts = blocks.map(renderBlockToHtml).filter(Boolean)
-  return wrapEmail(bodyParts.join("\n\n"))
+  return wrapEmail(bodyParts.join("\n"))
 }
 
 export function blocksToBodyHtml(blocks: EmailBlock[]): string {
-  return blocks.map(renderBlockToHtml).filter(Boolean).join("\n\n")
+  return blocks.map(renderBlockToHtml).filter(Boolean).join("\n")
 }
