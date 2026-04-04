@@ -398,6 +398,7 @@ export class GreenInvoiceClient implements BillingClient {
       })),
       successUrl: request.successUrl,
       failureUrl: request.cancelUrl,
+      minPayments: 1,
       maxPayments: 6,
       expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     };
