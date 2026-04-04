@@ -232,7 +232,9 @@ export function CustomerTable({
               <TableHead className="w-[80px]">סט</TableHead>
               <TableHead className="w-[90px]">מצב</TableHead>
               <TableHead className="w-[110px]">עדכון</TableHead>
-              <TableHead className="w-[140px]">תשלום</TableHead>
+              <TableHead className="w-[80px]">שולם</TableHead>
+              <TableHead className="w-[80px]">מחיר סט</TableHead>
+              <TableHead className="w-[90px]">חסר לסט שלם</TableHead>
               <TableHead className="w-[40px] text-center">אינפו</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
@@ -304,14 +306,28 @@ export function CustomerTable({
                       </Badge>
                     )}
                   </TableCell>
+                  <TableCell className="text-[12px] font-mono" dir="ltr">
+                    ₪{Number(customer.amountPaid).toLocaleString("he-IL")}
+                  </TableCell>
+                  <TableCell className="text-[12px] font-mono" dir="ltr">
+                    ₪{Number(customer.setTypePrice).toLocaleString("he-IL")}
+                  </TableCell>
                   <TableCell>
-                    <PaymentBadge
-                      amountPaid={customer.amountPaid}
-                      setTypePrice={customer.setTypePrice}
-                      fullSetPrice={customer.fullSetPrice}
-                      includesUpdates={customer.includesUpdates}
-                      organSupportsUpdates={customer.organSupportsUpdates}
-                    />
+                    {(() => {
+                      const remaining = Math.max(0, Number(customer.fullSetPrice) - Number(customer.amountPaid))
+                      if (remaining <= 0) {
+                        return (
+                          <Badge variant="outline" className="font-normal whitespace-nowrap bg-green-50 text-green-700 border-green-200 text-[10px]">
+                            0
+                          </Badge>
+                        )
+                      }
+                      return (
+                        <Badge variant="outline" className="font-normal whitespace-nowrap bg-orange-50 text-orange-700 border-orange-200 text-[10px]">
+                          ₪{remaining.toLocaleString("he-IL")}
+                        </Badge>
+                      )
+                    })()}
                   </TableCell>
                   <TableCell className="text-center">
                     <span
