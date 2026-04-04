@@ -120,7 +120,7 @@ export function StepEmailSelect({
 
   // Auto-select templates when data loads — only if no templates were previously selected
   useEffect(() => {
-    if (loading || templates.length === 0 || folders.length === 0) return
+    if (loading || templates.length === 0 || folders.length === 0 || (organGroups.length === 0 && allOrgans.length === 0)) return
     if (emailTemplateMap && Object.keys(emailTemplateMap).length > 0) return // Already has saved selections
 
     const eligibleFolderIds = new Set<string>()
@@ -425,7 +425,6 @@ export function StepEmailSelect({
         </SegmentSection>
       )}
 
-      {/* Half Set — removed from update wizard, handled in email wizard */}
     </div>
   )
 }
