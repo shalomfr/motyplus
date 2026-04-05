@@ -18,6 +18,8 @@ export const EMAIL_VARIABLES = [
   { name: "remainingAmount", label: "יתרה לתשלום" },
   { name: "remainingForFullSet", label: "יתרה להשלמת סט" },
   { name: "samplesLink", label: "קישור דגימות" },
+  { name: "rhythmsFileName", label: "שם קובץ מקצבים" },
+  { name: "samplesFileName", label: "שם קובץ דגימות" },
   { name: "rhythmsLink", label: "קישור מקצבים (לפי אורגן)" },
   { name: "driveLink", label: "קישור דרייב" },
   { name: "youtubeLink", label: "קישור יוטיוב" },

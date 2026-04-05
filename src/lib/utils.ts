@@ -45,3 +45,10 @@ export function calculateUpdateExpiryDate(purchaseDate: Date): Date {
 export function isWithinUpdatePeriod(updateExpiryDate: Date): boolean {
   return new Date() <= updateExpiryDate;
 }
+
+export function extractFilename(url: string): string {
+  const parts = url.split("/")
+  const raw = parts[parts.length - 1]
+  const match = raw.match(/^\d+-(.+)$/)
+  return match ? match[1] : raw
+}

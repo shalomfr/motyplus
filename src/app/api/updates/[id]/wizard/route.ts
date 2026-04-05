@@ -45,6 +45,8 @@ function getSampleVariables(version: string): Record<string, string> {
     releaseDate: today,
     samplesLink: "https://drive.google.com/samples-example",
     rhythmsLink: "https://drive.google.com/rhythms-example",
+    rhythmsFileName: "V5.0-rhythms.zip",
+    samplesFileName: "V5.0-samples.zip",
     driveLink: "https://drive.google.com/preview",
     youtubeLink: "https://youtube.com/preview",
     customLink: "",

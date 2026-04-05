@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { sendEmail, replaceTemplateVariables } from "@/lib/email";
 import { logActivity } from "@/lib/activity-logger";
 import { getShareableLink } from "@/lib/file-storage";
-import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
+import { ORDER_FORM_URL, TERMS_URL, extractFilename } from "@/lib/utils";
 
 // POST /api/customers/[id]/send-update-email — שליחת מקצבים/דגימות + שדרוג אוטומטי
 export async function POST(
@@ -92,6 +92,8 @@ export async function POST(
       updateVersion: latestVersion.version,
       samplesLink: downloadLink,
       rhythmsLink,
+      rhythmsFileName: latestVersion.rhythmsFileUrl ? extractFilename(latestVersion.rhythmsFileUrl) : "",
+      samplesFileName: latestVersion.samplesFileUrl ? extractFilename(latestVersion.samplesFileUrl) : "",
       downloadLink,
       downloadLink2: "",
       organName: customer.organ.name,

@@ -7,7 +7,7 @@ import { sendWhatsApp } from "@/lib/whatsapp"
 import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage"
 import { parseCpiFilename } from "@/lib/cpi-filename"
 import { getBillingClient } from "@/lib/billing"
-import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils"
+import { ORDER_FORM_URL, TERMS_URL, extractFilename } from "@/lib/utils"
 
 // POST /api/updates/[id]/send-all — שליחת העדכון לכל הלקוחות הזכאים
 export async function POST(
@@ -252,6 +252,8 @@ export async function POST(
               setType: customer.setType?.name || "",
               samplesLink: downloadLink,
               rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
+              rhythmsFileName: updateVersion.rhythmsFileUrl ? extractFilename(updateVersion.rhythmsFileUrl) : "",
+              samplesFileName: updateVersion.samplesFileUrl ? extractFilename(updateVersion.samplesFileUrl) : "",
               releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
               downloadLink,
               downloadLink2,

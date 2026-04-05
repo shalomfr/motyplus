@@ -7,7 +7,7 @@ import { listFiles, shareFile, getShareableLink } from "@/lib/file-storage";
 import { logActivity } from "@/lib/activity-logger";
 import { parseCpiFilename } from "@/lib/cpi-filename";
 import { getBillingClient } from "@/lib/billing";
-import { ORDER_FORM_URL, TERMS_URL } from "@/lib/utils";
+import { ORDER_FORM_URL, TERMS_URL, extractFilename } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +44,7 @@ function buildCpiMap(sampleFiles: { path: string }[]): Map<number, { main?: stri
 
 async function sendToEligible(
   customers: SendableCustomer[],
-  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; emailTemplateMap: unknown; rhythmsFileUrl: string | null; releaseDate: Date | null },
+  updateVersion: { id: string; version: string; emailSubject: string | null; emailBody: string | null; emailTemplateMap: unknown; rhythmsFileUrl: string | null; samplesFileUrl: string | null; releaseDate: Date | null },
   cpiMap: Map<number, { main?: string; additional?: string }>,
   userId: string,
   rhythmsLinkMap: Map<string, string>
@@ -142,6 +142,8 @@ async function sendToEligible(
           additionalOrganName, additionalOrganLine,
           setType: customer.setType.name,
           samplesLink: downloadLink, rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
+          rhythmsFileName: updateVersion.rhythmsFileUrl ? extractFilename(updateVersion.rhythmsFileUrl) : "",
+          samplesFileName: updateVersion.samplesFileUrl ? extractFilename(updateVersion.samplesFileUrl) : "",
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           downloadLink, downloadLink2,
           customLink: "",
