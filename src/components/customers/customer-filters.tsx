@@ -13,7 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { ChevronDown, ChevronUp, X, Search } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { ChevronDown, ChevronUp, X, Search, CalendarIcon } from "lucide-react"
+import { format, parse } from "date-fns"
+import { he } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
 export interface CustomerFilters {
@@ -218,19 +222,57 @@ export function CustomerFiltersPanel({
             <span className="text-muted-foreground text-[10px]">|</span>
 
             {/* Date Range */}
-            <Input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(e) => updateFilter("dateFrom", e.target.value)}
-              className="w-[120px] h-8 text-xs text-emerald-700"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] h-8 text-xs justify-start text-right font-normal",
+                    filters.dateFrom ? "text-emerald-700" : "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="ml-1 h-3.5 w-3.5" />
+                  {filters.dateFrom
+                    ? format(parse(filters.dateFrom, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")
+                    : "מתאריך"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filters.dateFrom ? parse(filters.dateFrom, "yyyy-MM-dd", new Date()) : undefined}
+                  onSelect={(date) =>
+                    updateFilter("dateFrom", date ? format(date, "yyyy-MM-dd") : "")
+                  }
+                />
+              </PopoverContent>
+            </Popover>
             <span className="text-muted-foreground text-xs">עד</span>
-            <Input
-              type="date"
-              value={filters.dateTo}
-              onChange={(e) => updateFilter("dateTo", e.target.value)}
-              className="w-[120px] h-8 text-xs text-emerald-700"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] h-8 text-xs justify-start text-right font-normal",
+                    filters.dateTo ? "text-emerald-700" : "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="ml-1 h-3.5 w-3.5" />
+                  {filters.dateTo
+                    ? format(parse(filters.dateTo, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")
+                    : "עד תאריך"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filters.dateTo ? parse(filters.dateTo, "yyyy-MM-dd", new Date()) : undefined}
+                  onSelect={(date) =>
+                    updateFilter("dateTo", date ? format(date, "yyyy-MM-dd") : "")
+                  }
+                />
+              </PopoverContent>
+            </Popover>
 
             <span className="text-muted-foreground text-[10px]">|</span>
 

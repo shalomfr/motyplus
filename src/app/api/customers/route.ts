@@ -117,18 +117,29 @@ export async function GET(request: NextRequest) {
         where.AND = [versionCondition];
       }
     } else if (maxUpdateVersion) {
-      // מעודכן עד גרסה — רק לקוחות שיש להם עדכון אבל נמוך מהגרסה שנבחרה
-      const versionCondition: Prisma.CustomerWhereInput = {
-        AND: [
-          { currentUpdateVersion: { not: null } },
-          { currentUpdateVersion: { not: "" } },
-          { currentUpdateVersion: { lt: maxUpdateVersion } },
-        ],
-      };
-      if (where.AND) {
-        (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
-      } else {
-        where.AND = [versionCondition];
+      // סינון עד גרסה כולל — כל הלקוחות עם גרסה <= לגרסה שנבחרה + לא מעודכנים
+      const selectedVersion = await prisma.updateVersion.findFirst({
+        where: { version: maxUpdateVersion },
+        select: { sortOrder: true },
+      });
+      if (selectedVersion) {
+        const versionsUpTo = await prisma.updateVersion.findMany({
+          where: { sortOrder: { lte: selectedVersion.sortOrder } },
+          select: { version: true },
+        });
+        const versionStrings = versionsUpTo.map((v) => v.version);
+        const versionCondition: Prisma.CustomerWhereInput = {
+          OR: [
+            { currentUpdateVersion: { in: versionStrings } },
+            { currentUpdateVersion: null },
+            { currentUpdateVersion: "" },
+          ],
+        };
+        if (where.AND) {
+          (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
+        } else {
+          where.AND = [versionCondition];
+        }
       }
     }
 

@@ -187,6 +187,10 @@ export default function CustomersListPage() {
       if (filters.dateTo) params.set("dateTo", filters.dateTo)
       if (filters.missingDetails)
         params.set("missingDetails", "true")
+      if (filters.missingField)
+        params.set("missingField", filters.missingField)
+      if (filters.maxUpdateVersion && filters.maxUpdateVersion !== "all")
+        params.set("maxUpdateVersion", filters.maxUpdateVersion)
 
       const res = await fetch(`/api/customers/export?${params.toString()}`)
       if (!res.ok) throw new Error("שגיאה בייצוא")

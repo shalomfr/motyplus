@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
+    const missingDetails = searchParams.get("missingDetails");
+    const missingField = searchParams.get("missingField");
+    const maxUpdateVersion = searchParams.get("maxUpdateVersion");
 
     // בניית תנאי סינון (זהה לרשימת לקוחות)
     const where: Prisma.CustomerWhereInput = {};
@@ -42,6 +45,82 @@ export async function GET(request: NextRequest) {
       where.purchaseDate = {};
       if (dateFrom) where.purchaseDate.gte = new Date(dateFrom);
       if (dateTo) where.purchaseDate.lte = new Date(dateTo);
+    }
+
+    // סינון לפי פרטים חסרים
+    if (missingDetails === "true") {
+      const fieldMap: Record<string, Prisma.CustomerWhereInput[]> = {
+        email: [{ email: "" }],
+        phone: [{ phone: "" }],
+        address: [{ address: null }, { address: "" }],
+        infoFile: [{ infoFileUrl: null }, { infoFileUrl: "" }],
+        whatsapp: [{ whatsappPhone: null }, { whatsappPhone: "" }],
+      };
+
+      const missingCondition: Prisma.CustomerWhereInput = missingField && fieldMap[missingField]
+        ? { OR: fieldMap[missingField] }
+        : {
+            OR: [
+              { address: null },
+              { address: "" },
+              { whatsappPhone: null },
+              { whatsappPhone: "" },
+            ],
+          };
+
+      if (search) {
+        const searchCondition = {
+          OR: [
+            { fullName: { contains: search, mode: "insensitive" as const } },
+            { phone: { contains: search } },
+            { email: { contains: search, mode: "insensitive" as const } },
+          ],
+        };
+        where.AND = [searchCondition, missingCondition];
+        delete where.OR;
+      } else {
+        Object.assign(where, missingCondition);
+      }
+    }
+
+    // סינון לפי גרסת עדכון
+    if (maxUpdateVersion === "not_updated") {
+      const versionCondition: Prisma.CustomerWhereInput = {
+        OR: [
+          { currentUpdateVersion: null },
+          { currentUpdateVersion: "" },
+        ],
+      };
+      if (where.AND) {
+        (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
+      } else {
+        where.AND = [versionCondition];
+      }
+    } else if (maxUpdateVersion) {
+      // סינון עד גרסה כולל — כל הלקוחות עם גרסה <= לגרסה שנבחרה + לא מעודכנים
+      const selectedVersion = await prisma.updateVersion.findFirst({
+        where: { version: maxUpdateVersion },
+        select: { sortOrder: true },
+      });
+      if (selectedVersion) {
+        const versionsUpTo = await prisma.updateVersion.findMany({
+          where: { sortOrder: { lte: selectedVersion.sortOrder } },
+          select: { version: true },
+        });
+        const versionStrings = versionsUpTo.map((v) => v.version);
+        const versionCondition: Prisma.CustomerWhereInput = {
+          OR: [
+            { currentUpdateVersion: { in: versionStrings } },
+            { currentUpdateVersion: null },
+            { currentUpdateVersion: "" },
+          ],
+        };
+        if (where.AND) {
+          (where.AND as Prisma.CustomerWhereInput[]).push(versionCondition);
+        } else {
+          where.AND = [versionCondition];
+        }
+      }
     }
 
     const customers = await prisma.customer.findMany({
@@ -97,6 +176,16 @@ export async function GET(request: NextRequest) {
       { wch: 5 },   // V3
       { wch: 30 },  // הערות
     ];
+
+    // הוספת AutoFilter על כל העמודות
+    const colCount = 17; // מספר העמודות
+    const rowCount = excelData.length + 1; // שורות + כותרת
+    worksheet["!autofilter"] = {
+      ref: XLSX.utils.encode_range({
+        s: { r: 0, c: 0 },
+        e: { r: rowCount - 1, c: colCount - 1 },
+      }),
+    };
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "לקוחות");
 
