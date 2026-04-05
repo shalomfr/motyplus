@@ -230,7 +230,7 @@ export function SamplePrepCube({
                       className="h-7 px-2 text-xs"
                       onClick={() =>
                         copyToClipboard(
-                          `${displayId} ${activeUpdate.version}`,
+                          `${displayId}_${activeUpdate.version}`,
                           `מזהה+גירסה ${displayId}`
                         )
                       }
