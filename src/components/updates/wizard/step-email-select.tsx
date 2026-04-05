@@ -140,7 +140,13 @@ export function StepEmailSelect({
       "Tyros5-2G": ["Tyros5-2G"],
     }
 
-    const organsToMatch = organGroups.length > 0 ? organGroups : allOrgans
+    // Merge all organs (with and without eligible customers) so auto-detect covers everything displayed
+    const organsToMatch = allOrgans.length > 0
+      ? allOrgans.map((o) => {
+          const fromApi = organGroups.find((g) => g.organId === o.organId)
+          return { ...o, count: fromApi?.count || 0 }
+        })
+      : organGroups
     const autoEligible: Record<string, TemplateEntry> = {}
 
     for (const organ of organsToMatch) {
