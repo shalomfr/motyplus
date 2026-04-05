@@ -36,7 +36,7 @@ async function getSetCustomers() {
   return prisma.customer.findMany({
     where: {
       orderSentAt: null,
-      status: { not: "PENDING_APPROVAL" },
+      status: "ACTIVE",
       OR: [
         { amountPaid: { gt: 0 } },
         { payments: { some: { status: "COMPLETED" } } },
