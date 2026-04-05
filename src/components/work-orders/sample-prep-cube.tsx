@@ -139,7 +139,7 @@ export function SamplePrepCube({
               </Badge>
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {pending.length} לקוחות ממתינים מתוך {customers.length} זכא��ם
+              {pending.length} לקוחות ממתינים מתוך {customers.length} זכאים
             </p>
           </div>
           <Button
