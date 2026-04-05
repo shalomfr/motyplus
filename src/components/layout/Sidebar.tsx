@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedLogo } from "@/components/ui/AnimatedLogo";
 
-interface NavItem { label: string; icon: LucideIcon; path: string; }
+interface NavItem { label: string; icon: LucideIcon; path: string; badge?: number; }
 
 const NAV_ITEMS: NavItem[] = [
   { label: "דף הבית", icon: Home, path: "/" },
@@ -47,17 +47,43 @@ export function Sidebar({
   onCollapseToggle,
 }: SidebarProps) {
   const pathname = usePathname();
+  const [workOrderBadge, setWorkOrderBadge] = useState(0);
 
   useEffect(() => {
     if (isMobileOpen) onMobileToggle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  // Fetch work-orders badge count
+  const fetchBadge = useCallback(async () => {
+    try {
+      const res = await fetch("/api/work-orders?cube=all");
+      if (res.ok) {
+        const data = await res.json();
+        const total =
+          (data.counts?.samples?.pending || 0) +
+          (data.counts?.sets?.total || 0) +
+          (data.counts?.approval?.total || 0);
+        setWorkOrderBadge(total);
+      }
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => {
+    fetchBadge();
+    const interval = setInterval(fetchBadge, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchBadge]);
+
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
   };
 
-  const allItems = [...NAV_ITEMS, { label: "הגדרות", icon: Settings, path: "/settings" }];
+  // Inject badge into work-orders nav item
+  const navItemsWithBadge = NAV_ITEMS.map((item) =>
+    item.path === "/work-orders" ? { ...item, badge: workOrderBadge } : item
+  );
+  const allItems = [...navItemsWithBadge, { label: "הגדרות", icon: Settings, path: "/settings" }];
 
   return (
     <>
@@ -86,7 +112,13 @@ export function Sidebar({
                 className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
                   isActive ? "gradient-blue-btn text-white shadow-lg" : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-800"
                 )}>
-                <Icon size={20} className="shrink-0" /><span>{item.label}</span>
+                <Icon size={20} className="shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {"badge" in item && (item as NavItem).badge! > 0 && (
+                  <span className="min-w-[20px] h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5">
+                    {(item as NavItem).badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -131,7 +163,7 @@ export function Sidebar({
 
         {/* Nav */}
         <nav className={cn("flex-1 overflow-y-auto", isCollapsed ? "flex flex-col items-center gap-1 w-full px-2.5" : "px-3 py-2 space-y-1")}>
-          {NAV_ITEMS.map((item) => {
+          {navItemsWithBadge.map((item) => {
             const Icon = item.icon;
             const isActive = item.path === "/" ? pathname === "/" : pathname.startsWith(item.path);
 
@@ -148,8 +180,24 @@ export function Sidebar({
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon size={isCollapsed ? 22 : 20} className="shrink-0" />
-                {!isCollapsed && <span>{item.label}</span>}
+                <div className="relative shrink-0">
+                  <Icon size={isCollapsed ? 22 : 20} />
+                  {isCollapsed && item.badge! > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold px-1">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <>
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge! > 0 && (
+                      <span className="min-w-[20px] h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5">
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
+                )}
               </Link>
             );
           })}

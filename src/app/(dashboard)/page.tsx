@@ -7,7 +7,7 @@ import {
   RefreshCw, AlertTriangle, UserPlus, UserCog, Users,
   Mail, Loader2, Tags, Settings, Plus, Send,
   ClipboardList, CheckCircle2, Upload, FileText, ChevronDown, ChevronUp,
-  LayoutDashboard
+  LayoutDashboard, Music, Package, UserCheck
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
@@ -31,10 +31,22 @@ export default function HomePage() {
   const [uploadingId, setUploadingId] = useState<number | null>(null)
   const [heroRevealed, setHeroRevealed] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [workCounts, setWorkCounts] = useState<{
+    samples: { total: number; pending: number }
+    sets: { total: number }
+    approval: { total: number }
+  } | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setHeroRevealed(true), 600)
     return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/work-orders?cube=all")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.counts) setWorkCounts(data.counts) })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -169,6 +181,63 @@ export default function HomePage() {
 
           {/* Bottom section — alerts */}
           <div className="px-8 sm:px-12 pb-10 space-y-4">
+            {/* Work orders task summary */}
+            {workCounts && (workCounts.samples.pending > 0 || workCounts.sets.total > 0 || workCounts.approval.total > 0) && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {workCounts.samples.pending > 0 && (
+                  <button
+                    onClick={() => router.push("/work-orders?cube=samples")}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-purple-50/80 border border-purple-100 hover:bg-purple-100/80 transition-colors text-right"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                      <Music className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-800 text-sm">הכנת דגימות</p>
+                      <p className="text-xs text-gray-500">{workCounts.samples.pending} ממתינים</p>
+                    </div>
+                    <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-lg font-bold">
+                      {workCounts.samples.pending}
+                    </Badge>
+                  </button>
+                )}
+                {workCounts.sets.total > 0 && (
+                  <button
+                    onClick={() => router.push("/work-orders?cube=sets")}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50/80 border border-blue-100 hover:bg-blue-100/80 transition-colors text-right"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                      <Package className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-800 text-sm">שליחת סט</p>
+                      <p className="text-xs text-gray-500">{workCounts.sets.total} ממתינים</p>
+                    </div>
+                    <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 text-lg font-bold">
+                      {workCounts.sets.total}
+                    </Badge>
+                  </button>
+                )}
+                {workCounts.approval.total > 0 && (
+                  <button
+                    onClick={() => router.push("/work-orders?cube=approval")}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-yellow-50/80 border border-yellow-100 hover:bg-yellow-100/80 transition-colors text-right"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center shrink-0">
+                      <UserCheck className="h-5 w-5 text-yellow-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-800 text-sm">אישור לקוחות</p>
+                      <p className="text-xs text-gray-500">{workCounts.approval.total} ממתינים</p>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-lg font-bold">
+                      {workCounts.approval.total}
+                    </Badge>
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Update reminder */}
             <div className="flex items-center justify-between p-5 rounded-2xl bg-gray-50/80 border border-gray-100">
               <div className="flex items-center gap-4">
