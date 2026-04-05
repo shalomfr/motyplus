@@ -21,6 +21,12 @@ export async function GET(req: NextRequest) {
   }
 
   // Create a NextAuth JWT token
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "";
+  const isSecure = req.url.startsWith("https");
+  const cookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
   const token = await encode({
     token: {
       id: user.id,
@@ -29,16 +35,13 @@ export async function GET(req: NextRequest) {
       role: user.role,
       sub: user.id,
     },
-    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "",
+    secret,
+    salt: cookieName,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 
   // Set the session cookie and redirect to dashboard
   const cookieStore = await cookies();
-  const isSecure = req.url.startsWith("https");
-  const cookieName = isSecure
-    ? "__Secure-authjs.session-token"
-    : "authjs.session-token";
 
   cookieStore.set(cookieName, token, {
     httpOnly: true,
