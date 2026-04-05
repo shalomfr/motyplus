@@ -76,6 +76,7 @@ async function getSampleData() {
       status: { in: ["ACTIVE", "EXCEPTION"] },
       isCasual: false,
       setType: { includesUpdates: true },
+      organ: { supportsUpdates: true },
       OR: [
         { updateExpiryDate: { gte: now } },
         { status: "EXCEPTION" },
