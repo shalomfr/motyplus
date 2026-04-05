@@ -5,9 +5,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   const userAgent = req.headers.get("user-agent") || "";
 
+  // Build the real public base URL from headers (Render uses internal 0.0.0.0)
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = `${proto}://${host}`;
+
   // Only allow from the Android app
   if (!userAgent.includes("MottyBeatsCRM")) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
   // Get the first admin user
@@ -16,12 +21,12 @@ export async function GET(req: NextRequest) {
   });
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
   // Create a NextAuth JWT token
   const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "";
-  const isSecure = req.url.startsWith("https");
+  const isSecure = proto === "https";
   const cookieName = isSecure
     ? "__Secure-authjs.session-token"
     : "authjs.session-token";
@@ -40,7 +45,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Set the session cookie on the redirect response
-  const response = NextResponse.redirect(new URL("/", req.url));
+  const response = NextResponse.redirect(new URL("/", baseUrl));
   response.cookies.set(cookieName, token, {
     httpOnly: true,
     secure: isSecure,
