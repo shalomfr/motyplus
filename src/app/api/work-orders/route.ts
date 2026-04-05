@@ -36,7 +36,7 @@ async function getSetCustomers() {
   return prisma.customer.findMany({
     where: {
       orderSentAt: null,
-      status: "ACTIVE",
+      status: { in: ["ACTIVE", "EXCEPTION"] },
       OR: [
         { amountPaid: { gt: 0 } },
         { payments: { some: { status: "COMPLETED" } } },
