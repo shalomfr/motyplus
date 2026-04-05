@@ -92,9 +92,9 @@ export default function UpdatesListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">רשימת עדכונים</h2>
-        <Button variant="outline" onClick={() => router.push("/updates")}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">רשימת עדכונים</h2>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => router.push("/updates")}>
           <ArrowRight className="h-4 w-4 ml-2" />
           חזרה
         </Button>
@@ -117,6 +117,7 @@ export default function UpdatesListPage() {
               אין עדכונים עדיין. צור עדכון חדש כדי להתחיל.
             </div>
           ) : (
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -166,6 +167,7 @@ export default function UpdatesListPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

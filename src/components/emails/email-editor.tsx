@@ -43,32 +43,33 @@ export function EmailEditor({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <Label>{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="shrink-0">{label}</Label>
         <div className="flex gap-1 bg-muted rounded-lg p-0.5">
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 text-xs gap-1 rounded-md",
+              "h-8 sm:h-7 text-xs gap-1 rounded-md px-2 sm:px-3 min-h-[36px] sm:min-h-0",
               editorType === "blocks" && "bg-white shadow-sm"
             )}
             onClick={() => setEditorType("blocks")}
           >
             <Blocks className="h-3.5 w-3.5" />
-            עורך בלוקים
+            <span className="hidden sm:inline">עורך בלוקים</span>
+            <span className="sm:hidden">בלוקים</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 text-xs gap-1 rounded-md",
+              "h-8 sm:h-7 text-xs gap-1 rounded-md px-2 sm:px-3 min-h-[36px] sm:min-h-0",
               editorType === "code" && "bg-white shadow-sm"
             )}
             onClick={() => setEditorType("code")}
           >
             <Code className="h-3.5 w-3.5" />
-            עורך HTML
+            HTML
           </Button>
         </div>
       </div>

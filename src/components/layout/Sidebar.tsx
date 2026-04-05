@@ -88,28 +88,32 @@ export function Sidebar({
   return (
     <>
       {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={onMobileToggle} />
-      )}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black/30 z-40 md:hidden transition-opacity duration-300",
+          isMobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onMobileToggle}
+      />
 
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex flex-col glass-sidebar text-gray-700 w-64 transition-transform duration-300 md:hidden",
+          "fixed inset-y-0 right-0 z-50 flex flex-col glass-sidebar text-gray-700 w-[85vw] max-w-[320px] transition-transform duration-300 ease-in-out md:hidden",
           isMobileOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex items-center justify-between border-b border-gray-200/60 p-4 min-h-[72px]">
           <AnimatedLogo size={36} />
-          <button onClick={onMobileToggle} className="p-2 rounded-lg hover:bg-gray-100/60"><X size={20} /></button>
+          <button onClick={onMobileToggle} className="p-2 rounded-lg hover:bg-gray-100/60 min-w-[44px] min-h-[44px] flex items-center justify-center"><X size={20} /></button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 overscroll-contain">
           {allItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.path === "/" ? pathname === "/" : pathname.startsWith(item.path);
             return (
               <Link key={item.path} href={item.path}
-                className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium min-h-[44px]",
                   isActive ? "gradient-blue-btn text-white shadow-lg" : "text-gray-600 hover:bg-blue-50/60 hover:text-blue-800"
                 )}>
                 <Icon size={20} className="shrink-0" />
@@ -128,7 +132,7 @@ export function Sidebar({
             <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
             {userEmail && <p className="text-xs text-gray-500 truncate">{userEmail}</p>}
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50/60">
+          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50/60 min-h-[44px]">
             <LogOut size={20} className="shrink-0" /><span>התנתק</span>
           </button>
         </div>

@@ -84,6 +84,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const searchRef = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Mobile search toggle
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
   // User menu state
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -140,6 +143,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
     setSearchQuery("");
     setUserMenuOpen(false);
     setBellOpen(false);
+    setMobileSearchOpen(false);
   }, [pathname]);
 
   // Poll pending customers
@@ -161,12 +165,12 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   }, [fetchPending]);
 
   return (
-    <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 py-3 min-h-[64px]">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 glass-header px-3 sm:px-4 md:px-6 py-3 min-h-[64px]">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
         {/* Mobile menu button */}
         <button
           onClick={onMobileMenuToggle}
-          className="p-2 rounded-lg hover:bg-gray-100/60 transition-colors md:hidden text-gray-700"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100/60 transition-colors md:hidden text-gray-700"
           aria-label="פתח תפריט"
         >
           <Menu size={22} />
@@ -195,6 +199,15 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           <Calendar size={15} />
           <span>{getHebrewDate()}</span>
         </div>
+
+        {/* Mobile search button */}
+        <button
+          onClick={() => setMobileSearchOpen((prev) => !prev)}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-white border border-gray-200/80 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm md:hidden"
+          aria-label="חיפוש"
+        >
+          <Search size={18} />
+        </button>
 
         {/* Search with results dropdown */}
         <div className="hidden md:block relative" ref={searchRef}>
@@ -262,7 +275,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         {/* Mail button — navigate to emails */}
         <button
           onClick={() => router.push("/emails")}
-          className="relative w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+          className="relative min-w-[44px] min-h-[44px] w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
           title="מיילים"
         >
           <Mail size={18} />
@@ -272,7 +285,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         <div className="relative" ref={bellRef}>
           <button
             onClick={() => setBellOpen((prev) => !prev)}
-            className="relative w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+            className="relative min-w-[44px] min-h-[44px] w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
             title="לקוחות ממתינים לאישור"
           >
             <Bell size={18} />
@@ -284,7 +297,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           </button>
 
           {bellOpen && (
-            <div className="absolute top-full mt-2 left-0 w-80 bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+            <div className="absolute top-full mt-2 left-0 sm:left-0 w-[calc(100vw-2rem)] sm:w-80 max-w-[320px] bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
               <div className="p-3 border-b border-gray-100 flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-700">ממתינים לאישור</span>
                 {pendingCount > 0 && (
@@ -354,7 +367,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
 
           {/* User dropdown */}
           {userMenuOpen && (
-            <div className="absolute top-full mt-2 left-0 w-56 bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+            <div className="absolute top-full mt-2 left-0 w-[calc(100vw-2rem)] sm:w-56 max-w-[240px] bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
               {/* User info */}
               <div className="p-4 border-b border-gray-100 text-center">
                 <div className="w-12 h-12 rounded-full gradient-blue-btn flex items-center justify-center text-white font-bold text-lg mx-auto mb-2">
@@ -395,6 +408,76 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
           )}
         </div>
       </div>
+
+      {/* Mobile search bar — slides down below header row */}
+      {mobileSearchOpen && (
+        <div className="mt-2 md:hidden" ref={searchRef}>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="חיפוש לקוח..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
+              autoFocus
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200/80 rounded-full bg-white text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+              dir="rtl"
+            />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            {searchLoading && (
+              <div className="absolute left-10 top-1/2 -translate-y-1/2">
+                <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile search results */}
+          {searchOpen && searchResults.length > 0 && (
+            <div className="mt-2 w-full bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+              <div className="p-2 border-b border-gray-100">
+                <span className="text-xs text-gray-400 px-2">{searchResults.length} תוצאות</span>
+              </div>
+              {searchResults.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    router.push(`/customers/${c.id}`);
+                    setSearchOpen(false);
+                    setSearchQuery("");
+                    setMobileSearchOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-right min-h-[44px]"
+                >
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm shrink-0">
+                    {c.fullName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-800 truncate">{c.fullName}</div>
+                    <div className="text-xs text-gray-400 truncate">{c.organName || c.phone}</div>
+                  </div>
+                  <span className="text-xs text-gray-300 font-mono">{c.id}</span>
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  router.push(`/customers?search=${encodeURIComponent(searchQuery)}`);
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                  setMobileSearchOpen(false);
+                }}
+                className="w-full py-2.5 text-center text-xs font-semibold text-blue-600 hover:bg-blue-50 border-t border-gray-100 min-h-[44px]"
+              >
+                חפש בכל הלקוחות
+              </button>
+            </div>
+          )}
+          {searchOpen && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
+            <div className="mt-2 w-full bg-white rounded-2xl border border-gray-200 shadow-xl z-50 p-6 text-center">
+              <span className="text-sm text-gray-400">לא נמצאו תוצאות</span>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

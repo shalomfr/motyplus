@@ -140,10 +140,10 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">מזהה</TableHead>
+                  <TableHead className="w-16 hidden sm:table-cell">מזהה</TableHead>
                   <TableHead>שם</TableHead>
-                  <TableHead>אורגן</TableHead>
-                  <TableHead className="w-20">קובץ זמין</TableHead>
+                  <TableHead className="hidden md:table-cell">אורגן</TableHead>
+                  <TableHead className="hidden sm:table-cell w-20">קובץ זמין</TableHead>
                   <TableHead className="w-24">מידע הועלה</TableHead>
                   <TableHead className="w-24">דגימות מוכנות</TableHead>
                   <TableHead>סטטוס</TableHead>
@@ -158,7 +158,7 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
                       customer.sent && "bg-green-50"
                     )}
                   >
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className="flex items-center gap-1">
                         <span className="font-mono text-xs">{customer.id}</span>
                         <button
@@ -175,8 +175,8 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{customer.fullName}</TableCell>
-                    <TableCell>{customer.organ.name}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">{customer.organ.name}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {customer.hasUpdateFile ? (
                         <FileCheck className="h-4 w-4 text-green-500" />
                       ) : (

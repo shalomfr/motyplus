@@ -450,6 +450,7 @@ export default function EmailTemplatesPage() {
   }
 
   const renderTemplateTable = (templatesList: EmailTemplate[], folderId?: string) => (
+    <div className="overflow-x-auto -mx-2 sm:mx-0">
     <Table>
       <TableHeader>
         <TableRow>
@@ -543,41 +544,45 @@ export default function EmailTemplatesPage() {
         ))}
       </TableBody>
     </Table>
+    </div>
   )
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">תבניות מייל</h2>
-        <Button variant="outline" onClick={() => router.push("/emails")} className="gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">תבניות מייל</h2>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => router.push("/emails")}>
           <ArrowRight className="h-4 w-4" />
-          חזרה למיילים
+          <span className="hidden sm:inline mr-1">חזרה למיילים</span>
+          <span className="sm:hidden mr-1">חזרה</span>
         </Button>
       </div>
 
       {/* כותרת + הרחב/כווץ + הוסף תיקייה */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          <h3 className="font-semibold text-lg">תבניות מייל</h3>
+          <Mail className="h-5 w-5 shrink-0" />
+          <h3 className="font-semibold text-base sm:text-lg">תבניות מייל</h3>
           <Badge variant="outline">{templates.length} תבניות</Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setNewTemplateFolderId(""); setNewTemplateDialogOpen(true) }} className="gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => { setNewTemplateFolderId(""); setNewTemplateDialogOpen(true) }} className="gap-1 text-xs sm:text-sm">
             <Plus className="h-4 w-4" />
-            תבנית חדשה
+            <span className="hidden sm:inline">תבנית חדשה</span>
+            <span className="sm:hidden">תבנית</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={openNewFolderDialog} className="gap-1">
+          <Button variant="outline" size="sm" onClick={openNewFolderDialog} className="gap-1 text-xs sm:text-sm">
             <FolderPlus className="h-4 w-4" />
-            תיקייה חדשה
+            <span className="hidden sm:inline">תיקייה חדשה</span>
+            <span className="sm:hidden">תיקייה</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportAll} className="gap-1">
+          <Button variant="outline" size="sm" onClick={handleExportAll} className="gap-1 text-xs sm:text-sm">
             <Download className="h-4 w-4" />
-            ייצוא הכל
+            <span className="hidden sm:inline">ייצוא הכל</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} className="gap-1 text-xs sm:text-sm">
             <Upload className="h-4 w-4" />
-            ייבוא תבניות
+            <span className="hidden sm:inline">ייבוא תבניות</span>
           </Button>
           <input
             ref={importFileRef}
@@ -589,6 +594,7 @@ export default function EmailTemplatesPage() {
           <Button
             variant="ghost"
             size="sm"
+            className="text-xs sm:text-sm"
             onClick={() => {
               if (allExpanded) {
                 setExpandedSections(new Set())
@@ -600,12 +606,12 @@ export default function EmailTemplatesPage() {
             {allExpanded ? (
               <>
                 <ChevronUp className="h-4 w-4 ml-1" />
-                כווץ הכל
+                <span className="hidden sm:inline">כווץ הכל</span>
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4 ml-1" />
-                הרחב הכל
+                <span className="hidden sm:inline">הרחב הכל</span>
               </>
             )}
           </Button>
@@ -640,16 +646,16 @@ export default function EmailTemplatesPage() {
                 onDragEnd={() => setDragFolderId(null)}
               >
                 <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-muted/50 transition-colors min-h-[48px]"
                   onClick={() => toggleSection(folder.id)}
                 >
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                    <div className={`p-2 rounded-lg ${colors.bg}`}>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab shrink-0 hidden sm:block" />
+                    <div className={`p-2 rounded-lg shrink-0 ${colors.bg}`}>
                       <Icon className={`h-4 w-4 ${colors.text}`} />
                     </div>
-                    <span className="font-medium">{folder.name}</span>
-                    <Badge variant="outline" className="text-xs">
+                    <span className="font-medium truncate">{folder.name}</span>
+                    <Badge variant="outline" className="text-xs shrink-0">
                       {folderTemplates.length}
                     </Badge>
                   </div>

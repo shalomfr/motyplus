@@ -327,7 +327,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <SettingsIcon className="h-7 w-7 text-gray-600" />
+        <SettingsIcon className="h-6 w-6 sm:h-7 sm:w-7 text-gray-600" />
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">הגדרות</h2>
       </div>
 
@@ -457,8 +457,8 @@ export default function SettingsPage() {
                 גיבוי אחרון: {formatDateTime(lastBackupDate)}
               </div>
             )}
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleExportBackup} disabled={backupLoading}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button size="sm" onClick={handleExportBackup} disabled={backupLoading} className="w-full sm:w-auto">
                 {backupLoading ? <Loader2 className="h-4 w-4 animate-spin ml-1" /> : <Download className="h-4 w-4 ml-1" />}
                 ייצא גיבוי
               </Button>
@@ -467,6 +467,7 @@ export default function SettingsPage() {
                 variant="outline"
                 onClick={() => document.getElementById("restore-file-input")?.click()}
                 disabled={restoreLoading}
+                className="w-full sm:w-auto"
               >
                 <Upload className="h-4 w-4 ml-1" />
                 שחזר מגיבוי
@@ -499,7 +500,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* WhatsApp Connection */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -518,7 +519,7 @@ export default function SettingsPage() {
                 <span className="text-sm">Evolution API לא מוגדר (חסר EVOLUTION_URL)</span>
               </div>
             ) : whatsapp.status === "connected" ? (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="h-6 w-6 text-green-500" />
                   <div>
@@ -639,14 +640,14 @@ export default function SettingsPage() {
         </Card>
 
         {/* User Management */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 overflow-hidden">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 ניהול משתמשים
               </CardTitle>
-              <Button size="sm" onClick={() => setShowAddUser(true)}>
+              <Button size="sm" onClick={() => setShowAddUser(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 ml-1" />
                 הוסף משתמש
               </Button>
@@ -658,38 +659,75 @@ export default function SettingsPage() {
                 אין משתמשים במערכת
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>שם</TableHead>
-                    <TableHead>מייל</TableHead>
-                    <TableHead>תפקיד</TableHead>
-                    <TableHead>סטטוס</TableHead>
-                    <TableHead>נוצר</TableHead>
-                    <TableHead className="w-24">פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop table */}
+                <div className="hidden sm:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>שם</TableHead>
+                        <TableHead>מייל</TableHead>
+                        <TableHead>תפקיד</TableHead>
+                        <TableHead>סטטוס</TableHead>
+                        <TableHead>נוצר</TableHead>
+                        <TableHead className="w-24">פעולות</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell dir="ltr" className="text-left">{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {user.role === "ADMIN" ? "מנהל" : "סוכן"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {user.isActive ? (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">פעיל</Badge>
+                            ) : (
+                              <Badge className="bg-red-100 text-red-800 border-red-200">מושבת</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDateTime(user.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleUser(user.id, user.isActive)}
+                              className={user.isActive ? "text-red-500 hover:text-red-700" : "text-green-500 hover:text-green-700"}
+                            >
+                              {user.isActive ? "השבת" : "הפעל"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {/* Mobile cards */}
+                <div className="sm:hidden space-y-3">
                   {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell dir="ltr" className="text-left">{user.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {user.role === "ADMIN" ? "מנהל" : "סוכן"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.isActive ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200">פעיל</Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-800 border-red-200">מושבת</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDateTime(user.createdAt)}
-                      </TableCell>
-                      <TableCell>
+                    <div key={user.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{user.name}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {user.role === "ADMIN" ? "מנהל" : "סוכן"}
+                          </Badge>
+                          {user.isActive ? (
+                            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">פעיל</Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">מושבת</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground" dir="ltr">{user.email}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{formatDateTime(user.createdAt)}</span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -698,11 +736,11 @@ export default function SettingsPage() {
                         >
                           {user.isActive ? "השבת" : "הפעל"}
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

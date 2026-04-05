@@ -113,7 +113,7 @@ export default function AccountingDashboardPage() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">חשבונות</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">חשבונות</h1>
       </div>
 
       {/* Summary Cards */}
@@ -124,7 +124,7 @@ export default function AccountingDashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(thisMonthTotal)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(thisMonthTotal)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -133,7 +133,7 @@ export default function AccountingDashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(lastMonthTotal)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(lastMonthTotal)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -142,7 +142,7 @@ export default function AccountingDashboardPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(yearTotal)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(yearTotal)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -151,13 +151,13 @@ export default function AccountingDashboardPage() {
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(openDebts)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(openDebts)}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Quick Links */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         <Link href="/accounting/payments">
           <Button variant="outline" className="gap-2">
             <CreditCard className="h-4 w-4" />
@@ -187,6 +187,7 @@ export default function AccountingDashboardPage() {
           {payments.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">אין תשלומים</p>
           ) : (
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -224,6 +225,7 @@ export default function AccountingDashboardPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

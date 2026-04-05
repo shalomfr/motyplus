@@ -40,7 +40,7 @@ function StepIndicator({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
+        "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg transition-all text-xs sm:text-sm font-medium min-h-[44px]",
         isActive && "bg-orange-100 text-blue-800 shadow-sm",
         isCompleted && !isActive && "text-green-700 hover:bg-green-50",
         !isActive && !isCompleted && "text-gray-400 hover:text-gray-600"
@@ -48,7 +48,7 @@ function StepIndicator({
     >
       <span
         className={cn(
-          "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-all",
+          "flex items-center justify-center w-7 h-7 sm:w-7 sm:h-7 rounded-full text-xs font-bold shrink-0 transition-all",
           isActive && "bg-blue-600 text-white",
           isCompleted && !isActive && "bg-green-500 text-white",
           !isActive && !isCompleted && "bg-gray-200 text-gray-500"
@@ -56,7 +56,8 @@ function StepIndicator({
       >
         {isCompleted && !isActive ? <Check className="h-3.5 w-3.5" /> : index + 1}
       </span>
-      <span className="hidden md:inline">{step.label}</span>
+      <span className="hidden sm:inline">{step.label}</span>
+      {isActive && <span className="sm:hidden text-[10px] max-w-[60px] truncate">{step.label}</span>}
     </button>
   )
 }
@@ -77,7 +78,7 @@ export function WizardShell({
   return (
     <div className="space-y-6">
       {/* Progress Steps */}
-      <div className="bg-white rounded-xl border p-2 flex items-center gap-1 overflow-x-auto" dir="rtl">
+      <div className="bg-white rounded-xl border p-1.5 sm:p-2 flex items-center gap-0.5 sm:gap-1 overflow-x-auto" dir="rtl">
         {steps.map((step, i) => (
           <div key={step.key} className="flex items-center">
             <StepIndicator
@@ -99,11 +100,11 @@ export function WizardShell({
       </div>
 
       {/* Step Content */}
-      <div className="min-h-[400px]">{children}</div>
+      <div className="min-h-[250px] sm:min-h-[400px]">{children}</div>
 
       {/* Navigation */}
       {!hideNavigation && (
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center justify-between gap-2 pt-4 border-t">
           <Button
             variant="outline"
             onClick={() => onStepChange(currentStep - 1)}

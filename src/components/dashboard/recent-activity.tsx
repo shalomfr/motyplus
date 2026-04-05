@@ -60,7 +60,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               return (
                 <div
                   key={entry.id}
-                  className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 p-2.5 sm:p-2 rounded-md hover:bg-muted/50 transition-colors min-h-[44px]"
                 >
                   <div className="p-1.5 bg-muted rounded-md mt-0.5">
                     <IconComponent className="h-4 w-4 text-muted-foreground" />

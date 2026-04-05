@@ -229,11 +229,12 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">משימות והתקדמות</h2>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">משימות והתקדמות</h2>
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
+            className="flex-1 sm:flex-initial"
             onClick={() => {
               const statusLabels: Record<string, string> = { IDEA: "רעיון", PLANNING: "תכנון", IN_PROGRESS: "בביצוע", DONE: "הושלם" }
               const priorityLabels: Record<string, string> = { HIGH: "גבוהה", MEDIUM: "בינונית", LOW: "נמוכה" }
@@ -262,7 +263,7 @@ export default function TasksPage() {
             <Download className="h-4 w-4 ml-1" />
             ייצוא
           </Button>
-          <Button onClick={() => setEditTask({ id: 0, title: "", description: null, status: "IDEA", priority: "MEDIUM", category: "כללי", order: 0, createdAt: "", completedAt: null })}>
+          <Button className="flex-1 sm:flex-initial" onClick={() => setEditTask({ id: 0, title: "", description: null, status: "IDEA", priority: "MEDIUM", category: "כללי", order: 0, createdAt: "", completedAt: null })}>
             <Plus className="h-4 w-4 ml-1" />
             משימה חדשה
           </Button>
@@ -272,7 +273,7 @@ export default function TasksPage() {
       {/* סיכום */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center gap-6 mb-2 text-sm">
+          <div className="flex items-center gap-3 sm:gap-6 mb-2 text-sm flex-wrap">
             <span className="font-medium">סה&quot;כ: {totalTasks}</span>
             {COLUMNS.map((col) => (
               <span key={col.key} className="flex items-center gap-1">
@@ -318,7 +319,7 @@ export default function TasksPage() {
       </div>
 
       {/* קנבן */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:snap-none sm:grid sm:grid-cols-2 xl:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0">
         {COLUMNS.map((col) => {
           const Icon = col.icon
           const columnTasks = getColumnTasks(col.key)
@@ -327,7 +328,7 @@ export default function TasksPage() {
           return (
             <div
               key={col.key}
-              className={`rounded-xl border-2 transition-colors min-h-[300px] ${
+              className={`rounded-xl border-2 transition-colors min-h-[250px] sm:min-h-[300px] flex-shrink-0 w-[75vw] sm:w-auto snap-start ${
                 isDragOver ? "border-orange-400 bg-orange-50/50" : "border-white/10 bg-white/5"
               }`}
               onDragOver={(e) => handleDragOver(e, col.key)}

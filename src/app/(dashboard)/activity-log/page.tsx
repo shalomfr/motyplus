@@ -150,11 +150,11 @@ export default function ActivityLogPage() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-1.5 w-40">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 sm:gap-4">
+            <div className="space-y-1.5 col-span-1">
               <label className="text-sm text-muted-foreground">סוג פעולה</label>
               <Select value={filterAction} onValueChange={setFilterAction}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="הכל" />
                 </SelectTrigger>
                 <SelectContent>
@@ -168,10 +168,10 @@ export default function ActivityLogPage() {
               </Select>
             </div>
 
-            <div className="space-y-1.5 w-40">
+            <div className="space-y-1.5 col-span-1">
               <label className="text-sm text-muted-foreground">משתמש</label>
               <Select value={filterUser} onValueChange={setFilterUser}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="הכל" />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,23 +185,23 @@ export default function ActivityLogPage() {
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 col-span-1">
               <label className="text-sm text-muted-foreground">מתאריך</label>
               <Input
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="w-40"
+                className="w-full sm:w-40"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 col-span-1">
               <label className="text-sm text-muted-foreground">עד תאריך</label>
               <Input
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
-                className="w-40"
+                className="w-full sm:w-40"
               />
             </div>
           </div>
@@ -226,6 +226,7 @@ export default function ActivityLogPage() {
             </div>
           ) : (
             <>
+              <div className="overflow-x-auto -mx-3 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -274,10 +275,11 @@ export default function ActivityLogPage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
                   <p className="text-sm text-muted-foreground">
                     עמוד {pagination.page} מתוך {pagination.totalPages}
                   </p>

@@ -510,7 +510,7 @@ export function CustomerForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit((data) => onSubmit(data, pendingInfoFile || undefined, pendingAdditionalInfoFile || undefined))} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="fullName">
@@ -703,7 +703,7 @@ export function CustomerForm({
           {/* Edit-mode only fields */}
           {mode === "edit" && initialData && (
             <div className="border-t pt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Read-only info */}
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">תאריך קנייה</Label>
@@ -817,7 +817,7 @@ export function CustomerForm({
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-blue-600 transition-colors flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer px-4 py-3 sm:py-2.5 min-h-[44px] border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-blue-600 transition-colors flex-1">
                     <Upload className="h-4 w-4" />
                     <span>העלה קובץ אינפו (.n27)</span>
                     <input
@@ -867,7 +867,7 @@ export function CustomerForm({
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer px-4 py-3 sm:py-2.5 min-h-[44px] border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors flex-1">
                     <Upload className="h-4 w-4" />
                     <span>העלה קובץ אינפו לאורגן נוסף (.n27)</span>
                     <input

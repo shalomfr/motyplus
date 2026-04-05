@@ -77,13 +77,13 @@ export default function ReceiptsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Receipt className="h-5 w-5" />
               רשימת קבלות ({totalCount})
             </CardTitle>
-            <div className="flex items-center gap-2 w-64">
-              <Search className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 w-full sm:w-64">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
               <Input
                 placeholder="חיפוש לקוח..."
                 value={search}
@@ -107,6 +107,7 @@ export default function ReceiptsPage() {
             </div>
           ) : (
             <>
+              <div className="overflow-x-auto -mx-3 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -164,10 +165,11 @@ export default function ReceiptsPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
                   <div className="text-sm text-muted-foreground">
                     {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalCount)} מתוך {totalCount}
                   </div>

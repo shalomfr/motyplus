@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   ])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
       <div className="flex items-center gap-4">
         <Link href="/">
           <Button variant="ghost" size="icon">

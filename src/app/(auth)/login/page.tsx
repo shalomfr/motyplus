@@ -53,8 +53,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center px-4 py-8 sm:p-4" dir="rtl">
+      <div className="bg-white rounded-lg shadow-2xl p-6 sm:p-8 w-full max-w-md">
         <div className="flex justify-center mb-6">
           <AnimatedLogo size={80} />
         </div>
@@ -91,7 +91,7 @@ export default function LoginPage() {
               autoComplete="email"
               dir="ltr"
               className={cn(
-                "w-full px-4 py-2.5 border rounded-lg text-sm transition-colors",
+                "w-full px-4 py-3 sm:py-2.5 border rounded-lg text-base sm:text-sm transition-colors",
                 "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                 "placeholder:text-gray-400",
                 errors.email
@@ -123,7 +123,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 dir="ltr"
                 className={cn(
-                  "w-full px-4 py-2.5 border rounded-lg text-sm transition-colors",
+                  "w-full px-4 py-3 sm:py-2.5 border rounded-lg text-base sm:text-sm transition-colors",
                   "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                   "placeholder:text-gray-400 pl-10",
                   errors.password
@@ -154,7 +154,7 @@ export default function LoginPage() {
             type="submit"
             disabled={isSubmitting}
             className={cn(
-              "w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors",
+              "w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 px-4 rounded-lg text-base sm:text-sm font-semibold transition-colors min-h-[44px]",
               "bg-blue-600 hover:bg-blue-700 text-white",
               "disabled:bg-gray-400 disabled:cursor-not-allowed"
             )}
@@ -175,7 +175,7 @@ export default function LoginPage() {
       </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
-          © Motty Beats — מערכת ניהול לקוחות
+          &copy; Motty Beats
         </p>
     </div>
   );

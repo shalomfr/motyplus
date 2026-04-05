@@ -209,17 +209,17 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ניהול תשלומים</h1>
-        <Button onClick={openNewPaymentDialog} className="gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <h1 className="text-xl sm:text-2xl font-bold">ניהול תשלומים</h1>
+        <Button onClick={openNewPaymentDialog} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           רישום תשלום
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-wrap gap-2 sm:gap-3 items-end">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="חיפוש..."
@@ -229,7 +229,7 @@ export default function PaymentsPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="סטטוס" />
           </SelectTrigger>
           <SelectContent>
@@ -239,7 +239,7 @@ export default function PaymentsPage() {
           </SelectContent>
         </Select>
         <Select value={methodFilter} onValueChange={setMethodFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="אמצעי תשלום" />
           </SelectTrigger>
           <SelectContent>
@@ -257,13 +257,13 @@ export default function PaymentsPage() {
           type="date"
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
-          className="w-[150px]"
+          className="w-[calc(50%-4px)] sm:w-[150px]"
         />
         <Input
           type="date"
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
-          className="w-[150px]"
+          className="w-[calc(50%-4px)] sm:w-[150px]"
         />
       </div>
 
@@ -276,7 +276,8 @@ export default function PaymentsPage() {
         <p className="text-muted-foreground text-center py-12">לא נמצאו תשלומים</p>
       ) : (
         <>
-          <Table>
+          <div className="overflow-x-auto -mx-1 sm:mx-0">
+          <Table className="min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">תאריך</TableHead>
@@ -334,6 +335,7 @@ export default function PaymentsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

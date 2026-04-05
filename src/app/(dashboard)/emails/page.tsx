@@ -13,18 +13,18 @@ export default function EmailsPage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מיילים</h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto pt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto pt-4 sm:pt-8">
         <Card
           className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] border-2 hover:border-blue-300"
           onClick={() => router.push("/emails/templates")}
         >
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
-            <div className="p-4 bg-blue-100 rounded-2xl">
-              <Mail className="h-10 w-10 text-blue-600" />
+          <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 bg-blue-100 rounded-2xl">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-xl font-bold">תבניות מייל</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h3 className="text-lg sm:text-xl font-bold">תבניות מייל</h3>
+              <p className="text-sm text-muted-foreground mt-1 sm:mt-2">
                 ניהול תבניות, תיקיות, ייבוא וייצוא
               </p>
             </div>
@@ -35,13 +35,13 @@ export default function EmailsPage() {
           className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] border-2 hover:border-green-300"
           onClick={() => router.push("/emails/sending")}
         >
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
-            <div className="p-4 bg-green-100 rounded-2xl">
-              <Send className="h-10 w-10 text-green-600" />
+          <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 bg-green-100 rounded-2xl">
+              <Send className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
             </div>
             <div>
-              <h3 className="text-xl font-bold">שליחת מיילים</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h3 className="text-lg sm:text-xl font-bold">שליחת מיילים</h3>
+              <p className="text-sm text-muted-foreground mt-1 sm:mt-2">
                 שליחת עדכונים, מיילים קבוצתיים ומותאמים
               </p>
             </div>

@@ -77,7 +77,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
     content: initialBody,
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none min-h-[300px] p-4 focus:outline-none [direction:rtl]",
+        class: "prose prose-sm max-w-none min-h-[200px] sm:min-h-[300px] p-3 sm:p-4 focus:outline-none [direction:rtl]",
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -180,7 +180,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       onClick={onClick}
       title={title}
       className={cn(
-        "p-1.5 rounded hover:bg-gray-100 transition-colors",
+        "p-2 sm:p-1.5 rounded hover:bg-gray-100 transition-colors min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 flex items-center justify-center",
         active && "bg-gray-200 text-blue-600"
       )}
     >
@@ -193,7 +193,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       type="button"
       onClick={() => switchMode(tabMode)}
       className={cn(
-        "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-t-lg transition-colors border-b-2",
+        "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium rounded-t-lg transition-colors border-b-2 min-h-[40px] sm:min-h-0",
         mode === tabMode
           ? "bg-white text-blue-700 border-blue-600"
           : "bg-gray-100 text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50"
@@ -226,7 +226,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       {mode === "visual" && (
         <>
           {/* Toolbar */}
-          <div className="border-b bg-gray-50 px-2 py-1.5 flex flex-wrap items-center gap-0.5">
+          <div className="border-b bg-gray-50 px-1.5 sm:px-2 py-1.5 flex flex-wrap items-center gap-0.5 sm:gap-0.5">
             <ToolBtn onClick={() => editor.chain().focus().undo().run()} title="ביטול">
               <Undo className="h-4 w-4" />
             </ToolBtn>
@@ -307,7 +307,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
           </div>
 
           {/* Variables bar */}
-          <div className="border-b bg-orange-50/50 px-3 py-2 flex flex-wrap gap-1.5">
+          <div className="border-b bg-orange-50/50 px-2 sm:px-3 py-2 flex flex-wrap gap-1 sm:gap-1.5">
             <span className="text-xs text-muted-foreground ml-2 self-center">משתנים:</span>
             {EMAIL_VARIABLES.map((v) => (
               <button
@@ -329,7 +329,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
       {mode === "code" && (
         <>
           {/* Variables bar in code mode too */}
-          <div className="border-b bg-orange-50/50 px-3 py-2 flex flex-wrap gap-1.5">
+          <div className="border-b bg-orange-50/50 px-2 sm:px-3 py-2 flex flex-wrap gap-1 sm:gap-1.5">
             <span className="text-xs text-muted-foreground ml-2 self-center">הוסף משתנה:</span>
             {EMAIL_VARIABLES.map((v) => (
               <button
@@ -351,7 +351,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
               shellRef.current = val
               onChange(val)
             }}
-            className="w-full min-h-[400px] p-4 font-mono text-sm bg-[#1e1e1e] text-[#d4d4d4] focus:outline-none resize-y"
+            className="w-full min-h-[250px] sm:min-h-[400px] p-3 sm:p-4 font-mono text-xs sm:text-sm bg-[#1e1e1e] text-[#d4d4d4] focus:outline-none resize-y"
             dir="ltr"
             spellCheck={false}
             placeholder="הדבק כאן HTML מעוצב או כתוב קוד..."
@@ -361,7 +361,7 @@ export function RichEmailEditor({ content, onChange }: RichEmailEditorProps) {
 
       {/* Preview mode */}
       {mode === "preview" && (
-        <div className="bg-gray-100 p-4 min-h-[400px]">
+        <div className="bg-gray-100 p-2 sm:p-4 min-h-[250px] sm:min-h-[400px]">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden max-w-[600px] mx-auto">
             <iframe
               ref={iframeRef}

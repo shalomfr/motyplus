@@ -168,9 +168,9 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">חשבוניות והצעות מחיר</h1>
-        <Button onClick={openDialog} className="gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <h1 className="text-xl sm:text-2xl font-bold">חשבוניות והצעות מחיר</h1>
+        <Button onClick={openDialog} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           צור מסמך
         </Button>
@@ -184,7 +184,8 @@ export default function InvoicesPage() {
       ) : invoices.length === 0 ? (
         <p className="text-muted-foreground text-center py-12">אין מסמכים</p>
       ) : (
-        <Table>
+        <div className="overflow-x-auto -mx-1 sm:mx-0">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead className="text-right">מספר</TableHead>
@@ -252,6 +253,7 @@ export default function InvoicesPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
 
       {/* Create Document Dialog */}

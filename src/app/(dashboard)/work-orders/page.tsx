@@ -107,7 +107,7 @@ export default function WorkOrdersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
             רשימת עבודה
@@ -116,7 +116,7 @@ export default function WorkOrdersPage() {
             משימות יומיות: הכנת דגימות, שליחת סטים, אישור לקוחות
           </p>
         </div>
-        <Button onClick={() => setNewOrderOpen(true)} className="gap-2">
+        <Button onClick={() => setNewOrderOpen(true)} className="gap-2 w-full sm:w-auto">
           <UserPlus className="h-4 w-4" />
           הזמנת לקוח חדש
         </Button>

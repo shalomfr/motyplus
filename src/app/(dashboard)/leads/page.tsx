@@ -106,14 +106,14 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">לידים</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {leads.length} לידים | {activeLostCount} אבדו
           </p>
         </div>
-        <Button onClick={() => router.push("/leads/new")}>
+        <Button onClick={() => router.push("/leads/new")} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 ml-2" />
           ליד חדש
         </Button>
@@ -121,9 +121,9 @@ export default function LeadsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Filter className="h-4 w-4 text-muted-foreground" />
+        <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
         <Select value={filterAgent} onValueChange={setFilterAgent}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="סוכן" />
           </SelectTrigger>
           <SelectContent>
@@ -137,7 +137,7 @@ export default function LeadsPage() {
         </Select>
 
         <Select value={filterDate} onValueChange={setFilterDate}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="תאריך" />
           </SelectTrigger>
           <SelectContent>

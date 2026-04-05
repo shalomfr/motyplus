@@ -21,12 +21,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
       <CardContent>
           <div className="space-y-4">
             {/* Chart */}
-            <div className="flex items-end gap-2 h-48" dir="ltr">
+            <div className="flex items-end gap-1 sm:gap-2 h-36 sm:h-48" dir="ltr">
               {data.map((item) => {
                 const heightPercent = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0
                 return (
                   <div key={item.month} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex flex-col items-center justify-end h-40">
+                    <div className="w-full flex flex-col items-center justify-end h-28 sm:h-40">
                       {item.revenue > 0 && (
                         <span className="text-[10px] text-muted-foreground mb-1">
                           {formatCurrency(item.revenue)}
@@ -47,7 +47,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             </div>
 
             {/* Summary */}
-            <div className="flex justify-between items-center pt-2 border-t text-sm">
+            <div className="flex justify-between items-center pt-2 border-t text-xs sm:text-sm">
               <span className="text-muted-foreground">
                 סה"כ תקופה:
               </span>

@@ -224,18 +224,18 @@ export function CustomerTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-white/5">
-              <TableHead className="w-[70px]">מזהה</TableHead>
+              <TableHead className="w-[70px] hidden md:table-cell">מזהה</TableHead>
               <TableHead>שם מלא</TableHead>
               <TableHead>טלפון</TableHead>
-              <TableHead>מייל</TableHead>
-              <TableHead>אורגן</TableHead>
-              <TableHead className="w-[80px]">סט</TableHead>
+              <TableHead className="hidden sm:table-cell">מייל</TableHead>
+              <TableHead className="hidden lg:table-cell">אורגן</TableHead>
+              <TableHead className="hidden lg:table-cell w-[80px]">סט</TableHead>
               <TableHead className="w-[90px]">מצב</TableHead>
-              <TableHead className="w-[110px]">עדכון</TableHead>
-              <TableHead className="w-[80px]">שולם</TableHead>
-              <TableHead className="w-[80px]">מחיר סט</TableHead>
-              <TableHead className="w-[90px]">חסר לסט שלם</TableHead>
-              <TableHead className="w-[40px] text-center">אינפו</TableHead>
+              <TableHead className="hidden md:table-cell w-[110px]">עדכון</TableHead>
+              <TableHead className="hidden sm:table-cell w-[80px]">שולם</TableHead>
+              <TableHead className="hidden md:table-cell w-[80px]">מחיר סט</TableHead>
+              <TableHead className="hidden md:table-cell w-[90px]">חסר לסט שלם</TableHead>
+              <TableHead className="hidden sm:table-cell w-[40px] text-center">אינפו</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
           </TableHeader>
@@ -244,7 +244,7 @@ export function CustomerTable({
               const status = statusConfig[customer.status] || statusConfig.ACTIVE
               return (
                 <TableRow key={customer.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono text-gray-500">
+                  <TableCell className="font-mono text-gray-500 hidden md:table-cell">
                     {customer.id}
                   </TableCell>
                   <TableCell className="font-medium">
@@ -270,11 +270,11 @@ export function CustomerTable({
                   <TableCell dir="ltr" className="text-right">
                     {customer.phone}
                   </TableCell>
-                  <TableCell dir="ltr" className="text-right">
+                  <TableCell dir="ltr" className="text-right hidden sm:table-cell">
                     {customer.email}
                   </TableCell>
-                  <TableCell>{customer.organName}</TableCell>
-                  <TableCell>{customer.setTypeName}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{customer.organName}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{customer.setTypeName}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -283,7 +283,7 @@ export function CustomerTable({
                       {status.label}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {customer.includesUpdates ? (
                       customer.currentUpdateVersion ? (
                         latestVersion && customer.currentUpdateVersion !== latestVersion ? (
@@ -306,13 +306,13 @@ export function CustomerTable({
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-[12px] font-mono" dir="ltr">
+                  <TableCell className="text-[12px] font-mono hidden sm:table-cell" dir="ltr">
                     ₪{Number(customer.amountPaid).toLocaleString("he-IL")}
                   </TableCell>
-                  <TableCell className="text-[12px] font-mono" dir="ltr">
+                  <TableCell className="text-[12px] font-mono hidden md:table-cell" dir="ltr">
                     ₪{Number(customer.setTypePrice).toLocaleString("he-IL")}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {(() => {
                       const remaining = Math.max(0, Number(customer.fullSetPrice) - Number(customer.amountPaid))
                       if (remaining <= 0) {
@@ -329,7 +329,7 @@ export function CustomerTable({
                       )
                     })()}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center hidden sm:table-cell">
                     <span
                       className={cn(
                         "inline-block w-2.5 h-2.5 rounded-full",

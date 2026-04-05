@@ -142,7 +142,7 @@ export function LeadForm({ initialData, leadId, mode }: LeadFormProps) {
           <CardTitle className="text-lg">פרטי ליד</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">שם מלא</Label>
               <Input
@@ -167,7 +167,7 @@ export function LeadForm({ initialData, leadId, mode }: LeadFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">מייל</Label>
               <EmailInput
@@ -189,7 +189,7 @@ export function LeadForm({ initialData, leadId, mode }: LeadFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>אורגן</Label>
               <Select value={form.organId} onValueChange={(v) => handleChange("organId", v)}>
@@ -243,7 +243,7 @@ export function LeadForm({ initialData, leadId, mode }: LeadFormProps) {
         </CardContent>
       </Card>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={loading}>
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin ml-2" />

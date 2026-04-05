@@ -8,9 +8,9 @@ import { LeadForm } from "@/components/leads/lead-form"
 export default function NewLeadPage() {
   const router = useRouter()
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/leads")}>
+        <Button variant="ghost" size="icon" onClick={() => router.push("/leads")} className="h-10 w-10 min-h-[44px] min-w-[44px]">
           <ArrowRight className="h-5 w-5" />
         </Button>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">ליד חדש</h2>

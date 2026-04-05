@@ -76,13 +76,14 @@ export default function NewUpdateWizardPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
           אשף עדכון חדש
         </h2>
-        <Button variant="ghost" onClick={() => router.push("/updates")}>
+        <Button variant="ghost" size="sm" className="shrink-0" onClick={() => router.push("/updates")}>
           <ArrowRight className="h-4 w-4 ml-1" />
-          חזרה לעדכונים
+          <span className="hidden sm:inline">חזרה לעדכונים</span>
+          <span className="sm:hidden">חזרה</span>
         </Button>
       </div>
 

@@ -68,9 +68,9 @@ export default function PromotionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">מבצעים</h2>
-        <Button onClick={() => router.push("/promotions/new")}>
+        <Button onClick={() => router.push("/promotions/new")} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 ml-2" />
           מבצע חדש
         </Button>
@@ -93,6 +93,7 @@ export default function PromotionsPage() {
               אין מבצעים. צור מבצע חדש כדי להתחיל.
             </div>
           ) : (
+            <div className="overflow-x-auto -mx-3 sm:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -133,6 +134,7 @@ export default function PromotionsPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

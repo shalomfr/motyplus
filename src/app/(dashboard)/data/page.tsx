@@ -200,12 +200,13 @@ function OrgansTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 ml-2" />
           הוסף אורגן
         </Button>
       </div>
 
+      <div className="overflow-x-auto -mx-3 sm:mx-0">
       <Table>
         <TableHeader>
           <TableRow>
@@ -253,6 +254,7 @@ function OrgansTab() {
           ))}
         </TableBody>
       </Table>
+      </div>
 
       {organs.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">אין אורגנים</div>
@@ -461,12 +463,13 @@ function SetsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 ml-2" />
           הוסף סט
         </Button>
       </div>
 
+      <div className="overflow-x-auto -mx-3 sm:mx-0">
       <Table>
         <TableHeader>
           <TableRow>
@@ -516,6 +519,7 @@ function SetsTab() {
           ))}
         </TableBody>
       </Table>
+      </div>
 
       {sets.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">אין סוגי סטים</div>
@@ -621,6 +625,7 @@ function UpdatesPricesTab() {
 
   return (
     <>
+      <div className="overflow-x-auto -mx-3 sm:mx-0">
       <Table>
         <TableHeader>
           <TableRow>
@@ -641,6 +646,7 @@ function UpdatesPricesTab() {
           ))}
         </TableBody>
       </Table>
+      </div>
 
       {updates.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">אין גרסאות עדכון</div>
@@ -663,10 +669,10 @@ export default function DataPage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">ניהול נתונים</h2>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="overflow-hidden">
+        <CardContent className="pt-6 px-3 sm:px-6">
           <Tabs defaultValue="organs" dir="rtl">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 h-auto">
               <TabsTrigger value="organs">אורגנים</TabsTrigger>
               <TabsTrigger value="sets">סטים</TabsTrigger>
               <TabsTrigger value="updates">עדכונים ומחירים</TabsTrigger>

@@ -227,11 +227,11 @@ export default function SendEmailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/emails")}>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Button variant="ghost" size="icon" className="shrink-0 min-h-[44px] min-w-[44px]" onClick={() => router.push("/emails")}>
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">שליחת מייל</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">שליחת מייל</h2>
       </div>
 
       {error && (
@@ -245,9 +245,9 @@ export default function SendEmailPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Left side - Compose */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Template selection */}
           <Card>
             <CardHeader>
@@ -414,8 +414,8 @@ export default function SendEmailPage() {
           </Card>
         </div>
 
-        {/* Right side - Preview & Actions */}
-        <div className="space-y-4">
+        {/* Right side - Preview & Actions (stacks below on mobile) */}
+        <div className="space-y-4 min-w-0">
           <EmailPreview
             subject={subject}
             body={body}
@@ -424,8 +424,8 @@ export default function SendEmailPage() {
 
           <Card>
             <CardContent className="p-4 space-y-3">
-              <div className="flex gap-2">
-                <Button onClick={handleSendClick} disabled={sending} className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={handleSendClick} disabled={sending} className="flex-1 min-h-[44px]">
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin ml-2" />
                   ) : (
@@ -433,7 +433,7 @@ export default function SendEmailPage() {
                   )}
                   שלח מייל
                 </Button>
-                <Button variant="outline" onClick={handleSendTest} disabled={sending}>
+                <Button variant="outline" onClick={handleSendTest} disabled={sending} className="min-h-[44px]">
                   שלח בדיקה
                 </Button>
               </div>

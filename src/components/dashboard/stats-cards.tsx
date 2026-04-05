@@ -119,7 +119,7 @@ function StatCard({ config, stats }: { config: StatCardConfig; stats: DashboardS
           </div>
           <div>
             <p className="text-sm text-gray-600">{config.label}</p>
-            <p className="text-2xl font-bold text-gray-800">{config.getValue(stats)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-800">{config.getValue(stats)}</p>
             {config.getSubtext && (
               <p className="text-xs text-muted-foreground">{config.getSubtext(stats)}</p>
             )}
@@ -136,23 +136,23 @@ interface StatsCardsProps {
 
 export function StatsCards({ stats }: StatsCardsProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* שורה עליונה — לקוחות */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {TOP_ROW.map((config) => (
           <StatCard key={config.key} config={config} stats={stats} />
         ))}
       </div>
 
       {/* שורה אמצעית — עדכונים */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {MIDDLE_ROW.map((config) => (
           <StatCard key={config.key} config={config} stats={stats} />
         ))}
       </div>
 
       {/* שורה תחתונה — כספי */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {BOTTOM_ROW.map((config) => (
           <StatCard key={config.key} config={config} stats={stats} />
         ))}

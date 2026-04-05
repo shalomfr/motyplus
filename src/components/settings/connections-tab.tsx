@@ -197,7 +197,7 @@ function ProviderCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {icon}
             <div>
@@ -206,7 +206,7 @@ function ProviderCard({
             </div>
           </div>
           {provider && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Checkbox
                 checked={provider.isActive}
                 onCheckedChange={(checked) => handleToggleActive(checked === true)}
@@ -237,7 +237,7 @@ function ProviderCard({
       <CardContent className="space-y-4">
         {provider ? (
           <>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">מזהה:</span>
                 <span className="mr-2 font-mono">{provider.apiKey}</span>
