@@ -273,7 +273,7 @@ export async function GET(
     const segments: WizardSegment[] = [
       {
         key: "eligible",
-        label: "זכאי לעדכון",
+        label: "מעודכנים",
         count: eligible.length,
         templateName: firstEligibleTemplate ? (firstEligibleTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: eligiblePreview.subject,
@@ -295,7 +295,7 @@ export async function GET(
       },
       {
         key: "not_updated",
-        label: "לא זכאי לעדכון (סט שלם)",
+        label: "לא מעודכנים (סט שלם)",
         count: notUpdatedFiltered.length,
         templateName: notUpdatedTemplate ? (notUpdatedTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: notUpdatedPreview.subject,
@@ -306,7 +306,7 @@ export async function GET(
       },
       {
         key: "half_set",
-        label: "חצי סט",
+        label: "חלקי סט",
         count: halfSet.length,
         templateName: halfSetTemplate ? (halfSetTemplate as { templateName?: string }).templateName || "תבנית נבחרה" : null,
         previewSubject: halfSetPreview.subject,

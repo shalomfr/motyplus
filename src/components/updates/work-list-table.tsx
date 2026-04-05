@@ -236,7 +236,7 @@ export function WorkListTable({ updateId, customers, organs, onRefresh }: WorkLi
 
       {filteredCustomers.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          אין לקוחות זכאים לעדכון זה
+          אין לקוחות לעדכון זה
         </div>
       )}
     </div>

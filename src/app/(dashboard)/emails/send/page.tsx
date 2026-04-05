@@ -396,7 +396,7 @@ export default function SendEmailPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">הכל</SelectItem>
-                        <SelectItem value="eligible">זכאים לעדכון</SelectItem>
+                        <SelectItem value="eligible">מעודכנים</SelectItem>
                         <SelectItem value="expired">פג תוקף עדכון</SelectItem>
                       </SelectContent>
                     </Select>

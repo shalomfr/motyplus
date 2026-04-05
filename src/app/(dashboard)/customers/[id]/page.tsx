@@ -360,7 +360,7 @@ export default function EditCustomerPage() {
             {!customer.includesUpdates && (
               <>
                 <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                  חצי סט — ללא עדכונים
+                  חלקי סט — ללא עדכונים
                 </Badge>
                 {/* #11: כפתור שדרוג ליד סוג הסט */}
                 {fullSetTypes.length > 0 && (

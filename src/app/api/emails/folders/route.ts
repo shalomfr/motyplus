@@ -3,12 +3,14 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
 const DEFAULT_FOLDERS = [
-  { key: "update", name: "מיילים של עדכון", color: "blue", iconName: "RefreshCw", order: 0 },
-  { key: "after_purchase", name: "אחרי רכישה", color: "emerald", iconName: "ShoppingBag", order: 1 },
-  { key: "welcome", name: "שליחות פרטיות", color: "green", iconName: "UserPlus", order: 2 },
-  { key: "promotion", name: "מבצעים והצעות מחיר", color: "orange", iconName: "Percent", order: 3 },
-  { key: "greeting", name: "ברכות וחגים", color: "pink", iconName: "Gift", order: 4 },
-  { key: "reminder", name: "תזכורות", color: "amber", iconName: "Bell", order: 5 },
+  { key: "update", name: "מעודכנים", color: "blue", iconName: "RefreshCw", order: 0 },
+  { key: "not_updated", name: "לא מעודכנים", color: "orange", iconName: "AlertTriangle", order: 1 },
+  { key: "half_set", name: "חלקי סט", color: "purple", iconName: "Package", order: 2 },
+  { key: "after_purchase", name: "אחרי רכישה", color: "emerald", iconName: "ShoppingBag", order: 3 },
+  { key: "welcome", name: "שליחות פרטיות", color: "green", iconName: "UserPlus", order: 4 },
+  { key: "promotion", name: "מבצעים והצעות מחיר", color: "orange", iconName: "Percent", order: 5 },
+  { key: "greeting", name: "ברכות וחגים", color: "pink", iconName: "Gift", order: 6 },
+  { key: "reminder", name: "תזכורות", color: "amber", iconName: "Bell", order: 7 },
 ]
 
 // GET — fetch all folders, auto-seed defaults if empty
@@ -24,13 +26,32 @@ export async function GET() {
       include: { _count: { select: { templates: true } } },
     })
 
-    // Auto-rename: "לקוח חדש" → "שליחות פרטיות"
-    const welcomeFolder = folders.find((f) => f.key === "welcome" && f.name === "לקוח חדש")
-    if (welcomeFolder) {
-      await prisma.emailFolder.update({
-        where: { id: welcomeFolder.id },
-        data: { name: "שליחות פרטיות" },
-      })
+    // Auto-rename old folder names to new names
+    const renames: Record<string, Record<string, string>> = {
+      welcome: { "לקוח חדש": "שליחות פרטיות" },
+      update: { "מיילים של עדכון": "מעודכנים" },
+      half_set: { "חצי סט": "חלקי סט" },
+    }
+    let needsRefresh = false
+    for (const [key, nameMap] of Object.entries(renames)) {
+      for (const [oldName, newName] of Object.entries(nameMap)) {
+        const folder = folders.find((f) => f.key === key && f.name === oldName)
+        if (folder) {
+          await prisma.emailFolder.update({ where: { id: folder.id }, data: { name: newName } })
+          needsRefresh = true
+        }
+      }
+    }
+
+    // Ensure "לא מעודכנים" and "חלקי סט" folders exist
+    const existingKeys = new Set(folders.map((f) => f.key))
+    const missingFolders = DEFAULT_FOLDERS.filter((d) => !existingKeys.has(d.key))
+    if (missingFolders.length > 0) {
+      await prisma.emailFolder.createMany({ data: missingFolders })
+      needsRefresh = true
+    }
+
+    if (needsRefresh) {
       folders = await prisma.emailFolder.findMany({
         orderBy: { order: "asc" },
         include: { _count: { select: { templates: true } } },

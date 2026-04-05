@@ -24,7 +24,7 @@ interface CustomerBalanceCardProps {
 const STATUS_CONFIG = {
   fully_updated: { label: "מעודכן", color: "bg-green-100 text-green-800 border-green-200", icon: CheckCircle },
   missing_updates: { label: "חסרים עדכונים", color: "bg-orange-100 text-orange-800 border-orange-200", icon: AlertTriangle },
-  half_set: { label: "חצי סט", color: "bg-blue-100 text-blue-800 border-blue-200", icon: CreditCard },
+  half_set: { label: "חלקי סט", color: "bg-blue-100 text-blue-800 border-blue-200", icon: CreditCard },
 } as const
 
 export function CustomerBalanceCard({ customerId, customerName, customerEmail, amountPaid, onStatusChange }: CustomerBalanceCardProps) {

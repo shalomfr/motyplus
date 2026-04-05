@@ -184,7 +184,7 @@ export function BulkQuoteWizardDialog({
     for (const f of folders) {
       const name = f.name.trim()
       if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") notUpdatedFolderIds.add(f.id)
-      if (name === "חצי סט") halfSetFolderIds.add(f.id)
+      if (name === "חלקי סט" || name === "חצי סט") halfSetFolderIds.add(f.id)
     }
 
     // Auto-select not_updated per organ from "לא מעודכנים" folder
@@ -201,7 +201,7 @@ export function BulkQuoteWizardDialog({
     }
     if (Object.keys(autoMap).length > 0) setNotUpdatedTemplateMap(autoMap)
 
-    // Auto-select half_set per organ from "חצי סט" folder
+    // Auto-select half_set per organ from "חלקי סט" folder
     const halfSetTemplates = templates.filter((t) => t.folderId && halfSetFolderIds.has(t.folderId))
     const halfMatch = halfSetTemplates.find((t) => t.name.includes("גינוס") || t.name.includes("Genos")) || halfSetTemplates[0]
     if (halfMatch) setHalfSetTemplate(halfMatch)
@@ -247,7 +247,7 @@ export function BulkQuoteWizardDialog({
       if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
         map.not_updated.add(f.id)
       }
-      if (name === "חצי סט") {
+      if (name === "חלקי סט" || name === "חצי סט") {
         map.half_set.add(f.id)
       }
     }
@@ -344,7 +344,7 @@ export function BulkQuoteWizardDialog({
     fullName: "ישראל ישראלי",
     firstName: "ישראל",
     organ: "Genos 2",
-    setType: previewType === "not_updated" ? "סט שלם" : "חצי סט",
+    setType: previewType === "not_updated" ? "סט שלם" : "חלקי סט",
     currentVersion: "V3.0",
     updateVersion: "V3.0",
     remainingAmount: "1500",
@@ -497,7 +497,7 @@ export function BulkQuoteWizardDialog({
                           <AlertTriangle className={cn("h-5 w-5", sendNotUpdated ? "text-red-600" : "text-gray-400")} />
                         </div>
                         <div>
-                          <p className="font-medium">לקוחות לא זכאים לעדכון</p>
+                          <p className="font-medium">לקוחות לא מעודכנים</p>
                           <p className="text-xs text-muted-foreground">
                             סט שלם, לא בגרסה האחרונה
                             {stats.latestVersion && ` (${stats.latestVersion})`}
@@ -534,7 +534,7 @@ export function BulkQuoteWizardDialog({
                           <Users className={cn("h-5 w-5", sendHalfSet ? "text-amber-600" : "text-gray-400")} />
                         </div>
                         <div>
-                          <p className="font-medium">לקוחות חצי סט</p>
+                          <p className="font-medium">לקוחות חלקי סט</p>
                           <p className="text-xs text-muted-foreground">הצעה לשדרוג לסט שלם</p>
                         </div>
                       </div>
@@ -590,7 +590,7 @@ export function BulkQuoteWizardDialog({
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <span className="font-semibold text-gray-800">לא זכאים לעדכון</span>
+                          <span className="font-semibold text-gray-800">לא מעודכנים</span>
                           <Badge variant="secondary">{stats?.notUpdatedCount || 0}</Badge>
                           {allOrgansHaveTemplate && (
                             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
@@ -647,7 +647,7 @@ export function BulkQuoteWizardDialog({
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <Users className="h-4 w-4 text-amber-600" />
-                          <span className="font-semibold text-gray-800">חצי סט</span>
+                          <span className="font-semibold text-gray-800">חלקי סט</span>
                           <Badge variant="secondary">{stats?.halfSetCount || 0}</Badge>
                           {halfSetTemplate && (
                             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
@@ -687,7 +687,7 @@ export function BulkQuoteWizardDialog({
                     className="gap-1"
                   >
                     <AlertTriangle className="h-3.5 w-3.5" />
-                    לא זכאים לעדכון ({stats?.notUpdatedCount})
+                    לא מעודכנים ({stats?.notUpdatedCount})
                   </Button>
                   <Button
                     variant={previewType === "half_set" ? "default" : "outline"}
@@ -696,7 +696,7 @@ export function BulkQuoteWizardDialog({
                     className="gap-1"
                   >
                     <Users className="h-3.5 w-3.5" />
-                    חצי סט ({stats?.halfSetCount})
+                    חלקי סט ({stats?.halfSetCount})
                   </Button>
                 </div>
               )}
@@ -738,7 +738,7 @@ export function BulkQuoteWizardDialog({
                   <div>
                     <p>
                       <AlertTriangle className="h-3.5 w-3.5 inline ml-1 text-red-600" />
-                      לא זכאים לעדכון: {stats?.notUpdatedCount || 0} לקוחות
+                      לא מעודכנים: {stats?.notUpdatedCount || 0} לקוחות
                     </p>
                     {organs.map((organ) => {
                       const tpl = notUpdatedTemplateMap[organ.id]
@@ -753,7 +753,7 @@ export function BulkQuoteWizardDialog({
                 {sendHalfSet && (
                   <p>
                     <Users className="h-3.5 w-3.5 inline ml-1 text-amber-600" />
-                    חצי סט: {stats?.halfSetCount || 0} לקוחות — תבנית: {halfSetTemplate?.name || "ברירת מחדל"}
+                    חלקי סט: {stats?.halfSetCount || 0} לקוחות — תבנית: {halfSetTemplate?.name || "ברירת מחדל"}
                   </p>
                 )}
               </div>

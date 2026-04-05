@@ -378,7 +378,7 @@ export default function UpdateWorkPage() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <ListChecks className="h-5 w-5" />
-            לקוחות זכאים לעדכון
+            לקוחות לעדכון
           </CardTitle>
         </CardHeader>
         <CardContent>

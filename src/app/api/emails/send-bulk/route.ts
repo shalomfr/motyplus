@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
       if (organTemplates.size === 0) {
         return NextResponse.json({
-          error: "לא נמצאה תבנית למי שלא זכאי לעדכון",
+          error: "לא נמצאה תבנית ללא מעודכנים",
         }, { status: 400 });
       }
 

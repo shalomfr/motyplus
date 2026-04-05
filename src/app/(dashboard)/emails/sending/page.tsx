@@ -173,7 +173,7 @@ export default function EmailSendingPage() {
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">שלח למי שלא זכאי לעדכון</p>
+                  <p className="font-medium text-sm">שלח ללא מעודכנים</p>
                   <p className="text-xs text-muted-foreground">מייל עם הצעת מחיר לעדכון</p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export default function EmailSendingPage() {
                   <Users className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">שלח לחצאי סטים</p>
+                  <p className="font-medium text-sm">שלח לחלקי סטים</p>
                   <p className="text-xs text-muted-foreground">הצעה לשדרוג לסט שלם</p>
                 </div>
               </div>

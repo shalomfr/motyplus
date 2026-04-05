@@ -126,7 +126,7 @@ export function StepEmailSelect({
     const eligibleFolderIds = new Set<string>()
     for (const f of folders) {
       const name = f.name.trim()
-      if (name === "זכאים לעדכון" || name === "מעודכנים") eligibleFolderIds.add(f.id)
+      if (name === "מעודכנים" || name === "זכאים לעדכון") eligibleFolderIds.add(f.id)
     }
 
     const eligibleTemplates = templates.filter((t) => t.folderId && eligibleFolderIds.has(t.folderId))
@@ -219,11 +219,12 @@ export function StepEmailSelect({
     }
     for (const f of folders) {
       const name = f.name.trim()
-      // Exact matching — support both new name "זכאים לעדכון" and legacy "מעודכנים"
-      if (name === "זכאים לעדכון" || name === "מעודכנים") {
+      if (name === "מעודכנים" || name === "זכאים לעדכון") {
         map.eligible.add(f.id)
-      } else if (name === "לא זכאים לעדכון" || name === "לא מעודכנים") {
+      } else if (name === "לא מעודכנים" || name === "לא זכאים לעדכון") {
         map.not_updated.add(f.id)
+      } else if (name === "חלקי סט" || name === "חצי סט") {
+        map.half_set.add(f.id)
       } else if (name === "מבצעים והצעות מחיר" || name === "הצעות מחיר") {
         map.not_updated.add(f.id)
         map.half_set.add(f.id)
@@ -388,7 +389,7 @@ export function StepEmailSelect({
       {/* Eligible — per organ */}
       {mergedOrgans.length > 0 && (
         <SegmentSection
-          title="זכאי לעדכון"
+          title="מעודכנים"
           count={eligibleSegment?.count || 0}
           color="green"
           expanded={expandedSections.has("eligible")}

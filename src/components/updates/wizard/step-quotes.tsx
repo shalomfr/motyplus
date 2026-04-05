@@ -132,7 +132,7 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <CheckCircle2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
-        <p>כל הלקוחות זכאים לעדכון — אין הצעות מחיר לשלוח</p>
+        <p>כל הלקוחות מעודכנים — אין הצעות מחיר לשלוח</p>
       </div>
     )
   }
@@ -140,7 +140,7 @@ export function StepQuotes({ updateId, quoteCustomers }: StepQuotesProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-800">הצעות מחיר — לקוחות לא זכאים לעדכון</h3>
+        <h3 className="text-lg font-semibold text-gray-800">הצעות מחיר — לקוחות לא מעודכנים</h3>
         <p className="text-sm text-muted-foreground mt-1">
           צור לינקי תשלום אישיים ושלח הצעות מחיר ללקוחות שצריכים עדכון או השלמת סט
         </p>
