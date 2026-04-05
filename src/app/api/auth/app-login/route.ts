@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { encode } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 
 export async function GET(req: NextRequest) {
   const userAgent = req.headers.get("user-agent") || "";
@@ -40,10 +39,9 @@ export async function GET(req: NextRequest) {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 
-  // Set the session cookie and redirect to dashboard
-  const cookieStore = await cookies();
-
-  cookieStore.set(cookieName, token, {
+  // Set the session cookie on the redirect response
+  const response = NextResponse.redirect(new URL("/", req.url));
+  response.cookies.set(cookieName, token, {
     httpOnly: true,
     secure: isSecure,
     sameSite: "lax",
@@ -51,5 +49,5 @@ export async function GET(req: NextRequest) {
     maxAge: 30 * 24 * 60 * 60,
   });
 
-  return NextResponse.redirect(new URL("/", req.url));
+  return response;
 }
