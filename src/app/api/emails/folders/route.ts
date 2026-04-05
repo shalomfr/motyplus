@@ -43,14 +43,6 @@ export async function GET() {
       }
     }
 
-    // Ensure "לא מעודכנים" and "חלקי סט" folders exist
-    const existingKeys = new Set(folders.map((f) => f.key))
-    const missingFolders = DEFAULT_FOLDERS.filter((d) => !existingKeys.has(d.key))
-    if (missingFolders.length > 0) {
-      await prisma.emailFolder.createMany({ data: missingFolders })
-      needsRefresh = true
-    }
-
     if (needsRefresh) {
       folders = await prisma.emailFolder.findMany({
         orderBy: { order: "asc" },
