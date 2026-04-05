@@ -58,7 +58,7 @@ export async function POST(
 
     // בניית קישור מקצבים מתיקיית דרייב
     const [organ, setType2] = await Promise.all([
-      prisma.organ.findUnique({ where: { id: customer.organId }, select: { demoAlias: true } }),
+      prisma.organ.findUnique({ where: { id: customer.organId }, select: { demoAlias: true, installFileName: true } }),
       prisma.setType.findUnique({ where: { id: customer.setTypeId }, select: { demoAlias: true } }),
     ]);
     let rhythmsLink = latestVersion.rhythmsFileUrl || "";
@@ -92,7 +92,7 @@ export async function POST(
       updateVersion: latestVersion.version,
       samplesLink: downloadLink,
       rhythmsLink,
-      rhythmsFileName: latestVersion.rhythmsFileUrl ? extractFilename(latestVersion.rhythmsFileUrl) : "",
+      rhythmsFileName: organ?.installFileName || (latestVersion.rhythmsFileUrl ? extractFilename(latestVersion.rhythmsFileUrl) : ""),
       samplesFileName: latestVersion.samplesFileUrl ? extractFilename(latestVersion.samplesFileUrl) : "",
       downloadLink,
       downloadLink2: "",

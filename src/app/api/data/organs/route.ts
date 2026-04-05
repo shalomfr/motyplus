@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: data.name,
         folderAlias: data.folderAlias || null,
+        installFileName: data.installFileName || null,
         organInfoFileUrl: data.organInfoFileUrl || null,
         supportsUpdates: data.supportsUpdates,
         sortOrder: nextSortOrder,

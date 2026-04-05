@@ -150,6 +150,7 @@ model Organ {
   name             String  @unique
   folderAlias      String?
   demoAlias        String? // שם תיקייה במבנה ה-demo בגוגל דרייב (Genos1, sx920, ...)
+  installFileName  String? // שם קובץ התקנה קבוע לאורגן (למשל Genos.bup, TYROS5.bup)
   organInfoFileUrl String? // קובץ אינפו ייחודי שרק האורגן הזה יכול לפתוח
   organInfoNumber  String? // מספר זיהוי שייזרק לתוך קבצי העדכון
   supportsUpdates  Boolean @default(false)

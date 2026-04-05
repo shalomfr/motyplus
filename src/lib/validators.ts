@@ -90,6 +90,7 @@ export const organSchema = z.object({
   name: z.string().min(1, "יש להזין שם אורגן"),
   folderAlias: z.string().optional().nullable(),
   demoAlias: z.string().optional().nullable(),
+  installFileName: z.string().optional().nullable(),
   organInfoFileUrl: z.string().optional().nullable(),
   supportsUpdates: z.boolean(),
   sortOrder: z.number().optional(),

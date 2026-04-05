@@ -33,6 +33,7 @@ interface Organ {
   name: string
   folderAlias: string | null
   demoAlias: string | null
+  installFileName: string | null
   organInfoFileUrl: string | null
   supportsUpdates: boolean
   sortOrder: number
@@ -72,6 +73,7 @@ function OrgansTab() {
   const [formOrganInfoFileUrl, setFormOrganInfoFileUrl] = useState("")
   const [formSupportsUpdates, setFormSupportsUpdates] = useState(false)
   const [formSortOrder, setFormSortOrder] = useState(0)
+  const [formInstallFileName, setFormInstallFileName] = useState("")
   const [isUploadingInfo, setIsUploadingInfo] = useState(false)
   const [infoFileName, setInfoFileName] = useState("")
 
@@ -98,6 +100,7 @@ function OrgansTab() {
     setFormName("")
     setFormFolderAlias("")
     setFormDemoAlias("")
+    setFormInstallFileName("")
     setFormOrganInfoFileUrl("")
     setFormSupportsUpdates(false)
     setFormSortOrder(0)
@@ -110,6 +113,7 @@ function OrgansTab() {
     setFormName(organ.name)
     setFormFolderAlias(organ.folderAlias || "")
     setFormDemoAlias(organ.demoAlias || "")
+    setFormInstallFileName(organ.installFileName || "")
     setFormOrganInfoFileUrl(organ.organInfoFileUrl || "")
     setFormSupportsUpdates(organ.supportsUpdates)
     setFormSortOrder(organ.sortOrder)
@@ -164,6 +168,7 @@ function OrgansTab() {
           name: formName,
           folderAlias: formFolderAlias || null,
           demoAlias: formDemoAlias || null,
+          installFileName: formInstallFileName || null,
           organInfoFileUrl: formOrganInfoFileUrl || null,
           supportsUpdates: formSupportsUpdates,
           sortOrder: formSortOrder,
@@ -213,6 +218,7 @@ function OrgansTab() {
             <TableHead>שם</TableHead>
             <TableHead>כינוי תיקייה</TableHead>
             <TableHead>כינוי Demo</TableHead>
+            <TableHead>קובץ התקנה</TableHead>
             <TableHead>תומך בעדכונים</TableHead>
             <TableHead>סדר מיון</TableHead>
             <TableHead>סטטוס</TableHead>
@@ -225,6 +231,7 @@ function OrgansTab() {
               <TableCell className="font-medium">{organ.name}</TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground">{organ.folderAlias || "-"}</TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground">{organ.demoAlias || "-"}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{organ.installFileName || "-"}</TableCell>
               <TableCell>
                 {organ.supportsUpdates ? (
                   <Badge className="bg-green-100 text-green-800 border-green-200">כן</Badge>
@@ -287,6 +294,11 @@ function OrgansTab() {
               <Label>כינוי Demo (demoAlias)</Label>
               <Input value={formDemoAlias} onChange={(e) => setFormDemoAlias(e.target.value)} placeholder="שם התיקייה ב-Drive Demo" dir="ltr" />
               <p className="text-xs text-muted-foreground">שם התיקייה במבנה ה-demo בגוגל דרייב. למשל: Genos1, sx920</p>
+            </div>
+            <div className="space-y-2">
+              <Label>שם קובץ התקנה (installFileName)</Label>
+              <Input value={formInstallFileName} onChange={(e) => setFormInstallFileName(e.target.value)} placeholder="למשל: Genos.bup, TYROS5.bup" dir="ltr" />
+              <p className="text-xs text-muted-foreground">שם קובץ ההתקנה הקבוע לאורגן — ישמש במשתנה &quot;שם קובץ מקצבים&quot; במיילים</p>
             </div>
             <div className="space-y-2">
               <Label>קובץ אינפו לזיהוי האורגן</Label>

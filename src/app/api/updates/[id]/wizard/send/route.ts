@@ -21,7 +21,7 @@ interface SendableCustomer {
   amountPaid: number;
   organId: string;
   setTypeId: string;
-  organ: { name: string };
+  organ: { name: string; installFileName: string | null };
   additionalOrgan: { name: string } | null;
   setType: { name: string; includesUpdates: boolean; price?: number };
   purchaseDate: Date | null;
@@ -142,7 +142,7 @@ async function sendToEligible(
           additionalOrganName, additionalOrganLine,
           setType: customer.setType.name,
           samplesLink: downloadLink, rhythmsLink: rhythmsLinkMap.get(`${customer.organId}_${customer.setTypeId}`) || updateVersion.rhythmsFileUrl || "",
-          rhythmsFileName: updateVersion.rhythmsFileUrl ? extractFilename(updateVersion.rhythmsFileUrl) : "",
+          rhythmsFileName: customer.organ.installFileName || (updateVersion.rhythmsFileUrl ? extractFilename(updateVersion.rhythmsFileUrl) : ""),
           samplesFileName: updateVersion.samplesFileUrl ? extractFilename(updateVersion.samplesFileUrl) : "",
           releaseDate: new Date(updateVersion.releaseDate || Date.now()).toLocaleDateString("he-IL"),
           downloadLink, downloadLink2,
@@ -291,7 +291,7 @@ export async function POST(
     const alreadyReceivedIds = new Set(alreadyReceived.map((cu) => cu.customerId));
 
     const customerInclude = {
-      organ: { select: { name: true, supportsUpdates: true } },
+      organ: { select: { name: true, supportsUpdates: true, installFileName: true } },
       additionalOrgan: { select: { name: true } },
       setType: { select: { name: true, includesUpdates: true, price: true } },
     } as const;
