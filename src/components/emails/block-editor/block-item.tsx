@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold, AlignRight, AlignCenter, AlignLeft, AlignJustify, Palette } from "lucide-react"
+import { Trash2, GripVertical, ChevronUp, ChevronDown, Plus, X, Upload, Bold, AlignRight, AlignCenter, AlignLeft, AlignJustify, Palette, Copy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { BLOCK_LABELS } from "./types"
 import type { EmailBlock, ButtonConfig, TextAlign } from "./types"
@@ -83,6 +83,7 @@ interface BlockItemProps {
   isSelected: boolean
   onSelect: () => void
   onChange: (updated: EmailBlock) => void
+  onCopy?: () => void
   onDelete: () => void
   onMoveUp: () => void
   onMoveDown: () => void
@@ -810,6 +811,7 @@ export function BlockItem({
   isSelected,
   onSelect,
   onChange,
+  onCopy,
   onDelete,
   onMoveUp,
   onMoveDown,
@@ -846,6 +848,17 @@ export function BlockItem({
         >
           <ChevronDown className="h-3 w-3" />
         </Button>
+        {onCopy && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            title="העתק בלוק"
+            onClick={(e) => { e.stopPropagation(); onCopy() }}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

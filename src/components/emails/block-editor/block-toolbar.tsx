@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button"
 import {
   Heading1, Heading2, MessageSquare, Type, FolderOpen, List, MousePointer2,
   Percent, Building2, AlertTriangle, PenLine, ImageIcon, Minus, BookOpen, Plus, Flag,
+  Import, Library,
 } from "lucide-react"
 import type { EmailBlock } from "./types"
 
 interface BlockToolbarProps {
   onAdd: (type: EmailBlock["type"]) => void
+  onImportBlocks?: () => void
+  onOpenLibrary?: () => void
 }
 
 const BLOCK_OPTIONS: Array<{ type: EmailBlock["type"]; label: string; icon: typeof Heading1 }> = [
@@ -30,7 +33,7 @@ const BLOCK_OPTIONS: Array<{ type: EmailBlock["type"]; label: string; icon: type
   { type: "divider", label: "מפריד", icon: Minus },
 ]
 
-export function BlockToolbar({ onAdd }: BlockToolbarProps) {
+export function BlockToolbar({ onAdd, onImportBlocks, onOpenLibrary }: BlockToolbarProps) {
   return (
     <div className="flex flex-wrap gap-1.5 p-3 bg-muted/30 border-b">
       <span className="text-xs text-muted-foreground self-center ml-1 flex items-center gap-1">
@@ -49,6 +52,31 @@ export function BlockToolbar({ onAdd }: BlockToolbarProps) {
           {label}
         </Button>
       ))}
+
+      <div className="w-px h-5 bg-border self-center mx-1" />
+
+      {onImportBlocks && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1 px-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+          onClick={onImportBlocks}
+        >
+          <Import className="h-3 w-3" />
+          ייבוא מתבנית
+        </Button>
+      )}
+      {onOpenLibrary && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1 px-2 border-purple-200 text-purple-700 hover:bg-purple-50"
+          onClick={onOpenLibrary}
+        >
+          <Library className="h-3 w-3" />
+          ספריית בלוקים
+        </Button>
+      )}
     </div>
   )
 }
