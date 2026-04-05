@@ -69,7 +69,7 @@ export function ApprovalCube({ customers, onRefresh }: ApprovalCubeProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">אישור לקוחות</CardTitle>
         <p className="text-sm text-muted-foreground">
-          {customers.length} לקוחות ממתינים לא��שור
+          {customers.length} לקוחות ממתינים לאישור
         </p>
       </CardHeader>
       <CardContent>
