@@ -361,6 +361,7 @@ export async function POST(request: NextRequest) {
             currentUpdateVersion,
             hasV3,
             isCasual: false,
+            orderSentAt: new Date(), // לקוחות מיובאים כבר קיבלו את הסט שלהם
             notes,
           },
         });
