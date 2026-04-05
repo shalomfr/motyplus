@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { listFiles } from "@/lib/file-storage"
-import { parseCpiFilename } from "@/lib/cpi-filename"
+import { listFiles, renameFile } from "@/lib/file-storage"
+import { parseCpiFilename, addVersionToFilename } from "@/lib/cpi-filename"
 
 // Cache: last sync timestamp + result
 let lastSyncAt = 0
@@ -46,14 +46,27 @@ export async function POST() {
     // List all CPI files from Drive
     const files = await listFiles("updates/samples")
 
-    // Parse filenames and build set of customer IDs with CPI files
+    // Parse filenames, rename if version is missing/old, build set of customer IDs
     const customerIdsWithCpi = new Set<number>()
+    let renamed = 0
+
     for (const file of files) {
       const filename = file.path.split("/").pop() || ""
       if (!filename.toLowerCase().endsWith(".cpi")) continue
       const parsed = parseCpiFilename(filename)
-      if (parsed.customerId !== null) {
-        customerIdsWithCpi.add(parsed.customerId)
+      if (parsed.customerId === null) continue
+
+      customerIdsWithCpi.add(parsed.customerId)
+
+      // Rename file if version is missing or doesn't match the active update
+      const newFilename = addVersionToFilename(filename, activeUpdate.version)
+      if (newFilename) {
+        try {
+          await renameFile(file.id, newFilename)
+          renamed++
+        } catch (err) {
+          console.error(`Failed to rename ${filename} → ${newFilename}:`, err)
+        }
       }
     }
 
@@ -64,6 +77,7 @@ export async function POST() {
         status: { in: ["ACTIVE", "EXCEPTION"] },
         isCasual: false,
         setType: { includesUpdates: true },
+        organ: { supportsUpdates: true },
         OR: [
           { updateExpiryDate: { gte: nowDate } },
           { status: "EXCEPTION" },
@@ -109,6 +123,7 @@ export async function POST() {
       success: true,
       synced: eligibleCustomers.length,
       withCpi: customerIdsWithCpi.size,
+      renamed,
       updateVersion: activeUpdate.version,
     })
   } catch (error) {
