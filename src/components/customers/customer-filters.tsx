@@ -15,7 +15,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { ChevronDown, ChevronUp, X, Search, CalendarIcon } from "lucide-react"
+import { ChevronDown, ChevronUp, X, Search, CalendarIcon, FileSpreadsheet } from "lucide-react"
 import { format, parse } from "date-fns"
 import { he } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -51,6 +51,8 @@ interface CustomerFiltersProps {
   filters: CustomerFilters
   onFiltersChange: (filters: CustomerFilters) => void
   onClear: () => void
+  onExport?: () => void
+  isExporting?: boolean
 }
 
 const defaultFilters: CustomerFilters = {
@@ -69,6 +71,8 @@ export function CustomerFiltersPanel({
   filters,
   onFiltersChange,
   onClear,
+  onExport,
+  isExporting,
 }: CustomerFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [organs, setOrgans] = useState<Organ[]>([])
@@ -319,6 +323,22 @@ export function CustomerFiltersPanel({
                 <SelectItem value="whatsapp">חסר WhatsApp</SelectItem>
               </SelectContent>
             </Select>
+
+            {onExport && (
+              <>
+                <span className="text-muted-foreground text-[10px]">|</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onExport}
+                  disabled={isExporting}
+                  className="h-8 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 ml-1" />
+                  {isExporting ? "מייצא..." : "ייצוא לאקסל"}
+                </Button>
+              </>
+            )}
           </div>
         )}
       </CardContent>

@@ -636,6 +636,8 @@ export default function CustomersListPage() {
         filters={filters}
         onFiltersChange={handleFiltersChange}
         onClear={handleClearFilters}
+        onExport={handleExportExcel}
+        isExporting={isExporting}
       />
 
       {/* Results Table */}
