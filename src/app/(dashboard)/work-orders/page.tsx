@@ -135,7 +135,7 @@ export default function WorkOrdersPage() {
           subtitle={activeUpdate ? `עדכון ${activeUpdate.version}` : "אין עדכון פעיל"}
         />
         <TaskCube
-          title="הכנת ושליחת סט"
+          title="לקוחות חדשים"
           count={counts.sets.total}
           icon={Package}
           bgColor="bg-blue-100"

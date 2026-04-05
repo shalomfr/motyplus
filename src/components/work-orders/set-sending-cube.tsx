@@ -56,7 +56,7 @@ export function SetSendingCube({ customers, onRefresh }: SetSendingCubeProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">הכנת ושליחת סט</CardTitle>
+        <CardTitle className="text-lg">לקוחות חדשים</CardTitle>
         <p className="text-sm text-muted-foreground">
           {customers.length} לקוחות ששילמו וממתינים לקבלת הסט
         </p>
